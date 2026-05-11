@@ -1,0 +1,789 @@
+/* =============================================================================
+   HEADER.CSS — Complete Header & Navigation Styles
+   =============================================================================
+   
+   This file contains ALL CSS for the site header, including:
+   
+   1. HEADER BASE         — Sticky header, scroll behavior, hide-on-scroll
+   2. HEADER LAYOUT       — Two-tier layout (top row + nav bar)
+   3. LOGO                — Logo sizing and alignment
+   4. HEADER ACTIONS      — Right-side icon buttons (cart, wishlist, profile)
+   5. ICON BUTTONS        — Circular icon button styles & hover effects
+   6. PROFILE DROPDOWN    — Hover dropdown for profile (View Profile, Logout)
+   7. BADGE               — Cart/notification count badges with pop animation
+   8. LEGACY STUBS        — Hidden legacy nav elements
+   9. NAV BUTTONS         — Shop category filter buttons
+   10. MEGA MENU          — Full mega-menu navigation with dropdown panels
+   11. SEARCH             — Inline search bar, active input, dropdown panel,
+                            popular chips, two-column search results
+   12. NOTIFICATION BELL  — Bell icon, dot indicator, dropdown panel
+   
+   Header HTML lives in: Views/Shared/_Layout.cshtml
+   ============================================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap');
+
+/* CSS Reset & Base */
+*, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --pure-black: #000000;
+    --pure-white: #FFFFFF;
+    --border-color: #E5E5E5;
+    --radius-full: 9999px;
+    --font-primary: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-display: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+body {
+    font-family: var(--font-primary);
+    background: var(--pure-white);
+    color: var(--pure-black);
+    line-height: 1.6;
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+}
+
+
+/* =====================================================
+   1. HEADER BASE — Sticky positioning & scroll states
+   ===================================================== */
+header {
+    background: var(--pure-white);
+    color: var(--pure-black);
+    padding: 0;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    border-bottom: 1px solid var(--border-color);
+    transition: box-shadow .3s ease, background .3s ease;
+}
+header.promo-gone { top: 0; }
+header.scrolled {
+    background: rgba(255,255,255,.97);
+    box-shadow: 0 2px 24px rgba(0,0,0,.07);
+}
+/* hide-on-scroll-down */
+header.header-hidden {
+    transform: translateY(-110%);
+}
+
+
+/* =====================================================
+   2. HEADER LAYOUT — Inner container & two-tier rows
+   ===================================================== */
+.header-inner {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 0 32px;
+}
+
+/* ── Top Row: Logo | Search | Icons ─────────────── */
+.header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+    gap: 24px;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 62px;
+    gap: 0;
+    position: relative;
+}
+
+/* ── Bottom Nav Bar ────────────────────────────────── */
+.header-nav-bar {
+    border-top: 1px solid #f0f0f0;
+}
+
+
+/* =====================================================
+   3. LOGO — Brand logo sizing
+   ===================================================== */
+.logo { flex-shrink: 0; }
+.logo a { display: flex; align-items: center; }
+.header-logo-img { height: 34px; width: auto; display: block; }
+
+
+/* =====================================================
+   4. HEADER ACTIONS — Right-side icons container
+   ===================================================== */
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+}
+
+
+/* =====================================================
+   5. ICON BUTTONS — Circular header icon buttons
+   ===================================================== */
+.hdr-icon-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: transparent;
+    border: none;
+    color: #111;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background .18s, color .18s, transform .18s;
+    flex-shrink: 0;
+}
+.hdr-icon-btn:hover { background: #f0f0f0; color: #000; transform: scale(1.08); }
+.hdr-icon-btn:active { transform: scale(.96); }
+
+
+/* =====================================================
+   6. PROFILE DROPDOWN — Hover-reveal profile menu
+   ===================================================== */
+.profile-dropdown-wrap {
+    position: relative;
+    display: inline-flex;
+}
+.profile-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    min-width: 160px;
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 6px;
+    box-shadow: 0 4px 16px rgba(0,0,0,.1);
+    padding: 6px 0;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(4px);
+    transition: opacity .15s, visibility .15s, transform .15s;
+    z-index: 1200;
+}
+.profile-dropdown-wrap:hover .profile-dropdown {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+.profile-dropdown-item {
+    display: block;
+    padding: 10px 18px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #333;
+    text-decoration: none;
+    transition: background .12s, color .12s;
+    font-family: var(--font-primary);
+    white-space: nowrap;
+}
+.profile-dropdown-item:hover {
+    background: #f5f5f5;
+    color: #000;
+}
+
+
+/* =====================================================
+   7. BADGE — Cart & notification count badges
+   ===================================================== */
+.hdr-badge {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    background: #111;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    border-radius: 99px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    pointer-events: none;
+    border: 1.5px solid #fff;
+    transition: transform .25s cubic-bezier(.36,.07,.19,.97);
+}
+.hdr-badge.hidden { display: none; }
+.hdr-badge.pop { animation: badgePop .35s cubic-bezier(.36,.07,.19,.97); }
+@keyframes badgePop {
+    0%   { transform: scale(1); }
+    45%  { transform: scale(1.55); }
+    75%  { transform: scale(0.88); }
+    100% { transform: scale(1); }
+}
+
+
+/* =====================================================
+   8. LEGACY STUBS — Hidden legacy navigation elements
+   ===================================================== */
+.my-orders-link, .cart-btn, .wishlist-btn { display: none; }
+.nav-link { display: none; }
+
+
+/* =====================================================
+   9. NAV BUTTONS — Shop category filter pill buttons
+   ===================================================== */
+.nav-btn {
+    padding: 10px 22px;
+    border: 1.5px solid #ddd;
+    border-radius: var(--radius-full);
+    background: transparent;
+    color: #111;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    font-size: 12px;
+    letter-spacing: .08em;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-family: var(--font-primary);
+    position: relative;
+    overflow: hidden;
+}
+.nav-btn:hover { background: #111; color: #fff; border-color: #111; }
+.nav-btn.active { background: #111; color: #fff; border-color: #111; }
+
+
+/* =====================================================
+   10. MEGA MENU — Navigation links & dropdown panels
+   ===================================================== */
+.mega-nav {
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    gap: 0;
+    height: 40px;
+}
+
+.mega-panel--3col {
+    grid-template-columns: repeat(3, 160px);
+    min-width: 520px;
+}
+
+.mega-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+/* ── Mega Link (top-level nav text) ────────────────── */
+.mega-link {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    padding: 0 14px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #111;
+    text-decoration: none;
+    white-space: nowrap;
+    letter-spacing: .02em;
+    text-transform: uppercase;
+    position: relative;
+    transition: color .18s;
+}
+.mega-link::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 10px;
+    right: 10px;
+    height: 2px;
+    background: #111;
+    transform: scaleX(0);
+    transform-origin: center;
+    transition: transform .22s cubic-bezier(.4,0,.2,1);
+    border-radius: 99px;
+}
+.mega-link--sale { color: #111; }
+.mega-link--sale::after { background: #111; }
+.mega-item:hover > .mega-link { color: #000; }
+.mega-item:hover > .mega-link::after { transform: scaleX(1); }
+
+/* NH logo inside nav link */
+.mega-link--nh { display: inline-flex; align-items: center; gap: 4px; }
+.mega-nh-logo { height: 16px; width: auto; display: inline-block; vertical-align: middle; }
+
+/* ── Mega Panel (dropdown container) ───────────────── */
+.mega-panel {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(6px);
+    background: #fff;
+    border: 1px solid #e8e8e8;
+    border-top: 2px solid #111;
+    border-radius: 0 0 10px 10px;
+    padding: 28px 32px 28px;
+    display: grid;
+    grid-template-columns: repeat(4, 160px);
+    gap: 0 24px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .18s ease, transform .2s ease;
+    box-shadow: 0 12px 40px rgba(0,0,0,.09);
+    z-index: 500;
+    min-width: 600px;
+}
+
+.mega-panel--slim {
+    grid-template-columns: 200px;
+    min-width: 200px;
+    left: 0;
+    transform: translateX(0) translateY(6px);
+    padding: 20px 24px;
+}
+
+.mega-item:hover .mega-panel {
+    opacity: 1;
+    pointer-events: all;
+    transform: translateX(-50%) translateY(0);
+}
+.mega-panel--slim.mega-item:hover .mega-panel,
+.mega-item:hover .mega-panel--slim {
+    transform: translateX(0) translateY(0);
+}
+
+/* Prevent gap between link and panel */
+.mega-panel::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    left: 0; right: 0;
+    height: 8px;
+}
+
+/* ── Mega Panel Columns ────────────────────────────── */
+.mega-col {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.mega-col-title {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: #111;
+    margin-bottom: 10px;
+    margin-top: 0;
+}
+
+.mega-col a {
+    font-size: 13px;
+    font-weight: 400;
+    color: #444;
+    text-decoration: none;
+    padding: 5px 0;
+    transition: color .15s, padding-left .15s;
+    line-height: 1.3;
+}
+.mega-col a:hover { color: #000; padding-left: 4px; }
+
+.mega-featured-link {
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    color: #111 !important;
+}
+.mega-featured-link:hover { color: #000 !important; }
+
+
+/* =====================================================
+   11. SEARCH — Inline search bar & dropdown results
+   ===================================================== */
+
+/* ── Header search wrap ──────────────────────── */
+.hdr-search-wrap { position: relative; display: flex; align-items: center; flex: 1; max-width: 600px; }
+
+/* ── Search button (closed state) ────────────────── */
+.hdr-search-bar {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: #fff;
+    border: 1px solid #d4d4d4;
+    border-radius: 3px;
+    padding: 7px 14px 7px 10px;
+    cursor: pointer;
+    color: #555;
+    font-size: 13px;
+    font-weight: 400;
+    font-family: var(--font-primary);
+    transition: border-color .15s, color .15s;
+    flex-shrink: 0;
+    width: 100%;
+    min-width: 160px;
+    height: 36px;
+    box-sizing: border-box;
+}
+.hdr-search-bar:hover { border-color: #111; color: #111; }
+
+/* ── Active search input (open state) ────────────── */
+.hdr-search-active {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 3px;
+    padding: 7px 12px;
+    height: 36px;
+    box-sizing: border-box;
+    font-size: 14px;
+}
+.hdr-sa-icon { flex-shrink: 0; color: #666; }
+.hdr-sa-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    box-shadow: none;
+    -webkit-appearance: none;
+    appearance: none;
+    font-size: 14px;
+    font-weight: 400;
+    font-family: var(--font-primary);
+    color: #111;
+    background: transparent;
+    caret-color: #111;
+    padding: 0;
+    min-width: 0;
+}
+.hdr-sa-input:focus,
+.hdr-sa-input:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+.hdr-search-active:focus-within {
+    outline: none;
+}
+.hdr-sa-input::-webkit-search-decoration,
+.hdr-sa-input::-webkit-search-cancel-button { display: none; }
+.hdr-sa-input::placeholder { color: #999; }
+.hdr-sa-clear {
+    flex-shrink: 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #111;
+    display: flex;
+    align-items: center;
+    padding: 0;
+    transition: opacity .15s;
+}
+.hdr-sa-clear:hover { opacity: .6; }
+
+/* ── Show / hide toggle ──────────────────────────── */
+.hdr-search-wrap.is-open .hdr-search-bar { display: none; }
+.hdr-search-wrap.is-open .hdr-search-active { display: flex; }
+
+/* ── Search Dropdown Panel ─────────────────────── */
+.search-dropdown {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    /* top: set via JS to header bottom */
+    z-index: 1199;
+    pointer-events: none;
+    visibility: hidden;
+}
+.search-dropdown.active {
+    pointer-events: all;
+    visibility: visible;
+}
+
+/* Dark overlay behind panel */
+.search-dropdown-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,.25);
+    opacity: 0;
+    transition: opacity .25s ease;
+}
+.search-dropdown.active .search-dropdown-backdrop { opacity: 1; }
+
+/* Floating panel — left/width set via JS, flush below search bar */
+.search-dropdown-panel {
+    position: absolute;
+    width: 700px;
+    background: #fff;
+    padding: 24px 32px 32px;
+    max-height: 520px;
+    overflow-y: auto;
+    opacity: 0;
+    transform: translateY(0);
+    transition: opacity .18s ease;
+    z-index: 1;
+    box-shadow: 0 8px 24px rgba(0,0,0,.10);
+    border-radius: 0 0 6px 6px;
+}
+.search-dropdown.active .search-dropdown-panel {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* ── Popular search chips ────────────────────────── */
+.search-popular-wrap { display: block; }
+.search-popular-label {
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: .02em;
+    color: #767677;
+    margin-bottom: 16px;
+}
+.search-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.search-chip {
+    display: inline-block;
+    padding: 7px 18px;
+    border: 1px solid #d6d6d6;
+    border-radius: 99px;
+    font-size: 13px;
+    font-weight: 400;
+    color: #333;
+    text-decoration: none;
+    background: #fff;
+    transition: border-color .15s, background .15s, color .15s;
+}
+.search-chip:hover { border-color: #111; background: #111; color: #fff; }
+
+/* ── Open state: connects search bar to dropdown ─── */
+.hdr-search-wrap.is-open {
+    z-index: 1200;
+}
+.hdr-search-wrap.is-open .hdr-search-active {
+    display: flex;
+    border-radius: 6px 6px 0 0;
+    border-bottom: none;
+    box-shadow: 0 -2px 8px rgba(0,0,0,.04);
+}
+
+/* ── Two-column search results ───────────────────── */
+.search-results-cols {
+    display: none;
+    gap: 0;
+}
+.search-sug-col {
+    width: 260px;
+    flex-shrink: 0;
+    padding-right: 40px;
+    margin-right: 32px;
+    border-right: 1px solid #e8e8e8;
+}
+.search-prod-col { flex: 1; }
+.search-col-title {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: #111;
+    margin: 0 0 14px;
+}
+
+/* ── Suggestion rows ─────────────────────────────── */
+.search-sug-list { list-style: none; padding: 0; margin: 0 0 20px; }
+.search-sug-list li { border-bottom: 1px solid #f0f0f0; }
+.search-sug-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 9px 0;
+    font-size: 14px;
+    color: #222;
+    text-decoration: none;
+    transition: color .12s;
+    gap: 8px;
+}
+.search-sug-item:hover { color: #000; }
+.search-sug-text { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.search-sug-text strong { font-weight: 700; }
+.search-sug-count { color: #bbb; font-size: 13px; flex-shrink: 0; }
+
+.search-see-all {
+    display: inline-block;
+    font-size: 13px;
+    font-weight: 700;
+    color: #111;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+.search-see-all:hover { opacity: .6; }
+
+/* ── Product result rows ─────────────────────────── */
+.search-prod-list { display: flex; flex-direction: column; gap: 14px; }
+.search-prod-item {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    text-decoration: none;
+    color: inherit;
+    transition: opacity .15s;
+}
+.search-prod-item:hover { opacity: .75; }
+.search-prod-img {
+    width: 56px;
+    height: 56px;
+    object-fit: cover;
+    background: #f5f5f5;
+    flex-shrink: 0;
+    border-radius: 2px;
+}
+.search-prod-info { flex: 1; min-width: 0; }
+.search-prod-cat {
+    font-size: 11px;
+    color: #767676;
+    margin-bottom: 2px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.search-prod-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: #111;
+    margin-bottom: 2px;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.search-prod-price {
+    font-size: 13px;
+    font-weight: 500;
+    color: #111;
+}
+
+
+/* =====================================================
+   12. NOTIFICATION BELL — Bell icon & dropdown
+   ===================================================== */
+.notif-wrap {
+    position: relative;
+}
+.notif-btn {
+    position: relative;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--pure-black, #111);
+    transition: background 0.2s;
+}
+.notif-btn:hover {
+    background: rgba(0,0,0,0.06);
+}
+.notif-dot {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 8px;
+    height: 8px;
+    background: #ef4444;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    display: none;
+}
+.notif-dot.active {
+    display: block;
+}
+.notif-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    width: 320px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+    z-index: 1000;
+    overflow: hidden;
+}
+.notif-dropdown.open {
+    display: block;
+}
+.notif-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px 12px;
+    border-bottom: 1px solid #f3f4f6;
+    font-size: 14px;
+    font-weight: 600;
+    color: #111;
+}
+.notif-clear-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    color: #6b7280;
+    padding: 0;
+    transition: color 0.2s;
+}
+.notif-clear-btn:hover { color: #111; }
+.notif-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-height: 320px;
+    overflow-y: auto;
+}
+.notif-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid #f9fafb;
+    transition: background 0.15s;
+    cursor: default;
+}
+.notif-item:last-child { border-bottom: none; }
+.notif-item:hover { background: #f9fafb; }
+.notif-item.unread { background: #f0f9ff; }
+.notif-item.unread:hover { background: #e0f2fe; }
+.notif-icon {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1px;
+}
+.notif-icon-order  { background: #dbeafe; color: #2563eb; }
+.notif-icon-preorder { background: #fef3c7; color: #d97706; }
+.notif-icon-promo  { background: #dcfce7; color: #16a34a; }
+.notif-body { flex: 1; min-width: 0; }
+.notif-text {
+    font-size: 13px;
+    color: #111;
+    line-height: 1.45;
+    margin: 0 0 3px;
+}
+.notif-time {
+    font-size: 11px;
+    color: #9ca3af;
+}

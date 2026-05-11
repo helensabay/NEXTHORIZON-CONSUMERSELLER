@@ -1,0 +1,84 @@
+﻿/* --- Breadcrumb Styling --- */
+.breadcrumb-item + .breadcrumb-item::before {
+    content: ">";
+    color: #adb5bd;
+}
+
+.breadcrumb a:hover {
+    color: #000 !important;
+    text-decoration: underline !important;
+}
+
+/* --- Stats Cards (Specific to Detail View) --- */
+.border-primary {
+    border-color: #0d6efd !important;
+}
+
+.border-success {
+    border-color: #198754 !important;
+}
+
+.border-info {
+    border-color: #0dcaf0 !important;
+}
+
+.border-danger {
+    border-color: #dc3545 !important;
+}
+
+/* --- Progress Bar Customization --- */
+.progress {
+    background-color: #e9ecef;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    transition: width 0.6s ease;
+}
+
+/* --- Participant Table Styling --- */
+.table thead th {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 700;
+    color: #6c757d;
+    border-top: none;
+}
+
+.table tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+    .table tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+
+/* Avatar Circle inside Table */
+.avatar-circle {
+    font-weight: 600;
+    flex-shrink: 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+/* --- Search Bar inside Card --- */
+.input-group-text {
+    color: #6c757d;
+}
+
+.form-control:focus {
+    box-shadow: none;
+    border-color: #dee2e6;
+}
+
+/* --- Responsive Adjustments --- */
+@media (max-width: 768px) {
+    .d-flex.gap-2 {
+        flex-direction: column;
+    }
+
+    .btn {
+        width: 100%;
+    }
+}

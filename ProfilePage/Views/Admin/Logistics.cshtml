@@ -1,0 +1,219 @@
+﻿@{
+    ViewData["Title"] = "Admin Portal - Logistics";
+    Layout = "_AdminLayout";
+}
+
+<div class="container-fluid py-4 bg-light">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end mb-4 gap-3">
+        <div>
+            <h4 class="fw-bold text-dark mb-1">Logistics Partners</h4>
+            <p class="text-secondary small mb-0">Manage active couriers and platform-wide shipping availability.</p>
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+            <div class="search-container position-relative">
+                <input type="text" id="logisticsSearch" class="form-control rounded-pill border-0 shadow-sm px-4 py-2" placeholder="Search courier..." style="width: 250px;">
+                <i class="bi bi-search position-absolute" style="right: 15px; top: 10px; color: #aaa;"></i>
+            </div>
+            <button class="btn btn-dark rounded-pill px-4 shadow-sm py-2" onclick="openAddPartnerModal()">
+                <i class="bi bi-plus-lg me-2"></i>Add Partner
+            </button>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-5">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-4 text-center filter-card" id="stat-total" onclick="filterPartners('total')">
+                <span class="text-muted x-small d-block mb-1 text-uppercase fw-bold">Total</span>
+                <h2 class="fw-bold mb-0">9</h2>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-4 text-center filter-card active-filter" id="stat-active" onclick="filterPartners('active')">
+                <span class="text-muted x-small d-block mb-1 text-uppercase fw-bold">Active</span>
+                <h2 class="fw-bold mb-0 text-success">6</h2>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-4 text-center filter-card" id="stat-inactive" onclick="filterPartners('inactive')">
+                <span class="text-muted x-small d-block mb-1 text-uppercase fw-bold">Inactive</span>
+                <h2 class="fw-bold mb-0 text-secondary">2</h2>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm rounded-4 p-4 text-center filter-card" id="stat-archived" onclick="filterPartners('archived')">
+                <span class="text-muted x-small d-block mb-1 text-uppercase fw-bold">Archived</span>
+                <h2 class="fw-bold mb-0 text-danger">1</h2>
+            </div>
+        </div>
+    </div>
+
+    <div id="activeSection" class="mb-5">
+        <div class="d-flex align-items-center mb-3">
+            <h5 class="fw-bold mb-0">Active Partners</h5>
+            <span class="badge bg-dark rounded-pill ms-2 px-3">6</span>
+        </div>
+        <div class="row g-4" id="activeContainer">
+            @for (int i = 1; i <= 3; i++)
+            {
+                <div class="col-sm-6 col-lg-4 col-xl-3 partner-card" data-name="Logistics Co. @i">
+                    <div class="card border-0 shadow-sm rounded-4 h-100 transition-hover">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div class="bg-light rounded-3 p-2 d-flex align-items-center justify-content-center border" style="width: 60px; height: 60px;">
+                                    <i class="bi bi-truck fs-1 text-dark"></i>
+                                </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input custom-switch"
+                                           type="checkbox"
+                                           role="switch"
+                                           id="switch-@i"
+                                           checked
+                                           onclick="toggleStatus('Logistics Co. @i', this)">
+                                    <label class="form-check-label d-none" for="switch-@i">Toggle Status</label>
+                                </div>
+                            </div>
+                            <h5 class="fw-bold mb-1 courier-name">Logistics Co. @i</h5>
+                            <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 mb-3">Active</span>
+                            <div class="row g-2 mb-4">
+                                <div class="col-6">
+                                    <label class="text-muted x-small d-block text-uppercase fw-bold">Success Rate</label>
+                                    <span class="small fw-bold text-dark">98.5%</span>
+                                </div>
+                                <div class="col-6 text-end">
+                                    <label class="text-muted x-small d-block text-uppercase fw-bold">Avg. Days</label>
+                                    <span class="small fw-bold text-dark">2-3 Days</span>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-outline-dark btn-sm w-100 rounded-pill fw-bold" onclick="viewPerformance('Logistics Co. @i', 94)">View Performance</button>
+                                <button class="btn btn-outline-danger btn-sm rounded-pill px-3" onclick="removePartner('Logistics Co. @i')">
+                                    <i class="bi bi-trash3"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div id="inactiveSection" class="p-4 rounded-4 mb-5" style="background-color: #f1f1f1; border: 2px dashed #ccc;">
+        <div class="d-flex align-items-center mb-3">
+            <h5 class="fw-bold mb-0 text-secondary">Inactive / Maintenance</h5>
+            <span class="badge bg-secondary rounded-pill ms-2 px-3">2</span>
+        </div>
+        <div class="row g-4" id="inactiveContainer">
+            <div class="col-sm-6 col-lg-4 col-xl-3 partner-card opacity-75" data-name="Flash Express">
+                <div class="card border-0 shadow-sm rounded-4 h-100">
+                    <div class="card-body p-4 text-center">
+                        <i class="bi bi-exclamation-triangle fs-2 text-muted mb-2"></i>
+                        <h6 class="fw-bold mb-1 courier-name">Flash Express</h6>
+                        <p class="x-small text-muted mb-3">Disabled for maintenance</p>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-sm btn-dark w-100 rounded-pill" onclick="toggleStatus('Flash Express', this)">Enable Service</button>
+                            <button class="btn btn-sm btn-outline-danger rounded-pill px-3" onclick="removePartner('Flash Express')">
+                                <i class="bi bi-trash3"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="archiveSection" class="p-4 rounded-4" style="background-color: #fff0f0; border: 2px solid #ffcccc; display: none;">
+        <div class="d-flex align-items-center mb-3">
+            <h5 class="fw-bold mb-0 text-danger">Archived Partners</h5>
+            <span class="badge bg-danger rounded-pill ms-2 px-3">1</span>
+        </div>
+        <div class="row g-4">
+            <div class="col-sm-6 col-lg-4 col-xl-3 partner-card" data-name="Old Courier Co.">
+                <div class="card border-0 shadow-sm rounded-4 h-100 bg-white">
+                    <div class="card-body p-4 text-center">
+                        <div class="bg-light rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                            <i class="bi bi-archive text-muted fs-4"></i>
+                        </div>
+                        <h6 class="fw-bold mb-1 courier-name">Old Courier Co.</h6>
+                        <p class="x-small text-muted mb-3">Archived on Oct 12, 2025</p>
+                        <button class="btn btn-sm btn-outline-dark w-100 rounded-pill" onclick="restorePartner('Old Courier Co.')">
+                            <i class="bi bi-arrow-counterclockwise me-1"></i> Restore Partner
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addPartnerModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow rounded-4">
+            <div class="modal-header border-0 pt-4 px-4">
+                <h5 class="fw-bold">Add Logistics Partner</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body px-4">
+                <div class="text-center mb-4">
+                    <div class="position-relative d-inline-block">
+                        <img id="logoPreview" src="/images/default-logo.png" class="rounded-3 border"
+                             style="width: 100px; height: 100px; object-fit: cover; background: #f8f9fa;">
+                        <label for="logoUpload" class="btn btn-dark btn-sm position-absolute bottom-0 end-0 rounded-circle p-0 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; border: 2px solid #fff;">
+                            <i class="bi bi-camera"></i>
+                        </label>
+                        <input type="file" id="logoUpload" hidden accept="image/*" onchange="previewImage(this)">
+                    </div>
+                    <p class="x-small text-muted mt-2 uppercase fw-bold">Upload Courier Logo</p>
+                </div>
+
+                <div class="mb-3">
+                    <label class="small fw-bold text-secondary">Courier Name</label>
+                    <input type="text" id="newPartnerName" class="form-control rounded-3" placeholder="e.g. J&T Express">
+                </div>
+                <div class="mb-3">
+                    <label class="small fw-bold text-secondary">Service Type</label>
+                    <select class="form-select rounded-3">
+                        <option>Standard Delivery</option>
+                        <option>Same Day (Instant)</option>
+                        <option>International</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer border-0 pb-4 px-4">
+                <button class="btn btn-dark w-100 rounded-pill py-2" onclick="saveNewPartner()">Save Partner</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="performanceModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow rounded-4">
+            <div class="modal-body p-4 text-center">
+                <h4 class="fw-bold mb-1" id="perfName">Partner Name</h4>
+                <p class="text-muted small mb-4">Performance metrics for the last 30 days</p>
+                <div class="mb-4 text-start">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="small fw-bold">Delivery Success Rate</span>
+                        <span class="small fw-bold" id="perfRateText">94%</span>
+                    </div>
+                    <div class="progress" style="height: 10px; border-radius: 10px;">
+                        <div id="perfProgressBar" class="progress-bar bg-dark" role="progressbar" style="width: 94%;"></div>
+                    </div>
+                </div>
+                <div class="row g-2">
+                    <div class="col-6"><div class="p-3 bg-light rounded-3 small"><b>1.8 Days</b><br>Avg Speed</div></div>
+                    <div class="col-6"><div class="p-3 bg-light rounded-3 small"><b>0.05%</b><br>Incident Rate</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="~/js/admin_js/logistics.js" asp-append-version="true"></script>
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin_css/logistics.css" asp-append-version="true" />
+}

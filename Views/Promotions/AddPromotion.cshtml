@@ -1,0 +1,299 @@
+@model MyAspNetApp.Models.PromotionViewModel
+@{
+    ViewData["Title"] = Model?.Id > 0 ? "Edit Promotion" : "Add Promotion";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXT HORIZON - Add Promotion</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="~/css/AddPromotion.css" asp-append-version="true">
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="logo"><div class="logo-icon">H</div> HORIZON</div>
+        <nav>
+            <a href="#" class="nav-item"><i class="fa-solid fa-house"></i> Dashboard</a>
+            <a href="#" class="nav-item"><i class="fa-solid fa-receipt"></i> Orders</a>
+            <a href="/Promotions/Promotion" class="nav-item active"><i class="fa-solid fa-bullhorn"></i> Promotions</a>
+            <a href="/Seller" class="nav-item"><i class="fa-solid fa-bag-shopping"></i> Products</a>
+            <a href="#" class="nav-item"><i class="fa-solid fa-chart-line"></i> Analytics</a>
+        </nav>
+    </aside>
+
+    <div class="main-wrapper">
+        <header class="header">
+            <i class="fa-regular fa-bell" style="font-size: 1.2rem; cursor: pointer;"></i>
+            <div class="user-profile">
+                <i class="fa-regular fa-circle-user" style="font-size: 1.6rem;"></i>
+                <span style="font-weight: 600;">Seller</span>
+                <i class="fa-solid fa-chevron-down" style="font-size: 0.7rem; margin-left: 5px;"></i>
+            </div>
+        </header>
+
+        <main class="content-container">
+            <div class="page-title-header">
+                <button type="button" class="btn-back" onclick="window.location.href='/Promotions/Promotion'">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </button>
+                <h1>@(Model?.Id > 0 ? "Edit Promotion" : "Add Promotion")</h1>
+            </div>
+
+            <form asp-action="AddPromotion" asp-controller="Promotions" method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <input asp-for="Id" type="hidden" />
+
+                <div class="form-card">
+                    <label class="section-title">Select Promotions Banner Size</label>
+                    <div class="banner-grid">
+                        <div class="banner-option"><input type="radio" asp-for="BannerSize" value="300x250" id="sz-300" class="sr-only"><label for="sz-300"><div class="banner-wireframe" style="width:50px;height:40px;"></div><span>300 X 250</span></label></div>
+                        <div class="banner-option"><input type="radio" asp-for="BannerSize" value="728x90" id="sz-728" class="sr-only"><label for="sz-728"><div class="banner-wireframe" style="width:80px;height:15px;"></div><span>728 X 90</span></label></div>
+                        <div class="banner-option"><input type="radio" asp-for="BannerSize" value="320x100" id="sz-320" class="sr-only"><label for="sz-320"><div class="banner-wireframe" style="width:60px;height:20px;"></div><span>320 X 100</span></label></div>
+                        <div class="banner-option"><input type="radio" asp-for="BannerSize" value="336x280" id="sz-336" class="sr-only"><label for="sz-336"><div class="banner-wireframe" style="width:60px;height:50px;"></div><span>336 X 280</span></label></div>
+                        <div class="banner-option"><input type="radio" asp-for="BannerSize" value="250x250" id="sz-250" class="sr-only"><label for="sz-250"><div class="banner-wireframe" style="width:45px;height:45px;"></div><span>250 X 250</span></label></div>
+                    </div>
+
+                    <div class="upload-area" id="trigger-upload">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        <span>Upload Photos</span>
+                    </div>
+                    <input type="file" id="photo-upload-input" name="BannerImages" accept="image/*" multiple class="sr-only">
+                    <div class="uploaded-thumbnails" id="thumbnail-container"></div>
+                </div>
+
+                <div class="form-card">
+                    <h2 class="section-title strong">Promotional Details</h2>
+                    <input type="text" asp-for="Name" class="input-text" placeholder="Promotion Name" required>
+
+                    <h3 class="section-title">Promotion Type</h3>
+                    <div class="promo-type-grid">
+                        <div class="promo-type-btn"><input type="radio" asp-for="Type" value="Percentage Discount" id="type-percent" class="sr-only promo-trigger" data-target="percent"><label for="type-percent">Percentage Discount</label></div>
+                        <div class="promo-type-btn"><input type="radio" asp-for="Type" value="Fix Amount" id="type-fix" class="sr-only promo-trigger" data-target="fix"><label for="type-fix">Fix Amount</label></div>
+                        <div class="promo-type-btn"><input type="radio" asp-for="Type" value="Buy X, Take Y" id="type-bogo" class="sr-only promo-trigger" data-target="bogo"><label for="type-bogo">Buy X, Take Y</label></div>
+                        <div class="promo-type-btn"><input type="radio" asp-for="Type" value="Free Return" id="type-return" class="sr-only promo-trigger" data-target="return"><label for="type-return">Free Return</label></div>
+                    </div>
+
+                    <div id="section-percent" class="dynamic-section">
+                        <div class="form-row">
+                            <div class="input-combined"><span class="inner-label">Percentage Discount</span><div class="divider"></div><input type="number" asp-for="TotalDiscountPercent" placeholder="0"><span class="suffix">%</span></div>
+                            <div class="input-combined"><span class="inner-label">Usage Limit</span><div class="divider"></div><input type="number" asp-for="UsageLimit"></div>
+                            <label class="custom-check-card inline-check">
+                                <input type="checkbox" asp-for="UntilPromotionLast" class="custom-checkbox">
+                                <span class="check-label">Until Promotion Last</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="section-fix" class="dynamic-section">
+                        <div class="form-row">
+                            <div class="input-combined"><span class="inner-label">Total amount of Discount</span><div class="divider"></div><span class="suffix">P</span><input type="number" asp-for="TotalDiscountFix"></div>
+                            <div class="input-combined"><span class="inner-label">Usage Limit</span><div class="divider"></div><input type="number" asp-for="UsageLimit"></div>
+                            <label class="custom-check-card inline-check">
+                                <input type="checkbox" asp-for="UntilPromotionLast" class="custom-checkbox">
+                                <span class="check-label">Until Promotion Last</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="section-bogo" class="dynamic-section">
+                        <div class="form-row">
+                            <div class="input-combined small"><span class="inner-label">Buy</span><div class="divider"></div><input type="number" asp-for="BuyQuantity"></div>
+                            <div class="input-combined small"><span class="inner-label">Take</span><div class="divider"></div><input type="number" asp-for="TakeQuantity"></div>
+                            <div class="input-combined"><span class="inner-label">Usage Limit</span><div class="divider"></div><input type="number" asp-for="UsageLimit"></div>
+                            <label class="custom-check-card inline-check">
+                                <input type="checkbox" asp-for="UntilPromotionLast" class="custom-checkbox">
+                                <span class="check-label">Until Promotion Last</span>
+                            </label>
+                        </div>
+
+                        <label class="section-title">Item Free</label>
+                        <div class="form-row">
+                            <label class="custom-check-card-free">
+                                <input type="radio" asp-for="FreeItemRequirement" value="ExactProduct" class="custom-radio">
+                                <span class="check-label">Free item must be the exact same product</span>
+                            </label>
+                            <label class="custom-check-card-free">
+                                <input type="radio" asp-for="FreeItemRequirement" value="DifferentProduct" class="custom-radio">
+                                <span class="check-label">Free item can be a different product</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="section-return" class="dynamic-section">
+                        <div class="form-row">
+                            <div class="input-combined medium"><span class="inner-label">Return Window</span><div class="divider"></div><input type="number" asp-for="ReturnWindowDays"></div>
+                            <span class="muted-inline">Days after receiving the item</span>
+                        </div>
+
+                        <label class="section-title">Accepted Reasons for Free Return</label>
+                        <div class="grid-2">
+                            <label class="custom-check-card-free"><input type="checkbox" name="ReturnReasons" value="Change of Mind" class="custom-checkbox"><span class="check-label">Change of Mind / Wrong Size</span></label>
+                            <label class="custom-check-card-free"><input type="checkbox" name="ReturnReasons" value="Incomplete" class="custom-checkbox"><span class="check-label">Order arrived incomplete / Missing items</span></label>
+                            <label class="custom-check-card-free"><input type="checkbox" name="ReturnReasons" value="Damaged" class="custom-checkbox"><span class="check-label">Damaged / Defective</span></label>
+                            <label class="custom-check-card-free"><input type="checkbox" name="ReturnReasons" value="Not as described" class="custom-checkbox"><span class="check-label">Item does not match description/photos</span></label>
+                        </div>
+
+                        <label class="section-title">Item Condition Requirements</label>
+                        <div class="grid-3">
+                            <label class="custom-check-card-free"><input type="checkbox" name="ReturnConditionRequirements" value="Unused" class="custom-checkbox"><span class="check-label">Must be unused/unworn</span></label>
+                            <label class="custom-check-card-free"><input type="checkbox" name="ReturnConditionRequirements" value="Tags" class="custom-checkbox"><span class="check-label">Original tags must be attached</span></label>
+                            <label class="custom-check-card-free"><input type="checkbox" name="ReturnConditionRequirements" value="Packaging" class="custom-checkbox"><span class="check-label">Original packaging intact</span></label>
+                        </div>
+                    </div>
+
+                    <div class="form-stack">
+                        <div id="min-req-wrapper">
+                            <label class="section-title">Set Minimum Requirement</label>
+                            <div class="form-row">
+                                <label class="custom-check-card"><input type="radio" asp-for="MinimumRequirementType" value="None" class="custom-radio"><span class="check-label">No Minimum Purchase Amount</span></label>
+                                <label class="custom-check-card"><input type="radio" asp-for="MinimumRequirementType" value="FixedAmount" class="custom-radio"><span class="check-label">Minimum Purchase Amount</span></label>
+                                <div class="input-combined amount-box"><span class="suffix">P</span><input type="number" asp-for="MinimumPurchaseAmount"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-row top-align">
+                            <div>
+                                <label class="section-title">Status</label>
+                                <div class="form-row">
+                                    @if (Model != null && Model.Id > 0 && string.Equals(Model.Status, "active", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        <label class="custom-check-card"><input type="radio" asp-for="Status" value="active" class="custom-radio"><span class="check-label">Save as Active</span></label>
+                                    }
+                                    else
+                                    {
+                                        <label class="custom-check-card"><input type="radio" asp-for="Status" value="pending" class="custom-radio"><span class="check-label">Submit for Approval</span></label>
+                                    }
+                                    <label class="custom-check-card"><input type="radio" asp-for="Status" value="inactive" class="custom-radio"><span class="check-label">Save as Inactive</span></label>
+                                </div>
+                            </div>
+
+                            <div class="schedule-block">
+                                <label class="section-title">Set Schedule</label>
+                                <div class="schedule-container">
+                                    <div class="schedule-pill">
+                                        <input type="date" name="StartDate">
+                                        <span class="divider">|</span>
+                                        <input type="time" name="StartTime">
+                                    </div>
+                                    <span class="range-divider">-</span>
+                                    <div class="schedule-pill">
+                                        <input type="date" name="EndDate">
+                                        <span class="divider">|</span>
+                                        <input type="time" name="EndTime">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="product-list-container">
+                        <label class="custom-check-card" id="all-btn-wrapper">
+                            <input type="checkbox" id="check-all" class="custom-checkbox">
+                            <span class="check-label strong-label">All</span>
+                        </label>
+
+                        <div class="product-wrapper">
+                            <div class="product-item">
+                                <label class="custom-check-card"><input type="checkbox" name="SelectedProductIds" value="1" class="custom-checkbox parent-product-checkbox"></label>
+                                <div class="product-img sample-pink"></div>
+                                <div class="product-details">
+                                    <span class="product-title">Sabrina 3 EP</span>
+                                    <span class="product-cat">Basketball Shoes</span>
+                                    <div class="product-price-box"><div class="price-current">P 7,595</div><div class="price-old">P 9,493.75</div></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="product-wrapper">
+                            <div class="product-item">
+                                <label class="custom-check-card"><input type="checkbox" name="SelectedProductIds" value="2" class="custom-checkbox parent-product-checkbox"></label>
+                                <div class="product-img sample-green"></div>
+                                <div class="product-details">
+                                    <span class="product-title">Nike Sportswear</span>
+                                    <span class="product-cat">Women's Oversized Windrunner Jacket</span>
+                                    <div class="product-price-box"><div class="price-current">P 4,795</div></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="product-wrapper">
+                            <div class="product-item">
+                                <label class="custom-check-card"><input type="checkbox" name="SelectedProductIds" value="3" class="custom-checkbox parent-product-checkbox"></label>
+                                <div class="product-img sample-gray"></div>
+                                <div class="product-details">
+                                    <span class="product-title">ACG Smith Summit</span>
+                                    <span class="product-cat">Older Kids' Trousers</span>
+                                    <div class="product-price-box"><div class="price-current">P 3,695</div></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="submit-row">
+                    <button type="submit" class="btn-primary">Save Promotion</button>
+                </div>
+            </form>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const uploadTrigger = document.getElementById('trigger-upload');
+            const fileInput = document.getElementById('photo-upload-input');
+            const thumbnailContainer = document.getElementById('thumbnail-container');
+            const promoTriggers = document.querySelectorAll('.promo-trigger');
+            const selectedType = document.querySelector('.promo-trigger:checked');
+            let selectedFiles = [];
+
+            if (uploadTrigger && fileInput) {
+                uploadTrigger.addEventListener('click', () => fileInput.click());
+                fileInput.addEventListener('change', (e) => {
+                    const newFiles = Array.from(e.target.files || []);
+                    newFiles.forEach(file => {
+                        selectedFiles.push(file);
+                        const objectUrl = URL.createObjectURL(file);
+                        const thumbDiv = document.createElement('div');
+                        thumbDiv.className = 'uploaded-thumb';
+                        thumbDiv.innerHTML = `<img src="${objectUrl}" alt=""><button type="button" class="remove-btn"><i class="fa-solid fa-xmark"></i></button>`;
+                        thumbDiv.querySelector('.remove-btn').addEventListener('click', () => {
+                            thumbDiv.remove();
+                            URL.revokeObjectURL(objectUrl);
+                            selectedFiles = selectedFiles.filter(f => f !== file);
+                            updateFileInput();
+                        });
+                        thumbnailContainer.appendChild(thumbDiv);
+                    });
+                    updateFileInput();
+                });
+            }
+
+            function updateFileInput() {
+                const dataTransfer = new DataTransfer();
+                selectedFiles.forEach(file => dataTransfer.items.add(file));
+                fileInput.files = dataTransfer.files;
+            }
+
+            function switchDynamicSection(targetId) {
+                document.querySelectorAll('.dynamic-section').forEach(section => section.classList.remove('active'));
+                const targetSection = document.getElementById('section-' + targetId);
+                if (targetSection) targetSection.classList.add('active');
+            }
+
+            promoTriggers.forEach(trigger => {
+                trigger.addEventListener('change', e => {
+                    if (e.target.checked) switchDynamicSection(e.target.dataset.target);
+                });
+            });
+
+            if (selectedType) {
+                switchDynamicSection(selectedType.dataset.target);
+            }
+        });
+    </script>
+</body>
+</html>

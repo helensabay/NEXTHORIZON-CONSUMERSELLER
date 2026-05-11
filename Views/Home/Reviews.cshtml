@@ -1,0 +1,378 @@
+﻿@{
+    ViewData["Title"] = "Reviews";
+    var productId = ViewData["ProductId"];
+}
+
+<div class="reviews-page">
+    <!-- Breadcrumb -->
+    <div class="product-page-breadcrumb">
+        <div class="container">
+            <a href="/Home/Shop" class="back-link">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+                Back to Shop
+            </a>
+            <span class="breadcrumb-sep">/</span>
+            <a id="rv-product-link" href="#" class="breadcrumb-current-link"></a>
+            <span class="breadcrumb-sep">/</span>
+            <span class="breadcrumb-current">Reviews</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Loading -->
+        <div class="rv-loading" id="rv-loading">
+            <div class="loading-spinner"></div>
+            <p>Loading reviews...</p>
+        </div>
+
+        <!-- Content -->
+        <div id="rv-content" style="display:none;">
+
+            <!-- Product Snapshot -->
+            <div class="rv-product-snap" id="rv-product-snap"></div>
+
+            <!-- Rating Summary Bar -->
+            <div class="rv-summary-bar" id="rv-summary-bar"></div>
+
+            <!-- Filter + Sort Bar -->
+            <div class="rv-filter-sort-bar" id="rv-filter-sort-bar" style="display:none;">
+                <div class="rv-filter-group">
+                    <span class="rv-filter-label">Filter by star rating</span>
+                    <div class="rv-star-btns" id="rv-star-btns">
+                        <button class="rv-star-btn" data-star="5">&#9733; 5</button>
+                        <button class="rv-star-btn" data-star="4">&#9733; 4</button>
+                        <button class="rv-star-btn" data-star="3">&#9733; 3</button>
+                        <button class="rv-star-btn" data-star="2">&#9733; 2</button>
+                        <button class="rv-star-btn" data-star="1">&#9733; 1</button>
+                    </div>
+                </div>
+                <div class="rv-sort-group">
+                    <span class="rv-sort-label">Sort by</span>
+                    <div class="rv-sort-select-wrap">
+                        <select class="rv-sort-select" id="rv-sort-select">
+                            <option value="newest">Newest</option>
+                            <option value="oldest">Oldest</option>
+                            <option value="highest">Highest Rated</option>
+                            <option value="lowest">Lowest Rated</option>
+                        </select>
+                        <svg class="rv-sort-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- All Reviews Grid -->
+            <div class="rv-section-title">
+                <h2>All Reviews</h2>
+                <span class="rv-total-count" id="rv-total-count"></span>
+                <a id="rv-write-btn" href="/Home/WriteReview?id=@productId" class="rv-write-review-btn">Write a Review</a>
+            </div>
+            <div class="rv-all-grid" id="rv-all-grid"></div>
+
+        </div>
+
+        <!-- You May Also Like -->
+        <div class="bag-ymal rv-ymal" id="rv-ymal" style="display:none;">
+            <h2 class="ymal-title">You May Also Like</h2>
+            <div class="related-grid related-grid-row" id="rv-ymal-grid"></div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+const RV_PRODUCT_ID = @productId;
+let rvProduct = null;
+let activeStarFilter = null;
+let activeSortOrder = 'newest';
+
+function escHtml(v) {
+    return String(v || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function firstLetter(v) {
+    const s = String(v || '').trim();
+    return s ? s.charAt(0).toUpperCase() : '?';
+}
+
+document.addEventListener('DOMContentLoaded', () => loadReviewsPage(RV_PRODUCT_ID));
+
+async function loadReviewsPage(id) {
+    try {
+        const res = await fetch(`/api/products/${id}`);
+        if (!res.ok) throw new Error('Not found');
+        rvProduct = await res.json();
+        renderReviewsPage();
+        loadRvYmal();
+    } catch(e) {
+        document.getElementById('rv-loading').innerHTML =
+            '<p style="text-align:center;opacity:.5;padding:4rem;">Product not found. <a href="/Home/Shop">Back to Shop</a></p>';
+    }
+}
+
+function renderReviewsPage() {
+    document.getElementById('rv-loading').style.display = 'none';
+    document.getElementById('rv-content').style.display = 'block';
+    document.title = 'Reviews \u2014 ' + rvProduct.name + ' \u00B7 NEXT HORIZON';
+
+    const link = document.getElementById('rv-product-link');
+    link.textContent = rvProduct.name;
+    link.href = '/Home/Product?id=' + rvProduct.id;
+
+    const reviews = rvProduct.reviews || [];
+
+    const dist = {5:0, 4:0, 3:0, 2:0, 1:0};
+    reviews.forEach(function(r) { if (dist[r.rating] !== undefined) dist[r.rating]++; });
+    const total = reviews.length || 1;
+
+    let distRows = '';
+    [5,4,3,2,1].forEach(function(star) {
+        const w = Math.round((dist[star]/total)*100);
+        distRows +=
+            '<div class="rv-dist-row">' +
+            '<span class="rv-dist-label">' + star + ' &#9733;</span>' +
+            '<div class="rv-dist-bar-wrap"><div class="rv-dist-bar-fill" style="width:' + w + '%"></div></div>' +
+            '<span class="rv-dist-pct">' + dist[star] + '</span>' +
+            '</div>';
+    });
+
+    document.getElementById('rv-product-snap').innerHTML =
+        '<div class="rv-snap-image">' +
+        '<img src="' + rvProduct.image + '" alt="' + rvProduct.name + '" onerror="this.src=\'data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27200%27 height=%27200%27%3E%3Crect width=%27200%27 height=%27200%27 fill=%27%23fafafa%27/%3E%3C/svg%3E\'">' +
+        '</div>' +
+        '<div class="rv-snap-info">' +
+        '<span class="rv-snap-brand">' + (rvProduct.brand || '') + '</span>' +
+        '<h1 class="rv-snap-name">' + rvProduct.name + '</h1>' +
+        '<a href="/Home/Product?id=' + rvProduct.id + '" class="rv-snap-link">View Product &rarr;</a>' +
+        '</div>' +
+        '<div class="rv-snap-rating">' +
+        '<div class="rv-snap-rating-top">' +
+        '<div class="rv-big-score">' +
+        '<div class="rv-big-num">' + rvProduct.rating.toFixed(1) + '</div>' +
+        '<div class="rv-big-stars">' + getStars(rvProduct.rating) + '</div>' +
+        '<div class="rv-big-label">Based on ' + reviews.length + ' review' + (reviews.length !== 1 ? 's' : '') + '</div>' +
+        '</div>' +
+        '<div class="rv-dist">' + distRows + '</div>' +
+        '</div>' +
+        '<div id="rv-metrics" class="rv-metrics rv-metrics-inline"></div>' +
+        '</div>';
+
+    document.getElementById('rv-summary-bar').style.display = 'none';
+
+    renderMetrics(reviews);
+
+    if (reviews.length > 0) {
+        document.getElementById('rv-filter-sort-bar').style.display = 'flex';
+        document.querySelectorAll('.rv-star-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                const star = parseInt(btn.dataset.star);
+                if (activeStarFilter === star) {
+                    activeStarFilter = null;
+                    btn.classList.remove('active');
+                } else {
+                    activeStarFilter = star;
+                    document.querySelectorAll('.rv-star-btn').forEach(function(b) { b.classList.remove('active'); });
+                    btn.classList.add('active');
+                }
+                renderFilteredReviews(reviews);
+            });
+        });
+        document.getElementById('rv-sort-select').addEventListener('change', function(e) {
+            activeSortOrder = e.target.value;
+            renderFilteredReviews(reviews);
+        });
+    }
+
+    document.getElementById('rv-total-count').textContent = reviews.length + ' review' + (reviews.length !== 1 ? 's' : '');
+
+    if (reviews.length === 0) {
+        document.getElementById('rv-all-grid').innerHTML =
+            '<div class="rv-empty"><p>No reviews yet. Be the first to review this product!</p>' +
+            '<a href="/Home/Product?id=' + rvProduct.id + '" class="rv-snap-link">View Product &rarr;</a></div>';
+        return;
+    }
+
+    renderFilteredReviews(reviews);
+}
+
+function renderMetrics(reviews) {
+    const withMetrics = reviews.filter(function(r) {
+        return r.comfort != null || r.quality != null || r.sizeFit != null || r.widthFit != null;
+    });
+    if (withMetrics.length === 0) return;
+
+    function avg(arr, key) {
+        const vals = arr.filter(function(r) { return r[key] != null; }).map(function(r) { return r[key]; });
+        return vals.length ? vals.reduce(function(s, v) { return s + v; }, 0) / vals.length : null;
+    }
+
+    const avgComfort  = avg(withMetrics, 'comfort');
+    const avgQuality  = avg(withMetrics, 'quality');
+    const avgSizeFit  = avg(withMetrics, 'sizeFit');
+    const avgWidthFit = avg(withMetrics, 'widthFit');
+
+    function pct45(v) { return v != null ? ((v - 1) / 4 * 100).toFixed(1) : null; }
+    function pct13(v) { return v != null ? ((v - 1) / 4 * 100).toFixed(1) : null; }
+
+    const comfortPct = pct45(avgComfort);
+    const qualityPct = pct45(avgQuality);
+    const sizePct    = pct13(avgSizeFit);
+    const widthPct   = pct13(avgWidthFit);
+
+    const sizeLabel  = avgSizeFit  != null ? (avgSizeFit  < 2.34 ? 0 : avgSizeFit  > 3.67 ? 2 : 1) : 1;
+    const widthLabel = avgWidthFit != null ? (avgWidthFit < 2.34 ? 0 : avgWidthFit > 3.67 ? 2 : 1) : 1;
+
+    function clampLeft(pct) {
+        var p = parseFloat(pct);
+        if (p < 4) p = 4;
+        if (p > 96) p = 96;
+        return p.toFixed(1) + '%';
+    }
+
+    // SVG track: segments as gray rectangles, indicator as black rect
+    var segH = '4px';
+    var segR = '2px';
+    var indW = '28px';
+    var segBg = 'background:#cccccc;';
+    var indBg = 'background:#111111;';
+    var absBase = 'position:absolute;top:0;height:' + segH + ';border-radius:' + segR + ';';
+
+    function makeDivTrack2(pct) {
+        var p = Math.min(Math.max(parseFloat(pct), 2), 98);
+        return '<div style="position:relative;height:' + segH + ';margin:6px 0;">' +
+            '<div style="' + absBase + segBg + 'left:0;width:48%;"></div>' +
+            '<div style="' + absBase + segBg + 'right:0;width:48%;"></div>' +
+            '<div style="' + absBase + indBg + 'width:' + indW + ';left:calc(' + p + '% - 14px);"></div>' +
+            '</div>';
+    }
+    function makeDivTrack3(pct) {
+        var p = Math.min(Math.max(parseFloat(pct), 2), 98);
+        return '<div style="position:relative;height:' + segH + ';margin:6px 0;">' +
+            '<div style="' + absBase + segBg + 'left:0;width:31%;"></div>' +
+            '<div style="' + absBase + segBg + 'left:34.5%;width:31%;"></div>' +
+            '<div style="' + absBase + segBg + 'right:0;width:31%;"></div>' +
+            '<div style="' + absBase + indBg + 'width:' + indW + ';left:calc(' + p + '% - 14px);"></div>' +
+            '</div>';
+    }
+    function makeSvgTrack2(pct) { return makeDivTrack2(pct); }
+    function makeSvgTrack3(pct) { return makeDivTrack3(pct); }
+
+    function twoEndSlider(pct, leftLabel, rightLabel, title) {
+        return '<div class="rv-card">' +
+            '<div class="rv-metric-title">' + title + '</div>' +
+            '<div class="rv-metric-track rv-track-2">' + makeSvgTrack2(pct) + '</div>' +
+            '<div class="rv-metric-labels rv-metric-labels-2">' +
+            '<span>' + leftLabel + '</span><span>' + rightLabel + '</span>' +
+            '</div></div>';
+    }
+
+    function threePointSlider(pct, labels, activeIdx, title) {
+        var labelHtml = labels.map(function(l, i) {
+            return '<span class="' + (i === activeIdx ? 'rv-label-active' : '') + '">' + l + '</span>';
+        }).join('');
+        return '<div class="rv-metric">' +
+            thumb +
+            photos +
+            sellerReplyHtml +
+    }
+
+    const metricsEl = document.getElementById('rv-metrics');
+    let html = '<div class="rv-metrics-grid">';
+    if (comfortPct  != null) html += twoEndSlider(comfortPct,  'Uncomfortable', 'Comfortable', 'Comfort');
+    if (qualityPct  != null) html += twoEndSlider(qualityPct,  'Poor',          'Perfect',     'Quality');
+    if (sizePct     != null) html += threePointSlider(sizePct,  ['Too small','Perfect','Too large'],  sizeLabel,  'Size');
+    if (widthPct    != null) html += threePointSlider(widthPct, ['Too narrow','Perfect','Too wide'],  widthLabel, 'Width');
+    html += '</div>';
+    metricsEl.innerHTML = html;
+    metricsEl.style.display = 'block';
+}
+
+function renderFilteredReviews(reviews) {
+    let list = reviews.slice();
+
+    if (activeStarFilter !== null) {
+        list = list.filter(function(r) { return Math.round(r.rating) === activeStarFilter; });
+    }
+
+    if (activeSortOrder === 'newest')  list.sort(function(a, b) { return new Date(b.date) - new Date(a.date); });
+    if (activeSortOrder === 'oldest')  list.sort(function(a, b) { return new Date(a.date) - new Date(b.date); });
+    if (activeSortOrder === 'highest') list.sort(function(a, b) { return b.rating - a.rating; });
+    if (activeSortOrder === 'lowest')  list.sort(function(a, b) { return a.rating - b.rating; });
+
+    const grid = document.getElementById('rv-all-grid');
+    if (list.length === 0) {
+        grid.innerHTML = '<div class="rv-empty"><p>No reviews match this filter.</p></div>';
+        return;
+    }
+
+    grid.innerHTML = list.map(function(r) {
+        const d = new Date(r.date).toLocaleDateString('en-PH', {year:'numeric',month:'long',day:'numeric'});
+        const userName = escHtml(r.userName);
+        const shortReview = escHtml(r.shortReview);
+        const comment = escHtml(r.comment);
+        const sellerReply = escHtml(r.sellerReply);
+        const sellerReplyDate = r.sellerReplyDate
+            ? new Date(r.sellerReplyDate).toLocaleDateString('en-PH', { year:'numeric', month:'long', day:'numeric' })
+            : '';
+        const sellerReplyHtml = r.sellerReply
+            ? '<div class="rv-seller-reply">' +
+                '<div class="rv-seller-reply-meta">Seller reply' + (sellerReplyDate ? ' · ' + sellerReplyDate : '') + '</div>' +
+                '<div class="rv-seller-reply-text">' + sellerReply + '</div>' +
+              '</div>'
+            : '';
+        // Hide inline thumbnail — require user to click the View Photos button to see images
+        const thumb = '';
+        const photos = (r.images && r.images.length) ?
+            '<button class="rv-view-photos-btn" onclick=\'openReviewSlideshow(' + JSON.stringify(r.images) + ', 0)\'>' +
+            '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>' +
+            'View ' + r.images.length + ' Photo' + (r.images.length !== 1 ? 's' : '') + '</button>' : '';
+        return '<div class="rv-card">' +
+            '<div class="rv-card-top">' +
+            '<div class="rv-card-user">' +
+            '<div class="rv-avatar">' + firstLetter(r.userName) + '</div>' +
+            '<div><div class="rv-card-name">' + userName + '</div>' +
+            '<div class="rv-card-date">' + d + '</div></div>' +
+            '</div>' +
+            '<div class="rv-card-right">' +
+            '<span class="stars">' + getStars(r.rating) + '</span>' +
+            (r.verifiedPurchase ? '<span class="pd-verified">&#10003; Verified Purchase</span>' : '') +
+            '</div></div>' +
+            (shortReview ? '<p class="rv-card-title"><strong>' + shortReview + '</strong></p>' : '') +
+            '<p class="rv-card-comment">' + comment + '</p>' +
+            sellerReplyHtml +
+            thumb +
+            photos +
+            '</div>';
+    }).join('');
+}
+
+async function loadRvYmal() {
+    try {
+        const res = await fetch('/api/products');
+        const all = await res.json();
+        const related = all.filter(function(p) { return p.id !== rvProduct.id && p.category === rvProduct.category; }).slice(0, 4);
+        if (related.length === 0) return;
+        const ymalSection = document.getElementById('rv-ymal');
+        const grid = document.getElementById('rv-ymal-grid');
+        grid.innerHTML = related.map(function(p) {
+            return '<div class="related-card" onclick="window.location.href=\'/Home/Product?id=' + p.id + '\'">' +
+                '<div class="related-card-image">' +
+                '<img src="' + p.image + '" alt="' + p.name + '" loading="lazy" onerror="this.src=\'data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27300%27 height=%27300%27%3E%3Crect width=%27300%27 height=%27300%27 fill=%27%23fafafa%27/%3E%3C/svg%3E\'">' +
+                '<div class="related-card-overlay">View</div>' +
+                '</div>' +
+                '<div class="related-card-info">' +
+                '<div class="related-card-name">' + p.name + '</div>' +
+                '<div class="related-card-price">' + formatPeso(p.price) + '</div>' +
+                '</div></div>';
+        }).join('');
+        ymalSection.style.display = 'block';
+    } catch(e) {}
+}
+</script>
+}

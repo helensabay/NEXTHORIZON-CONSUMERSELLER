@@ -1,0 +1,13 @@
+@MyAspNetApp_HostAddress = http://localhost:5297
+
+# Root endpoint - Welcome message
+GET {{MyAspNetApp_HostAddress}}/
+Accept: application/json
+
+###
+
+# Weather Forecast endpoint
+GET {{MyAspNetApp_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

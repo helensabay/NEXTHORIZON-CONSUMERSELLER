@@ -1,0 +1,506 @@
+﻿/* ==========================================================================
+   1. CORE LAYOUT & WHITE CONTAINER SURFACE
+   ========================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+
+.profile-layout-container {
+    width: 100%;
+    display: flex;
+    justify-content: stretch;
+    background-color: #f9f9f9; /* Subtle contrast to the white card */
+}
+
+.page-title {
+    font-size: 1.75rem;
+    font-weight: 900; /* Bold branding from sidebar */
+    text-transform: uppercase;
+    letter-spacing: -0.5px;
+    margin: 0;
+    color: var(--black);
+}
+
+.main-content-wrapper {
+    flex-grow: 1;
+    width: 100%;
+    padding: 10px;
+    display: flex;
+    justify-content: flex-start; /* Aligns to left sidebar naturally */
+}
+
+/* Container that centers the card and controls width on large screens */
+.account-details-full-width {
+    width: 95%; /* Increase from 900px to a percentage */
+    max-width: 1400px; /* Sets a much higher upper limit for ultra-wide screens */
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+}
+.bi bi-lock-fill{
+    color: black;
+}
+
+.profile-card-content {
+    background-color: #ffffff;
+    border: 1px solid #eeeeee;
+    border-radius: 12px;
+    padding: 40px 60px; /* Increased horizontal padding for the wider look */
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.03);
+    width: 100%; /* Ensure it fills the container */
+}
+
+/* ==========================================================================
+   2. ACTION BUTTONS (MONOCHROME THEME)
+   ========================================================================== */
+.section-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-bottom: 35px;
+}
+
+.section-title {
+    font-weight: 800;
+    font-family: 'Poppins', sans-serif;
+    letter-spacing: -0.5px;
+    color: #000;
+    margin: 0;
+}
+
+/* ADD PAYMENT METHOD BUTTON */
+.btn-primary-action {
+    background-color: #000 !important;
+    color: #fff !important;
+    border: 1px solid #000 !important;
+    padding: 12px 28px !important;
+    border-radius: 8px !important; /* Sharp corners like screenshot */
+    font-weight: 600;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    cursor: pointer;
+    text-transform: uppercase;
+    font-family: 'Poppins', sans-serif;
+    transition: all 0.2s ease;
+}
+
+    .btn-primary-action:hover {
+        background-color: #333 !important;
+        border-color: #333 !important;
+        transform: translateY(-1px);
+    }
+
+/* SUBMIT BUTTON AT THE BOTTOM */
+.btn-submit {
+    background-color: #000;
+    color: #fff;
+    border: none;
+    padding: 18px 100px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-family: 'Poppins', sans-serif;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 20px;
+}
+
+    .btn-submit:hover {
+        background-color: #222;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+/* EDIT BUTTON BOX */
+.btn-edit-card {
+    background-color: #fff !important;
+    border: 1px solid black !important;
+    padding: 10px !important;
+    border-radius: 6px;
+    cursor: pointer;
+    color: #000 !important;
+    transition: all 0.2s ease;
+}
+
+    .btn-edit-card:hover {
+        opacity: 0.9;
+        color: floralwhite !important;
+        border-color: dimgrey !important;
+    }
+
+/* REMOVE BUTTON TEXT LINK */
+.btn-remove {
+    background: transparent !important;
+    border: 1px solid black !important;
+    color: black !important;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.75rem;
+    padding: 8px 16px !important;
+    border-radius: 6px;
+    text-transform: uppercase;
+    transition: all 0.2s ease;
+}
+
+    .btn-remove:hover {
+        background-color: black !important;
+        color: floralwhite !important;
+        border-color: dimgrey !important;
+    }
+
+/* ==========================================================================
+   3. SAVED CARD STYLING & SELECTION
+   ========================================================================== */
+.saved-card-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #fff;
+    padding: 24px 30px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    border: 1px solid #ededed;
+    transition: all 0.3s ease;
+}
+
+    .saved-card-item:hover {
+        border-color: #000;
+    }
+
+    .saved-card-item.active-selection {
+        border: 2px solid #000;
+        background-color: #fafafa;
+    }
+
+.card-info-left i {
+    font-size: 2.2rem;
+    color: #000;
+}
+
+.card-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.card-brand {
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: #000;
+}
+
+.card-expiry {
+    font-size: 0.85rem;
+    color: #888;
+}
+
+.card-actions-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+.badge-default {
+    background-color: #000; /* Matching your black & white theme */
+    color: #fff;
+    padding: 2px 8px;
+    font-size: 10px;
+    font-weight: bold;
+    border-radius: 4px;
+    text-transform: uppercase;
+    margin-left: 10px;
+    vertical-align: middle;
+}
+
+.btn-set-default {
+    background-color: transparent;
+    border: 1px solid #000;
+    color: #000;
+    padding: 6px 14px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+    transition: 0.2s;
+}
+
+    .btn-set-default:hover {
+        background: #000;
+        color: #fff;
+    }
+
+/* ==========================================================================
+   4. FORM STYLES & GRID (MONOCHROME REDESIGN)
+   ========================================================================== */
+.payment-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr; /* Give Billing Address slightly more room */
+    gap: 80px; /* Wider gap between the two columns */
+    align-items: start;
+}
+
+.form-section-header {
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: #000;
+    margin-bottom: 30px;
+    text-transform: uppercase;
+    border-bottom: 2px solid #000;
+    padding-bottom: 8px;
+    display: inline-block;
+}
+
+.input-group label {
+    display: block;
+    font-weight: 700;
+    margin-bottom: 10px;
+    font-size: 0.75rem;
+    color: #444;
+    text-transform: uppercase;
+    font-family: 'Poppins', sans-serif;
+}
+
+.input-group input,
+.form-select-custom {
+    width: 100%;
+    padding: 14px 18px;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 4px; /* Minimalist sharp corners */
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+    color: #000;
+    font-family: 'Poppins', sans-serif;
+}
+
+    .input-group input:focus {
+        outline: none;
+        border-color: #000;
+        background-color: #fafafa;
+    }
+
+    .input-group input::placeholder {
+        color: #bbb;
+    }
+
+/* Side-by-Side Flex logic for MM/YYYY and balanced Billing Address */
+.input-row-split {
+    display: flex;
+    gap: 15px;
+    width: 100%;
+}
+
+    .input-row-split .input-group {
+        flex: 1;
+    }
+
+.expiry-dropdown-container {
+    display: flex;
+    gap: 15px;
+    width: 100%;
+}
+
+    .expiry-dropdown-container select {
+        flex: 1;
+    }
+
+.expiry-container {
+    display: flex;
+    gap: 10px;
+}
+
+/* Custom select dropdown styling */
+.form-select-custom {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='currentColor' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 18px center;
+    background-size: 14px;
+    padding-right: 45px;
+}
+
+.security-notice {
+    display: flex;
+    gap: 12px;
+    background-color: #fcfcfc;
+    padding: 20px;
+    border-radius: 8px;
+    margin-top: 30px;
+    border: 1px solid #efefef;
+    align-items: center;
+}
+
+    .security-notice i {
+        color: #27ae60;
+        font-size: 1.2rem;
+    }
+
+    .security-notice p {
+        font-size: 0.8rem;
+        color: #666;
+        margin: 0;
+        font-family: 'Poppins', sans-serif;
+    }
+
+.back-link {
+    color: #000;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 30px;
+    font-family: 'Poppins', sans-serif;
+    text-transform: uppercase;
+}
+
+    .back-link:hover {
+        text-decoration: underline;
+    }
+
+/* ==========================================================================
+   5. EMPTY STATE (FIXED DASHED BOX)
+   ========================================================================== */
+.empty-state-container {
+    width: 100%;
+    padding: 10px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed #eee;
+    border-radius: 12px;
+    background: #fafafa;
+}
+
+/* FADED Credit Card Icon Preservation */
+.empty-state-icon {
+    font-size: 4rem;
+    color: #d0d0d0; /* Faded/Muted icon color from original */
+    margin-bottom: 20px;
+    opacity: 0.6;
+}
+
+.empty-state-title {
+    font-weight: 800;
+    text-transform: uppercase;
+    font-family: 'Poppins', sans-serif;
+    margin-bottom: 10px;
+    color: #000;
+}
+
+.empty-state-text {
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 30px;
+    max-width: 400px;
+    text-align: center;
+    font-family: 'Poppins', sans-serif;
+}
+
+/* ==========================================================================
+   6. SWEETALERT MONOCHROME OVERRIDES (NO LOCALHOST)
+   ========================================================================== */
+/* Force SweetAlert to use Poppins Font */
+.swal2-popup {
+    font-family: 'Poppins', sans-serif !important;
+    border-radius: 12px !important;
+}
+
+.swal2-title {
+    font-weight: 800 !important;
+    text-transform: uppercase !important;
+    font-size: 1.2rem !important;
+}
+
+/* Monochrome Buttons for SweetAlert */
+.swal2-confirm {
+    background-color: #000 !important; /* Black button */
+    color: #fff !important;
+    border-radius: 6px !important;
+}
+
+.swal2-cancel {
+    background-color: #fff !important;
+    color: #000 !important;
+    border: 1px solid #000 !important; /* Outlined button */
+    border-radius: 6px !important;
+}
+
+/* ==========================================================================
+   7. RESPONSIVENESS
+   ========================================================================== */
+@media (max-width: 1100px) {
+    .payment-form-grid {
+        gap: 40px;
+    }
+
+    .profile-card-content {
+        padding: 30px;
+    }
+}
+
+@media (max-width: 992px) {
+    .main-content-wrapper {
+        padding: 20px 10px;
+    }
+
+    .payment-form-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .section-header-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
+    }
+
+    .btn-primary-action {
+        width: 100% !important;
+    }
+
+    .saved-card-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 12px;
+        transition: all 0.2s ease;
+    }
+
+        /* Non-Default Card: Subtle & Clean */
+        .saved-card-item.non-default {
+            background-color: #ffffff;
+            border: 1px solid #e0e0e0;
+        }
+
+        /* Default Card: Bold & High Contrast */
+        .saved-card-item.is-default {
+            background-color: #fafafa;
+            border: 2px solid #000000;
+        }
+
+    .card-actions-right {
+        width: 100%;
+        border-top: 1px solid #eee;
+        padding-top: 15px;
+        margin-top: 10px;
+    }
+
+    .input-row-split {
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .btn-submit {
+        width: 100%;
+        padding: 16px;
+    }
+}

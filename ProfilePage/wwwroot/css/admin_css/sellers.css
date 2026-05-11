@@ -1,0 +1,124 @@
+﻿/* Container for the table with rounded corners and outer border */
+.consumer-grid-wrapper {
+    border: 1px solid #333;
+    transition: all 0.3s ease;
+}
+
+.table-responsive {
+    overflow-x: auto;
+    scrollbar-width: thin; /* Firefox */
+}
+
+/* Header Adjustments */
+@media (max-width: 768px) {
+    .search-container {
+        width: 100% !important;
+    }
+
+    .w-100-sm {
+        width: 100%;
+    }
+}
+
+/* Toast styling */
+.toast-container {
+    z-index: 9999;
+}
+/* Tab Scrolling on small screens */
+.custom-tabs::-webkit-scrollbar {
+    height: 0px;
+}
+
+/* Header Cells styling */
+.consumer-grid-wrapper thead th {
+    background-color: #fff;
+    font-weight: bold;
+    font-size: 0.9rem;
+    padding: 12px;
+    border-bottom: 1px solid #333 !important;
+}
+
+/* Vertical dividers (the grid look) */
+.consumer-grid-wrapper .border-start {
+    border-left: 1px solid #ccc !important;
+}
+
+/* Data Cells styling */
+.consumer-grid-wrapper tbody td {
+    font-size: 0.85rem;
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+/* Search Bar styling to match the "Search Costumer" image */
+.search-container {
+    position: relative;
+    width: 280px;
+    background: white;
+    border-radius: 50px;
+    border: 1px solid #ddd;
+}
+
+    .search-container input::placeholder {
+        color: #ccc;
+        font-size: 0.9rem;
+    }
+
+    .search-container .bi-search {
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #333;
+    }
+
+/* Action Icons (Pencil and Trash) */
+.action-icons i {
+    font-size: 1.2rem;
+    color: #333;
+}
+
+/* Remove bottom border from the very last row */
+.consumer-grid-wrapper tr:last-child td {
+    border-bottom: none;
+}
+
+
+/* Style for the gender select filter */
+.form-select-sm {
+    height: 38px;
+    font-size: 0.85rem;
+    color: #555;
+    cursor: pointer;
+}
+
+.form-select:focus {
+    box-shadow: 0 0 0 0.25rem rgba(0, 0, 0, 0.05);
+    border-color: #ddd;
+}
+
+/* Tab button transition */
+.btn-sm.rounded-0 {
+    transition: all 0.2s ease-in-out;
+}
+
+/* Badge styling for Status */
+.badge {
+    font-weight: 500;
+    font-size: 0.7rem;
+    padding: 0.4em 0.8em;
+}
+
+/* Toast Styling */
+#actionToast {
+    min-width: 300px;
+}
+
+    #actionToast .bg-dark {
+        background-color: #1a1a1a !important; /* Slightly softer black */
+    }
+
+    #actionToast .toast-body {
+        font-size: 0.9rem;
+        font-weight: 500;
+    }

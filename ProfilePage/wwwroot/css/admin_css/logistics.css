@@ -1,0 +1,186 @@
+﻿/* --- Global & Scrollbar --- */
+.container-fluid::-webkit-scrollbar {
+    width: 6px;
+}
+
+.container-fluid::-webkit-scrollbar-thumb {
+    background-color: #ddd;
+    border-radius: 10px;
+}
+
+/* --- Search Bar & Header --- */
+.search-container input:focus {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+    outline: none;
+    border: 1px solid #000 !important;
+}
+
+.search-container i {
+    z-index: 5;
+}
+
+/* --- Statistics Cards & Filtering --- */
+.card h2 {
+    letter-spacing: -1px;
+}
+
+.filter-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0.65;
+    cursor: pointer;
+    border-bottom: 4px solid transparent !important;
+}
+
+.filter-card:hover {
+    opacity: 1;
+    transform: translateY(-3px);
+}
+
+.active-filter {
+    opacity: 1 !important;
+    background-color: #fff !important;
+    transform: translateY(-5px);
+    border-bottom: 5px solid #000 !important;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.08) !important;
+}
+
+.filter-card h2 {
+    font-size: 1.75rem;
+}
+
+/* --- Form Controls & BLACK Toggle Switches --- */
+/* Target the wrapper + class to override Bootstrap defaults */
+.form-switch .form-check-input.custom-switch {
+    cursor: pointer;
+    width: 2.5em !important;
+    height: 1.25em !important;
+    border-color: #ccc;
+    background-color: ghostwhite !important;
+}
+
+/* The state when the switch is ON */
+.form-switch .form-check-input.custom-switch:checked {
+    background-color: #000 !important;
+    border-color: #000 !important;
+    /* This specific SVG ensures the sliding knob is white against the black fill */
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e") !important;
+}
+
+/* Remove the default Bootstrap blue glow/outline */
+.form-check-input.custom-switch:focus {
+    box-shadow: 0 0 0 0.25rem rgba(0, 0, 0, 0.1) !important;
+    border-color: rgba(0, 0, 0, 0.2) !important;
+}
+
+.form-check-input.custom-switch:active {
+    filter: brightness(85%);
+    background-color: #000 !important;
+    border-color: #000 !important;
+}
+
+/* --- Partner Card Styling --- */
+.partner-card {
+    transition: opacity 0.3s ease;
+}
+
+.partner-card .card {
+    border: 1px solid #eee !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background-color: #fff;
+}
+
+.partner-card .card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.08) !important;
+    border-color: #000 !important;
+}
+
+/* Icon Container */
+.bg-light.rounded-3 {
+    background-color: #f8f9fa !important;
+    border: 1px solid #eee;
+}
+
+/* --- Badges --- */
+.bg-success-subtle {
+    background-color: #f8fdf9 !important;
+}
+
+/* --- Typography --- */
+.x-small {
+    font-size: 0.7rem;
+    letter-spacing: 1px;
+}
+
+.courier-name {
+    letter-spacing: -0.3px;
+}
+
+/* --- Inactive & Archive Section Containers --- */
+#activeSection, #inactiveSection, #archiveSection {
+    transition: all 0.4s ease-in-out;
+}
+
+#inactiveContainer .card {
+    background-color: #fafafa;
+    border: 1px dashed #ccc !important;
+}
+
+#archiveSection {
+    background-color: #fff5f5;
+    border: 2px solid #ffebeb;
+}
+
+#archiveSection .card {
+    border: 1px solid #ffcfcf !important;
+}
+
+#archiveSection .card:hover {
+    border-color: #dc3545 !important;
+}
+
+/* --- Buttons --- */
+.btn-outline-dark {
+    border-width: 1.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 0.5px;
+    transition: all 0.2s;
+}
+
+.btn-outline-dark:hover {
+    background-color: #000;
+    color: #fff;
+}
+
+.btn-dark {
+    background-color: #000;
+    border: none;
+    transition: all 0.2s ease;
+}
+
+.btn-dark:hover {
+    background-color: #333;
+    transform: translateY(-1px);
+}
+
+/* --- Modal Animations --- */
+.modal-content {
+    animation: modalSlideUp 0.3s ease-out;
+}
+
+@keyframes modalSlideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-backdrop.show {
+    backdrop-filter: blur(4px);
+    opacity: 0.4;
+}
+
+/* --- Utilities --- */
+.transition-hover {
+    transition: all 0.3s ease;
+}

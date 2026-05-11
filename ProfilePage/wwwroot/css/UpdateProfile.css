@@ -1,0 +1,246 @@
+﻿/* --- GOOGLE FONTS & RESET --- */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
+
+:root {
+    --mono-white: #ffffff;
+    --mono-black: #000000;
+    --mono-100: #f8f8f8;
+    --mono-200: #eeeeee;
+    --mono-500: #999999;
+    --mono-900: #222222;
+}
+
+* {
+    font-family: 'Poppins', sans-serif;
+    box-sizing: border-box;
+}
+
+.page-title {
+    font-size: 1.75rem;
+    font-weight: 900; /* Bold branding from sidebar */
+    text-transform: uppercase;
+    letter-spacing: -0.5px;
+    margin: 0;
+    color: var(--black);
+}
+/* --- LAYOUT CORE --- */
+.main-content-wrapper {
+    flex: 1;
+    width: 100%;
+    background-color: var(--mono-white);
+    display: flex;
+    flex-direction: column;
+}
+
+.content-body {
+    padding: 40px 60px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.account-details-full-width {
+    width: 100%;
+    max-width: 1100px;
+}
+
+/* --- ICON VISIBILITY FIX --- */
+/* This ensures the chevron icons are visible, black, and correctly spaced */
+.info-value i.bi {
+    display: inline-block !important;
+    visibility: visible !important;
+    color: var(--mono-black) !important;
+    font-size: 1rem;
+    margin-left: 10px;
+    font-style: normal;
+}
+
+/* --- INFO CARDS --- */
+.info-group-card {
+    background-color: var(--mono-white);
+    margin-bottom: 40px;
+    border-top: 1px solid var(--mono-black);
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 25px 10px;
+    border-bottom: 1px solid var(--mono-200);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+    .info-row:hover {
+        background-color: var(--mono-100);
+    }
+
+.info-label {
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+}
+
+.info-value {
+    color: var(--mono-black);
+    font-size: 0.95rem;
+}
+
+/* --- UNIVERSAL MODAL FIXES --- */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(3px);
+    z-index: 9999;
+    display: none; /* Switch to flex via JS */
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.modal-card {
+    background: #fff;
+    padding: 40px;
+    border-radius: 24px; /* Matches your screenshot curves */
+    width: 100%;
+    max-width: 480px;
+    position: relative;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    text-align: center;
+}
+
+/* --- THE "X" BUTTON: BLACK TO WHITE HOVER --- */
+/* Applying to all modals globally */
+.close-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 36px;
+    height: 36px;
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    z-index: 10;
+}
+
+    .close-btn i, .close-btn span {
+        color: #000;
+        font-size: 1.4rem;
+        line-height: 1;
+    }
+
+    .close-btn:hover {
+        background-color: #000;
+    }
+
+        .close-btn:hover i, .close-btn:hover span {
+            color: #fff !important;
+        }
+
+/* --- MODAL CONTENT --- */
+.modal-header {
+    border-bottom: 1px solid #eee;
+    padding-bottom: 15px;
+    margin-bottom: 25px;
+}
+
+    .modal-header span, #modalTitle {
+        font-size: 1.5rem;
+        font-weight: 900;
+        text-transform: uppercase;
+    }
+
+.modal-input {
+    width: 100%;
+    padding: 15px;
+    border: 1px solid #eee;
+    border-radius: 12px;
+    margin-bottom: 25px;
+    font-size: 1rem;
+}
+
+.save-btn {
+    width: 100%;
+    background: #000;
+    color: #fff;
+    padding: 18px;
+    border-radius: 40px;
+    font-weight: 700;
+    text-transform: uppercase;
+    border: none;
+    cursor: pointer;
+    letter-spacing: 1px;
+}
+
+/* Gender Modal Specifics */
+.gender-options {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 30px;
+}
+
+    .gender-options label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 500;
+        cursor: pointer;
+    }
+
+    .gender-options input[type="radio"] {
+        accent-color: #000;
+        width: 20px;
+        height: 20px;
+    }
+
+
+/* --- FIXED MONOCHROME TOAST --- */
+.toast-container {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background-color: var(--mono-black);
+    color: var(--mono-white);
+    /* Changed: Use min-width and vertical padding for better text containment */
+    padding: 16px 30px;
+    min-width: 300px;
+    max-width: 90vw; /* Prevents it from hitting screen edges on mobile */
+
+    font-weight: 700;
+    font-size: 0.85rem;
+    z-index: 11000;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    opacity: 0;
+    border: 1px solid var(--mono-white);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    pointer-events: none;
+    /* Fixed: Allow text to wrap and center it */
+    white-space: normal;
+    text-align: center;
+    line-height: 1.4;
+    display: block;
+}
+
+    .toast-container.show {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+    }
+
+    /* Monochrome Error (Inverted) */
+    .toast-container.error {
+        background-color: var(--mono-white) !important;
+        color: var(--mono-black) !important;
+        border: 2px solid var(--mono-black) !important;
+        /* Extra shadow to make the white box pop against the modal */
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }

@@ -1,0 +1,138 @@
+@{
+    ViewData["Title"] = "Wishlist";
+}
+
+<div class="bag-page">
+    <div class="container">
+
+        <div class="bag-header">
+            <h1 class="bag-title">Wishlist</h1>
+            <span class="bag-count" id="bag-count"></span>
+        </div>
+
+        <div id="wishlist-grid-wrap">
+            <div class="wl-grid" id="wl-grid"></div>
+        </div>
+
+        <div id="bag-empty" style="display:none;" class="bag-empty">
+            <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+            </svg>
+            <h2>Your wishlist is empty</h2>
+            <p>Save items you love and come back to them anytime.</p>
+            <a href="/Home/Shop" class="bag-shop-btn">Browse Shop</a>
+        </div>
+
+        <!-- You May Also Like -->
+        <div class="bag-ymal" id="bag-ymal" style="display:none;">
+            <h2 class="bag-ymal-title">You May Also Like</h2>
+            <div class="bag-ymal-grid" id="bag-ymal-grid"></div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+<script>
+document.addEventListener('DOMContentLoaded', loadWishlistPage);
+
+async function loadWishlistPage() {
+    try {
+        const res = await fetch('/api/wishlist');
+        const items = await res.json();
+        renderWishlist(items);
+        loadBagYmal();
+    } catch(e) {
+        document.getElementById('wl-grid').innerHTML = '<p style="opacity:.5">Could not load wishlist.</p>';
+    }
+}
+
+function renderWishlist(items) {
+    const countEl = document.getElementById('bag-count');
+    const emptyEl = document.getElementById('bag-empty');
+    const wrap = document.getElementById('wishlist-grid-wrap');
+
+    if (!items || items.length === 0) {
+        wrap.style.display = 'none';
+        emptyEl.style.display = 'flex';
+        countEl.textContent = '';
+        return;
+    }
+
+    wrap.style.display = 'block';
+    emptyEl.style.display = 'none';
+    countEl.textContent = `(${items.length} item${items.length !== 1 ? 's' : ''})`;
+
+    document.getElementById('wl-grid').innerHTML = items.map(item => `
+        <div class="wl-card" id="wl-${item.product.id}">
+            <div class="wl-card-img" onclick="window.location.href='/Home/Product?id=${item.product.id}'">
+                <img src="${item.product.image}" alt="${item.product.name}" loading="lazy"
+                    onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27300%27 height=%27300%27%3E%3Crect width=%27300%27 height=%27300%27 fill=%27%23f4f4f4%27/%3E%3C/svg%3E'">
+            </div>
+            <div class="wl-card-body">
+                <div class="wl-card-brand">${item.product.brand}</div>
+                <div class="wl-card-name" onclick="window.location.href='/Home/Product?id=${item.product.id}'">${item.product.name}</div>
+                <div class="wl-card-price">${formatPeso(item.product.price)}</div>
+                <div class="wl-card-stars">${getStars(item.product.rating)} <span>${item.product.rating.toFixed(1)}</span></div>
+                <div class="wl-card-actions">
+                    <button class="wl-add-cart-btn" onclick="wlAddToCart(${item.product.id})">Add to Cart</button>
+                    <button class="wl-remove-btn" onclick="wlRemove(${item.product.id})" title="Remove from wishlist">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+async function wlAddToCart(productId) {
+    try {
+        const res = await fetch(`/api/products/${productId}`);
+        const product = await res.json();
+        await fetch('/api/cart', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ productId, size: product.sizes[0], quantity: 1, sellerId: product.sellerId ?? 0 })
+        });
+        toast.success('Added to cart!');
+        updateCartCount();
+    } catch(e) {
+        toast.info('Could not add to cart.');
+    }
+}
+
+async function wlRemove(productId) {
+    await fetch(`/api/wishlist/${productId}`, { method: 'DELETE' });
+    loadWishlistPage();
+    updateWishlistCount();
+    toast.success('Removed from wishlist');
+}
+
+async function loadBagYmal() {
+    try {
+        const res = await fetch('/api/products');
+        const all = await res.json();
+        const picks = all.sort(() => Math.random() - 0.5).slice(0, 4);
+        const ymal = document.getElementById('bag-ymal');
+        const grid = document.getElementById('bag-ymal-grid');
+        ymal.style.display = 'block';
+        grid.innerHTML = picks.map(p => `
+            <div class="related-card" onclick="window.location.href='/Home/Product?id=${p.id}'">
+                <div class="related-card-image">
+                    <img src="${p.image}" alt="${p.name}" loading="lazy"
+                        onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27300%27 height=%27300%27%3E%3Crect width=%27300%27 height=%27300%27 fill=%27%23fafafa%27/%3E%3C/svg%3E'">
+                    <div class="related-card-overlay">View</div>
+                </div>
+                <div class="related-card-info">
+                    <div class="related-card-name">${p.name}</div>
+                    <div class="related-card-price">${formatPeso(p.price)}</div>
+                </div>
+            </div>
+        `).join('');
+    } catch(e) {}
+}
+</script>
+}

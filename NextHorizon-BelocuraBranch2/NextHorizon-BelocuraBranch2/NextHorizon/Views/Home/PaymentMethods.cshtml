@@ -1,0 +1,57 @@
+@{
+    ViewData["Title"] = "Payment Methods";
+}
+
+<div class="payment-wrapper">
+
+    <div class="main-container">
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <ul>
+                <li><a asp-controller="Home" asp-action="MyPurchases">Fitness Overview</a></li>
+                <li><a asp-controller="Home" asp-action="MyPurchases">Update Profile</a></li>
+                <li><a asp-controller="Home" asp-action="MyPurchases">Upload Activity</a></li>
+                <li><a asp-controller="Home" asp-action="MyPurchases">Shipping Address</a></li>
+                <li class="active"><a asp-controller="Home" asp-action="PaymentMethods">Payment Methods</a></li>
+                <li><a asp-controller="Home" asp-action="MyPurchases">My Purchases</a></li>
+            </ul>
+        </div>
+
+        <!-- Main Content -->
+        <div class="payment-content">
+
+            <!-- Add Payment Button -->
+            <div class="add-payment-btn">
+                <span>+</span> Add Payment Method
+            </div>
+
+            <!-- Billing Address -->
+            <div class="billing-section">
+
+                <div class="billing-header">
+                    <h5>BILLING ADDRESS</h5>
+                    <span class="edit-text">
+                        Edit <i class="fa fa-pen"></i>
+                    </span>
+                </div>
+
+                <div class="billing-box">
+                    <div class="billing-line">
+                        Region, Province, City, Barangay
+                    </div>
+                    <div class="billing-line">
+                        Postal Code
+                    </div>
+                    <div class="billing-line">
+                        Street Name, Building, House No.
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

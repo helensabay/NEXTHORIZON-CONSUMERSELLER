@@ -1,0 +1,76 @@
+@{
+    var sellerId = Context.Session.GetInt32("SellerId") ?? 0;
+}
+
+<div class="help-center-page" data-seller-id="@sellerId">
+    <div class="help-center-hero">
+        <div>
+            <p class="help-center-label">Support</p>
+            <h1>Need help managing your seller account?</h1>
+            <p class="help-center-subtitle">
+                Explore quick answers, guides, and support options for orders, payouts, shipping, marketing, and account
+                management.
+            </p>
+            <div class="help-search" style="margin-top:40px;">
+                <i class="fas fa-search"></i>
+                <input type="text" id="helpSearchInput" placeholder="Search help topics..." />
+            </div>
+        </div>
+        <a class="help-center-action" href="mailto:support@nexthorizon.com">Email Support</a>
+    </div>
+
+    <div class="two-column-layout">
+        <div class="help-left">
+            <p id="noResultsMessage" class="no-results">No results found.</p>
+
+            <h2 class="help-category-header">Categories</h2>
+            <div class="carousel-container">
+                <button class="carousel-arrow carousel-arrow-left" id="carouselLeft">&larr;</button>
+                <div id="helpCenterGrid" class="help-center-grid">
+                </div>
+                <button class="carousel-arrow carousel-arrow-right" id="carouselRight">&rarr;</button>
+            </div>
+
+            <div class="help-center-faq">
+                <h2>Frequently Asked Questions</h2>
+                <div id="faqContainer">
+                </div>
+                <div id="chatWithAgentRow" class="chat-with-agent-row hidden">
+                    <button id="chatWithAgentBtn" type="button" class="chat-with-agent-btn" onclick="openChatWithAgent()">
+                        Chat with Agent
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="help-right">
+            <div class="support-container">
+                <div class="support-header">
+                    <div class="support-header-left">
+                        <div class="support-avatar">S</div>
+                        <div>
+                            <h3>Seller Support</h3>
+                            <p>Customer Service</p>
+                        </div>
+                    </div>
+                    <button id="resolveChatBtn" class="resolve-chat-btn hidden" onclick="resolveChat()">Resolve</button>
+                    <button class="clear-chat-btn" onclick="clearChat()">Clear Chat</button>
+                </div>
+
+                <div class="support-body">
+                    <div id="chatThread" class="chat-thread"></div>
+                    <div id="typingIndicator" class="typing-indicator" style="display:none;">Agent is typing...</div>
+
+                    <div id="chatInputRow" class="chat-input-row hidden">
+                        <input type="text" id="agentInput" placeholder="Type your message..." />
+                        <button class="agent-btn" onclick="sendAgentMessage()">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    window.helpCenterSellerId = @sellerId;
+</script>

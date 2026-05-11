@@ -1,0 +1,131 @@
+@{
+    ViewData["Title"] = "Upload Activity";
+    Layout = "_ProfileLayout";
+}
+
+@section Styles {
+    <link href="~/MemberTracker/css/UploadActivity.css" rel="stylesheet" asp-append-version="true" />
+}
+
+<div class="page-wrapper" data-upload-url="@Url.Action("UploadMemberActivity", "AccountProfile")" data-my-activity-url="@Url.Action("MyActivity", "AccountProfile")">
+    <div class="upload-container">
+        <div class="section-title">Upload Activity</div>
+
+        <div class="tabs">
+            <a asp-controller="AccountProfile" asp-action="UploadActivity" class="tab active">Upload Activity</a>
+            <a asp-controller="AccountProfile" asp-action="MyActivity" class="tab">My Activity</a>
+        </div>
+
+        <form id="activityForm" enctype="multipart/form-data">
+            <div class="form-grid">
+                <div class="form-left">
+                    <div class="input-warning" id="activityWarning"></div>
+                    <div class="select-wrapper">
+                        <select id="activityName" name="ActivityName" class="form-control">
+                            <option value="">Select Activity</option>
+                            <option value="Run">Run</option>
+                            <option value="Walk">Walk</option>
+                            <option value="Ride">Ride</option>
+                            <option value="Hike">Hike</option>
+                        </select>
+                    </div>
+
+                    <div class="input-warning" id="dateWarning"></div>
+                    <input id="activityDate" name="ActivityDate" type="date" class="form-control" />
+
+                    <div class="input-warning" id="timeWarning"></div>
+                    <div class="time-input-wrapper">
+                        <input type="hidden" id="MovingTime" name="MovingTime" />
+                        <input type="text" id="movingTimeDisplay" placeholder="Select Moving Time" readonly
+                               class="form-control" onclick="openTimePicker()" />
+                    </div>
+
+                    <div id="timePickerModal" class="time-modal" aria-hidden="true">
+                        <div class="time-modal-content">
+                            <div class="time-columns">
+                                <div class="time-column">
+                                    <div class="time-value" id="hourValue">00</div>
+                                    <div class="time-label">h</div>
+                                    <input type="number" id="hourInput" min="0" max="23" value="0" />
+                                </div>
+                                <div class="time-column">
+                                    <div class="time-value" id="minuteValue">00</div>
+                                    <div class="time-label">m</div>
+                                    <input type="number" id="minuteInput" min="0" max="59" value="0" />
+                                </div>
+                                <div class="time-column">
+                                    <div class="time-value" id="secondValue">00</div>
+                                    <div class="time-label">s</div>
+                                    <input type="number" id="secondInput" min="0" max="59" value="0" />
+                                </div>
+                            </div>
+                            <button type="button" class="time-ok-btn" onclick="applyTime()">OK</button>
+                        </div>
+                    </div>
+
+                    <div class="input-warning" id="distanceWarning"></div>
+                    <div class="distance-input-wrapper">
+                        <input type="hidden" id="DistanceKm" name="DistanceKm" />
+                        <input type="hidden" id="DistanceUnit" />
+                        <input type="text" id="distanceDisplay" placeholder="Select Distance" readonly
+                               class="form-control" onclick="openDistancePicker()" />
+                    </div>
+
+                    <div id="distancePickerModal" class="time-modal" aria-hidden="true">
+                        <div class="time-modal-content distance-picker-content" role="dialog" aria-modal="true"
+                             aria-label="Distance picker">
+                            <div class="time-columns">
+                                <div class="time-column">
+                                    <div class="time-value" id="distanceWholeValue">0</div>
+                                    <div class="time-label">whole</div>
+                                    <input type="number" id="distanceWhole" min="0" max="999" value="0" />
+                                </div>
+                                <div class="time-column">
+                                    <div class="time-value" id="distanceDecimalValue">00</div>
+                                    <div class="time-label">decimal</div>
+                                    <input type="text" id="distanceDecimal" inputmode="numeric" maxlength="2" value="00" />
+                                </div>
+                                <div class="time-column">
+                                    <div class="time-value" id="distanceUnitValue">km</div>
+                                    <div class="time-label">unit</div>
+                                    <select id="distanceUnit" class="distance-unit-select">
+                                        <option value="km">km</option>
+                                        <option value="mi">mi</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button type="button" class="time-ok-btn" onclick="applyDistance()">OK</button>
+                        </div>
+                    </div>
+
+                    <div class="input-warning" id="stepsWarning"></div>
+                    <input id="stepsInput" name="Steps" type="number" class="form-control" min="1" max="100000" step="1"
+                           placeholder="Steps" />
+                </div>
+
+                <div class="upload-section">
+                    <div class="input-warning" id="proofWarning"></div>
+                    <div class="upload-preview" id="previewContainer">
+                        <img id="previewImage" alt="Preview image" />
+
+                        <button type="button" id="removeBtn" onclick="removeImage()" style="display:none;"
+                                class="remove-btn">x</button>
+                    </div>
+
+                    <label for="proofFile" class="upload-btn">
+                        <i class="fa-solid fa-upload"></i> Upload Screenshot
+                    </label>
+
+                    <input type="file" id="proofFile" name="ProofFile" accept=".jpg,.jpeg,.png,.webp"
+                           onchange="handleFileSelect(event)" />
+                </div>
+            </div>
+
+            <button type="submit" id="submitBtn" class="submit-btn">Submit Activity</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/MemberTracker/js/UploadActivity.js" asp-append-version="true"></script>
+}

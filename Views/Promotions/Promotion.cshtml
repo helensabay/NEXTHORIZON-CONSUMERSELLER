@@ -1,0 +1,199 @@
+@model List<MyAspNetApp.Models.PromotionViewModel>
+@{
+    ViewData["Title"] = "Promotions";
+    Layout = null;
+    var activePromotions = Model.Where(x => string.Equals(x.Status, "active", StringComparison.OrdinalIgnoreCase) || string.Equals(x.Status, "approved", StringComparison.OrdinalIgnoreCase)).ToList();
+    var pendingPromotions = Model.Where(x => string.Equals(x.Status, "pending", StringComparison.OrdinalIgnoreCase)).ToList();
+    var inactivePromotions = Model.Where(x => string.Equals(x.Status, "inactive", StringComparison.OrdinalIgnoreCase) || string.Equals(x.Status, "rejected", StringComparison.OrdinalIgnoreCase)).ToList();
+    var deletedPromotions = new List<MyAspNetApp.Models.PromotionViewModel>();
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXT HORIZON - Promotions</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="~/css/Promotions.css" asp-append-version="true">
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="logo"><div class="logo-icon">H</div> HORIZON</div>
+        <nav>
+            <a href="#" class="nav-item"><i class="fa-solid fa-house"></i> Dashboard</a>
+            <a href="#" class="nav-item"><i class="fa-solid fa-receipt"></i> Orders</a>
+            <a href="/Promotions/Promotion" class="nav-item active"><i class="fa-solid fa-bullhorn"></i> Promotions</a>
+            <a href="/Seller" class="nav-item"><i class="fa-solid fa-bag-shopping"></i> Products</a>
+            <a href="#" class="nav-item"><i class="fa-solid fa-wallet"></i> Finances</a>
+            <a href="#" class="nav-item"><i class="fa-solid fa-chart-line"></i> Analytics</a>
+            <a href="#" class="nav-item"><i class="fa-solid fa-gear"></i> Settings</a>
+        </nav>
+    </aside>
+
+    <div class="main">
+        <header class="header">
+            <div style="display:flex;align-items:center;gap:10px;margin-left:auto;">
+                <i class="fa-regular fa-bell" style="font-size: 1.2rem;"></i>
+                <i class="fa-regular fa-circle-user" style="font-size: 1.6rem;"></i>
+                <span style="font-weight: 600;">Seller</span>
+            </div>
+        </header>
+
+        <main class="content">
+            <div class="title-row">
+                <div>
+                    <h1>Promotions</h1>
+                    <p>Manage promotion drafts, approvals, and seller visibility from one screen.</p>
+                </div>
+                <div class="actions">
+                    <a class="btn-primary" href="/Promotions/AddPromotion">Apply Promotions</a>
+                    <a class="btn-secondary" href="/Admin/PromotionApprovals">Admin Approval</a>
+                </div>
+            </div>
+
+            <div class="overview-grid">
+                <div class="overview-card active" onclick="changeTab('active', this)">
+                    <span>Active<br>Promotions</span>
+                    <div class="badge badge-active" id="badge-active">@activePromotions.Count</div>
+                </div>
+                <div class="overview-card" onclick="changeTab('pending', this)">
+                    <span>Waiting<br>Approval</span>
+                    <div class="badge badge-pending" id="badge-pending">@pendingPromotions.Count</div>
+                </div>
+                <div class="overview-card" onclick="changeTab('inactive', this)">
+                    <span>Inactive<br>Promotions</span>
+                    <div class="badge badge-inactive" id="badge-inactive">@inactivePromotions.Count</div>
+                </div>
+                <div class="overview-card" onclick="changeTab('deleted', this)">
+                    <span>Deleted<br>Promotions</span>
+                    <div class="badge badge-deleted" id="badge-deleted">@deletedPromotions.Count</div>
+                </div>
+            </div>
+
+            <div class="list-shell">
+                <div class="list-header">
+                    <h2 id="list-title">Active Promotions</h2>
+                </div>
+
+                <div id="active-content" class="product-group active">
+                    @if (activePromotions.Any())
+                    {
+                        @foreach (var promo in activePromotions)
+                        {
+                            <div class="product-row">
+                                <div class="product-detail">
+                                    <div class="product-img"></div>
+                                    <div class="product-info">
+                                        <h4>@promo.Name</h4>
+                                        <p>@promo.Type</p>
+                                        <p class="usage-limit">Usage Limit: @promo.UsageLimit</p>
+                                        <p class="validity">Banner: @promo.BannerSize</p>
+                                    </div>
+                                </div>
+                                <div class="row-actions">
+                                    <span class="status-pill status-active">active</span>
+                                    <a href="/Promotions/AddPromotion?id=@promo.Id" class="btn-link">Edit</a>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="empty">No active promotions.</div>
+                    }
+                </div>
+
+                <div id="pending-content" class="product-group">
+                    @if (pendingPromotions.Any())
+                    {
+                        @foreach (var promo in pendingPromotions)
+                        {
+                            <div class="product-row">
+                                <div class="product-detail">
+                                    <div class="product-img"></div>
+                                    <div class="product-info">
+                                        <h4>@promo.Name</h4>
+                                        <p>@promo.Type</p>
+                                        <p class="usage-limit">Usage Limit: @promo.UsageLimit</p>
+                                        <p class="validity">Waiting for admin approval</p>
+                                    </div>
+                                </div>
+                                <div class="row-actions">
+                                    <span class="status-pill status-pending">pending</span>
+                                    <a href="/Promotions/AddPromotion?id=@promo.Id" class="btn-link">Review</a>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="empty">No pending promotions.</div>
+                    }
+                </div>
+
+                <div id="inactive-content" class="product-group">
+                    @if (inactivePromotions.Any())
+                    {
+                        @foreach (var promo in inactivePromotions)
+                        {
+                            <div class="product-row">
+                                <div class="product-detail">
+                                    <div class="product-img"></div>
+                                    <div class="product-info">
+                                        <h4>@promo.Name</h4>
+                                        <p>@promo.Type</p>
+                                        <p class="usage-limit">Usage Limit: @promo.UsageLimit</p>
+                                        <p class="validity">Saved as inactive</p>
+                                    </div>
+                                </div>
+                                <div class="row-actions">
+                                    <span class="status-pill status-inactive">inactive</span>
+                                    <a href="/Promotions/AddPromotion?id=@promo.Id" class="btn-link">Edit</a>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="empty">No inactive promotions.</div>
+                    }
+                </div>
+
+                <div id="deleted-content" class="product-group">
+                    <div class="empty">No deleted promotions.</div>
+                </div>
+            </div>
+
+            @if (TempData["PromotionSuccessMessage"] != null)
+            {
+                <div class="toast-note">
+                    @TempData["PromotionSuccessMessage"]
+                </div>
+            }
+        </main>
+    </div>
+
+    <script>
+        function changeTab(tabName, card) {
+            document.querySelectorAll('.overview-card').forEach(x => x.classList.remove('active'));
+            card.classList.add('active');
+
+            document.querySelectorAll('.product-group').forEach(x => x.classList.remove('active'));
+            document.getElementById(tabName + '-content')?.classList.add('active');
+
+            const titles = {
+                active: 'Active Promotions',
+                pending: 'Waiting Approval',
+                inactive: 'Inactive Promotions',
+                deleted: 'Deleted Promotions'
+            };
+
+            const title = document.getElementById('list-title');
+            if (title && titles[tabName]) {
+                title.textContent = titles[tabName];
+            }
+        }
+    </script>
+</body>
+</html>

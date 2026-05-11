@@ -1,0 +1,751 @@
+@model MyAspNetApp.Models.LandingPageViewModel
+
+@{
+    ViewData["Title"] = "Home";
+    Layout = "_LoginLandingLayout";
+    var isLoggedIn = Context.Session.GetInt32("UserId") != null
+        || !string.IsNullOrWhiteSpace(Context.Request.Cookies["NextHorizon.SharedUserId"]);
+    var allProducts = Model.Products ?? new List<Product>();
+    var footwearProducts = allProducts
+        .Where(IsFootwearProduct)
+        .DefaultIfEmpty()
+        .Where(p => p is not null)
+        .Cast<Product>()
+        .ToList();
+    if (footwearProducts.Count == 0)
+    {
+        footwearProducts = allProducts.Take(12).ToList();
+    }
+
+    var apparelProducts = allProducts
+        .Where(IsApparelProduct)
+        .DefaultIfEmpty()
+        .Where(p => p is not null)
+        .Cast<Product>()
+        .ToList();
+    if (apparelProducts.Count == 0)
+    {
+        apparelProducts = allProducts.Skip(footwearProducts.Count).Take(12).ToList();
+        if (apparelProducts.Count == 0)
+        {
+            apparelProducts = allProducts.Take(12).ToList();
+        }
+    }
+}
+
+<link rel="stylesheet" href="~/css/index.css" />
+<!-- Main Hero Section with Carousel -->
+<section class="hero-section" style="padding-top: 0 px; margin-top: 56px">
+    <div style="display: flex; gap: 0; align-items: flex-start; background: #111;">
+
+        <!-- LEFT: Carousel -->
+        <div style="position: relative; flex: 0 0 75%; overflow: hidden;">
+
+            <div id="heroTrack" style="display: flex; transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94); will-change: transform;">
+                @{
+                    string[] promoImages = { "1.png", "2.png", "3.png", "4.png", "5.png" };
+                    string[] promoTitles = { "New Arrivals", "Flash Sale", "Top Picks", "Run Further", "Beat Your Best" };
+                    string[] promoSubs   = { "Shop the latest collection", "Up to 70% off today only", "Curated for runners", "Gear that goes the distance", "Unlock your potential" };
+                }
+                @for (int i = 0; i < promoImages.Length; i++)
+                {
+                    <div style="min-width: 100%; position: relative; height: calc(100vh - 56px); flex-shrink: 0;">
+                        <img src="@Url.Content("~/images/" + promoImages[i])"
+                             alt="@promoTitles[i]"
+                             style="width: 100%; height: 100%; object-fit: cover; display: block;"
+                             onerror="this.onerror=null; this.src='https://placehold.co/1400x480/111/fff?text=@promoTitles[i]';">
+                        <div style="position: absolute; inset: 0; background: linear-gradient(to right, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.1) 60%, transparent 100%);"></div>
+                        <div style="position: absolute; top: 50%; left: 7%; transform: translateY(-50%);">
+                            <p style="color: rgba(255,255,255,0.7); font-size: 13px; letter-spacing: 3px; text-transform: uppercase; margin: 0 0 10px;">Next Horizon</p>
+                            <h1 style="color: white; font-size: clamp(2rem, 4vw, 3.2rem); font-weight: 800; text-transform: uppercase; margin: 0 0 10px; line-height: 1.1;">@promoTitles[i]</h1>
+                            <p style="color: rgba(255,255,255,0.8); font-size: 16px; margin: 0 0 28px;">@promoSubs[i]</p>
+                            <a href="/Account/Login" style="display: inline-block; background: white; color: #111; padding: 12px 32px; font-weight: 700; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; text-decoration: none; border-radius: 2px; transition: background 0.2s, color 0.2s;"
+                               onmouseenter="this.style.background='#111';this.style.color='white';this.style.border='1px solid white';"
+                               onmouseleave="this.style.background='white';this.style.color='#111';this.style.border='none';">
+                                Shop Now
+                            </a>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- Prev / Next arrows -->
+            <button onclick="heroSlide(-1)" style="position: absolute; left: 20px; top: 50%; transform: translateY(-50%);
+                background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: white;
+                width: 44px; height: 44px; border-radius: 50%; font-size: 18px; cursor: pointer;
+                display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px);
+                transition: background 0.2s;"
+                onmouseenter="this.style.background='rgba(255,255,255,0.3)'"
+                onmouseleave="this.style.background='rgba(255,255,255,0.15)'">&#8249;</button>
+
+            <button onclick="heroSlide(1)" style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%);
+                background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: white;
+                width: 44px; height: 44px; border-radius: 50%; font-size: 18px; cursor: pointer;
+                display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px);
+                transition: background 0.2s;"
+                onmouseenter="this.style.background='rgba(255,255,255,0.3)'"
+                onmouseleave="this.style.background='rgba(255,255,255,0.15)'">&#8250;</button>
+
+            <!-- Dot indicators -->
+            <div id="heroDots" style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+                 display: flex; gap: 8px; align-items: center;">
+                @for (int i = 0; i < promoImages.Length; i++)
+                {
+                    <button onclick="heroGoTo(@i)" style="width: @(i == 0 ? "24px" : "8px"); height: 8px;
+                        border-radius: 4px; border: none; cursor: pointer; transition: all 0.3s;
+                        background: @(i == 0 ? "white" : "rgba(255,255,255,0.4)");
+                        padding: 0;"></button>
+                }
+            </div>
+        </div>
+
+<!-- RIGHT: Leaderboard Sidebar -->
+<!-- RIGHT: Leaderboard Sidebar -->
+<!-- RIGHT: Leaderboard Sidebar -->
+<div style="flex: 0 0 25%; background: #111; color: white; padding: 24px 20px;
+            display: flex; flex-direction: column; border-left: 1px solid rgba(255,255,255,0.1);
+            align-self: flex-start;">
+
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+        <h6 style="color: white; font-weight: 700; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; margin: 0;">
+            🏅 Top Runners
+        </h6>
+        <span style="background: #e74c3c; color: white; font-size: 10px; font-weight: 700;
+                     padding: 2px 8px; border-radius: 3px; letter-spacing: 1px;">LIVE</span>
+    </div>
+
+    <!-- All runners list, scrollable -->
+    <div id="leaderboard-top3"></div>
+
+    <!-- Hidden runners dropdown -->
+    <div id="leaderboard-expanded" style="display:none; overflow-y: auto; max-height: 300px;
+         scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.2) transparent;">
+        <div id="leaderboard-rest"></div>
+
+        <!-- Join Challenge CTA inside dropdown -->
+        <div style="margin-top: 14px; padding: 14px; background: rgba(255,255,255,0.05); 
+             border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; text-align: center;">
+            <p style="color: rgba(255,255,255,0.7); font-size: 12px; margin: 0 0 10px; line-height: 1.5;">
+                🏆 Want to join the challenge?
+            </p>
+            <a href="/Account/Login" style="display: block; text-align: center; background: white; color: #111;
+               padding: 9px; font-weight: 700; font-size: 11px; letter-spacing: 1px; text-transform: uppercase;
+               text-decoration: none; border-radius: 2px;">
+                Login to Join
+            </a>
+        </div>
+    </div>
+
+    <!-- See More button always at the bottom -->
+    <button id="see-more-btn" onclick="toggleLeaderboard()" 
+        style="display:none; margin-top: auto; padding-top: 16px; background: transparent; border: none;
+               border-top: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.5); 
+               font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; 
+               cursor: pointer; width: 100%; padding: 16px 0 0; text-align: center; transition: color 0.2s;"
+        onmouseenter="this.style.color='white'"
+        onmouseleave="this.style.color='rgba(255,255,255,0.5)'">
+        SEE MORE ▾
+    </button>
+</div>
+</section>
+
+<!-- Feature Icons Section - Modern Grid -->
+<section class="features-section">
+
+        <div class="features-grid">
+            <!-- SALE -->
+<div class="feature-item" onclick="window.location='/Home/SearchPage?tag=sale'" style="cursor:pointer;">
+    <div class="feature-icon">
+        <i class="fas fa-percentage"></i>
+    </div>
+    <div class="feature-content">
+        <h4>SALE</h4>
+        <p>Up to 70% OFF</p>
+    </div>
+</div>
+<div class="feature-item">
+    <a href="/Account/Login" style="text-decoration:none; display:flex; flex-direction:column; align-items:center; gap:0.5rem;">
+        <div class="feature-icon">
+            <i class="fas fa-bullhorn"></i>
+        </div>
+        <div class="feature-content">
+            <h4>JOIN THE CHALLENGE</h4>
+            <p>Compete & Win</p>
+        </div>
+    </a>
+</div>
+
+<div class="feature-item" onclick="window.location='/Home/SearchPage?tag=flashdeals'" style="cursor:pointer;">
+    <div class="feature-icon">
+        <i class="fas fa-bolt"></i>
+    </div>
+    <div class="feature-content">
+        <h4>FLASH DEALS</h4>
+        <p>Limited Time Offers</p>
+    </div>
+</div>
+
+<!-- NEXT HORIZON -->
+<div class="feature-item" onclick="window.location='/Home/SearchPage?tag=new'" style="cursor:pointer;">
+    <div class="feature-icon">
+        <i class="fas fa-rocket"></i>
+    </div>
+    <div class="feature-content">
+        <h4>NEXT HORIZON</h4>
+        <p>New Arrivals</p>
+    </div>
+</div>
+
+            <div class="feature-item">
+                 <a href="/Account/Login" style="text-decoration:none; display:flex; flex-direction:column; align-items:center; gap:0.5rem;">
+                <div class="feature-icon">
+                    <i class="fas fa-shipping-fast"></i>
+                </div>
+                <div class="feature-content">
+                    <h4>FREE SHIPPING</h4>
+                    <p>On Orders $50+</p>
+                </div>
+            </div>
+<div class="feature-item">
+    <a href="/Account/Login" style="text-decoration:none; display:flex; flex-direction:column; align-items:center; gap:0.5rem;">
+        <div class="feature-icon">
+            <i class="fas fa-coins"></i>
+        </div>
+        <div class="feature-content">
+            <h4>COINS REWARDS</h4>
+            <p>Earn & Redeem</p>
+        </div>
+    </a>
+</div>
+           <div class="feature-item">
+    <a href="/Account/Login" style="text-decoration:none; display:flex; flex-direction:column; align-items:center; gap:0.5rem;">
+        <div class="feature-icon">
+            <i class="fas fa-medal"></i>
+        </div>
+        <div class="feature-content">
+            <h4>ACHIEVEMENTS</h4>
+            <p>Unlock Badges</p>
+        </div>
+    </a>
+</div>
+<div class="feature-item">
+    <a href="/Account/Login" style="text-decoration:none; display:flex; flex-direction:column; align-items:center; gap:0.5rem;">
+        <div class="feature-icon">
+            <i class="fas fa-handshake"></i>
+        </div>
+        <div class="feature-content">
+            <h4>PARTNER PROMOS</h4>
+            <p>Exclusive Deals</p>
+        </div>
+    </a>
+</div>
+</section>
+
+<!-- Product Grid Section - Professional E-commerce Style -->
+<section class="category-shelf">
+    <div class="container">
+        <div class="shelf-header">
+            <h2>FOOTWEAR COLLECTION</h2>
+             <p class="category-subtitle">Official Merchandise Collection</p>
+        </div>
+        
+        <div class="product-slider-wrapper">
+            <div class="product-auto-slider" id="shoes-slider">
+                @foreach (var product in footwearProducts)
+                {
+                    <div class="product-card">
+                        <div class="product-image-wrapper">
+                            <img src="@ProductImageSrc(product.Image)"
+     alt="@product.Name" />
+                            
+                            <div class="hover-overlay">
+                                <button class="btn-quickview" onclick="landingQuickView(
+    '@product.Image',
+    '@product.Name',
+    '@product.Brand',
+    '@product.Price',
+    '@product.Category',
+    '@product.Id',
+    '@string.Join(",", product.Sizes)',@product.Stock)">
+    <i class="fas fa-search"></i> QUICK VIEW
+</button>
+                                <button class="btn-addcart" onclick="requireLoginForLandingAction(event)">
+                                    <i class="fas fa-shopping-cart"></i> ADD TO CART
+                                </button>
+                            </div>
+                        </div>
+                        <div class="product-info">
+                            <p class="brand-name">@product.Brand</p>
+                            <h3 class="product-title">@product.Name</h3>
+                            <p class="product-price">₱@product.Price</p>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- TSHIRTS -->
+<section class="category-shelf">
+    <div class="container">
+        <div class="shelf-header">
+            <h2> ESSENTIAL TEES</h2>
+            <p class="category-subtitle">Official Merchandise Collection</p>
+        </div>
+        
+        <div class="product-slider-wrapper">
+            <div class="product-auto-slider" id="tshirt-slider">
+                @foreach (var product in apparelProducts) 
+                {
+                    <div class="product-card">
+                        <div class="product-image-wrapper">
+                           <img src="@ProductImageSrc(product.Image)"
+     alt="@product.Name" />
+                            
+                            <div class="hover-overlay">
+                               <button class="btn-quickview" onclick="landingQuickView(
+    '@product.Image',
+    '@product.Name',
+    '@product.Brand',
+    '@product.Price',
+    '@product.Category',
+    '@product.Id',
+    '@string.Join(",", product.Sizes)',@product.Stock)">
+    <i class="fas fa-search"></i> QUICK VIEW
+</button>
+                                <button class="btn-addcart" onclick="addToCart(@product.Id)">
+                                    <i class="fas fa-shopping-cart"></i> ADD TO CART
+                                </button>
+                            </div>
+                        </div>
+                        <div class="product-info">
+                            <p class="brand-name">@product.Brand</p>
+                            <h3 class="product-title">@product.Name</h3>
+                            <div class="price-container">
+                                <span class="price-tag">₱@product.Price</span>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- buttons for men, women, unisex -->
+<section class="gender-category-section">
+    <div class="container">
+        <div class="shelf-header">
+            <h2 class="category-title">FEATURED COLLECTIONS</h2>
+            <div class="category-tabs">
+                <button class="tab-btn active" onclick="filterByGender('all', this)">ALL</button>
+                <button class="tab-btn" onclick="filterByGender('Men', this)">MEN</button>
+                <button class="tab-btn" onclick="filterByGender('Women', this)">WOMEN</button>
+                <button class="tab-btn" onclick="filterByGender('Unisex', this)">UNISEX</button>
+            </div>
+        </div>
+
+            <div class="slider-content-window">
+                <div class="product-slider-track" id="gender-slider-track">
+                    @foreach (var product in allProducts) 
+                    {
+                            <div class="small-product-card" 
+    data-gender="@(string.IsNullOrWhiteSpace(product.Gender) ? "Unisex" : product.Gender.Trim())">
+    <div class="product-image-wrapper">
+        @if(product.Stock <= 0) 
+        {
+            <span class="badge-soldout">SOLD OUT</span>
+        }
+       <img src="@ProductImageSrc(product.Image)"
+     alt="@product.Name" />
+        <div class="small-card-hover">
+            <button class="btn-quickview-mini" onclick="landingQuickView(
+    '@product.Image',
+    '@product.Name',
+    '@product.Brand',
+    '@product.Price',
+    '@product.Category',
+    '@product.Id',
+    '@string.Join(",", product.Sizes)',@product.Stock)">
+    <i class="fas fa-search"></i> QUICK VIEW
+</button>
+            <button class="btn-addcart-mini" onclick="requireLoginForLandingAction(event)">
+                <i class="fas fa-shopping-cart"></i> ADD TO CART
+            </button>
+        </div>
+    </div>
+    <div class="product-info-small">
+        <p class="brand-label">@product.Brand</p>
+        <h4 class="product-name-mini">@product.Name</h4>
+        <div class="price-box-mini">
+            @if(product.OriginalPrice.HasValue && product.OriginalPrice > product.Price)
+            {
+                <span class="old-price-mini">₱@product.OriginalPrice</span>
+            }
+            <span class="price-tag-mini">₱@product.Price</span>
+        </div>
+    </div>
+</div>
+                    }
+                </div>
+            </div>
+            <!-- ADD THIS BELOW -->
+<div class="text-center mt-4">
+    @if (!isLoggedIn)
+    {
+        <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@(Context.Request.Path + Context.Request.QueryString)"
+           class="btn btn-outline-dark btn-lg px-5"
+           style="border:2px solid #111; font-weight:700; letter-spacing:1px;">
+            LOGIN TO SEE MORE
+        </a>
+    }
+    else
+    {
+        <a asp-controller="Home" asp-action="Products" 
+           class="btn btn-dark btn-lg px-5"
+           style="font-weight:700; letter-spacing:1px;">
+            VIEW ALL PRODUCTS
+        </a>
+    }
+</div>
+        </div>
+    </div>
+
+    <!-- Quick View Modal -->
+<div id="quickViewModal" class="qv-modal" onclick="closeQuickView(event)">
+    <div class="qv-modal-content">
+        <button class="qv-close" onclick="closeModal()">✕</button>
+        <div class="qv-flex">
+            <div class="qv-image-side">
+                <img id="qv-img" src="" alt="Product Image">
+            </div>
+            <div class="qv-details-side">
+                <p id="qv-brand" class="qv-brand"></p>
+                <h2 id="qv-name" class="qv-name"></h2>
+                <p id="qv-price" class="qv-price"></p>
+
+                <div class="qv-size-section">
+                    <p class="qv-size-label">Size: <span id="qv-selected-size"></span></p>
+                    <div id="qv-sizes" class="qv-sizes"></div>
+                </div>
+
+                <div class="qv-meta">
+                    <div class="qv-meta-row">
+                        <span class="qv-meta-label">Sku:</span>
+                        <span id="qv-sku"></span>
+                    </div>
+                    <div class="qv-meta-row">
+                        <span class="qv-meta-label">Available:</span>
+                        <span id="qv-stock"></span>
+                    </div>
+                    <div class="qv-meta-row">
+                        <span class="qv-meta-label">Category:</span>
+                        <span id="qv-category"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</section>
+
+
+<!-- Call to Action Section -->
+<section class="cta-banner">
+    <div class="container">
+        <div class="cta-content">
+            <h2>Ready to Join the Community?</h2>
+            <p>Sign up today and start tracking your progress, competing with others, and achieving your fitness goals.</p>
+            <div class="cta-buttons">
+                <a asp-controller="Account" asp-action="Signup" class="btn btn-primary btn-lg">Get Started</a>
+                <a asp-controller="Account" asp-action="BecomeSeller" class="btn btn-outline">Become a Seller</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+const landingRequiresLogin = @Html.Raw((!isLoggedIn).ToString().ToLowerInvariant());
+
+function buildLandingLoginUrl() {
+    const returnUrl = window.location.pathname + window.location.search + window.location.hash;
+    return `/Account/Login?returnUrl=${encodeURIComponent(returnUrl)}`;
+}
+
+function requireLoginForLandingAction(event) {
+    if (!landingRequiresLogin) {
+        return false;
+    }
+
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+
+    window.location.href = buildLandingLoginUrl();
+    return true;
+}
+
+function landingQuickView(image, name, brand, price, category, sku, sizes, stock) {
+    if (requireLoginForLandingAction()) {
+        return;
+    }
+
+    openQuickView(image, name, brand, price, category, sku, sizes, stock);
+}
+
+let heroIndex = 0;
+let heroTotal = @promoImages.Length;
+let heroTimer = null;
+
+function heroGoTo(index) {
+    heroIndex = index;
+    document.getElementById('heroTrack').style.transform = `translateX(-${heroIndex * 100}%)`;
+    const dots = document.getElementById('heroDots').querySelectorAll('button');
+    dots.forEach((d, i) => {
+        d.style.width      = i === heroIndex ? '24px' : '8px';
+        d.style.background = i === heroIndex ? 'white' : 'rgba(255,255,255,0.4)';
+    });
+    resetHeroTimer();
+}
+
+function heroSlide(dir) {
+    heroGoTo((heroIndex + dir + heroTotal) % heroTotal);
+}
+
+function resetHeroTimer() {
+    clearInterval(heroTimer);
+    heroTimer = setInterval(() => heroSlide(1), 4000);
+}
+
+resetHeroTimer();
+
+document.addEventListener("DOMContentLoaded", function() {
+    const sliders = document.querySelectorAll('.product-auto-slider');
+
+    sliders.forEach(slider => {
+        let scrollAmount = 0;
+        const step = 300; // Width of card + gap
+
+        setInterval(() => {
+            const maxScroll = slider.scrollWidth - slider.parentElement.clientWidth;
+            
+            if (scrollAmount >= maxScroll) {
+                scrollAmount = 0; // Reset to start
+            } else {
+                scrollAmount += step;
+            }
+            
+            slider.style.transform = `translateX(-${scrollAmount}px)`;
+        }, 3000); // 3 seconds interval
+    });
+});
+
+function filterByGender(gender, element) {
+    // highlight active tab
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    element.classList.add('active');
+
+    const cards = document.querySelectorAll('#gender-slider-track .small-product-card');
+
+    cards.forEach(card => {
+        const productGender = (card.dataset.gender || "Unisex").trim().toLowerCase();
+        const targetGender = gender.toLowerCase();
+
+        if (targetGender === 'all' || productGender === targetGender) {
+            card.style.display = "block";
+        } else {
+            card.style.display = "none";
+        }
+    });
+
+    // reset slider position
+    currentScroll = 0;
+    document.getElementById('gender-slider-track').style.transform = "translateX(0px)";
+}
+let currentScroll = 0;
+
+function addToCart(productId) {
+    if (requireLoginForLandingAction()) {
+        return;
+    }
+
+    window.location.href = "http://localhost:5297/Home/Shop";
+}
+
+
+
+// Leaderboard
+// Leaderboard
+const API_URL = '/Home/GetLeaderboard?scope=All&take=100';
+const MEDALS = ["🥇", "🥈", "🥉"];
+let leaderboardExpanded = false;
+
+function fmt(sec) {
+    const m = Math.floor(sec / 60), s = sec % 60;
+    return m + "m " + String(s).padStart(2, "0") + "s";
+}
+function initials(n) {
+    return n.split(" ").map(w => w[0]).join("").substring(0, 2).toUpperCase();
+}
+
+function runnerRow(r, i) {
+    return `
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.07);">
+            <span style="font-size:16px;width:22px;text-align:center;">${i < 3 ? MEDALS[i] : i + 1}</span>
+            <div style="width:30px;height:30px;border-radius:50%;background:#1a2e45;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#64b5f6;flex-shrink:0;">
+                ${initials(r.athleteName)}
+            </div>
+            <div style="flex:1;min-width:0;">
+                <div style="font-size:13px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.athleteName}</div>
+                <div style="font-size:11px;color:rgba(255,255,255,0.35);">${new Date(r.activityDate).toLocaleDateString("en-US",{month:"short",day:"numeric"})}</div>
+            </div>
+            <div style="text-align:right;flex-shrink:0;">
+                <div style="font-size:13px;font-weight:600;color:#fff;">${parseFloat(r.distanceKm).toFixed(2)} km</div>
+                <div style="font-size:11px;color:rgba(255,255,255,0.35);">${fmt(r.durationSeconds)}</div>
+            </div>
+        </div>`;
+}
+
+function toggleLeaderboard() {
+    leaderboardExpanded = !leaderboardExpanded;
+    const expanded = document.getElementById("leaderboard-expanded");
+    const btn = document.getElementById("see-more-btn");
+
+    if (leaderboardExpanded) {
+        expanded.style.display = "block";
+        btn.innerHTML = "SEE LESS ▴";
+    } else {
+        expanded.style.display = "none";
+        btn.innerHTML = "SEE MORE ▾";
+    }
+}
+
+async function loadLeaderboard() {
+    try {
+        const res = await fetch(API_URL);
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+
+        const top3 = document.getElementById("leaderboard-top3");
+        const rest = document.getElementById("leaderboard-rest");
+        const btn  = document.getElementById("see-more-btn");
+
+        if (!data.length) {
+            top3.innerHTML = '<p style="color:rgba(255,255,255,0.4);font-size:13px;text-align:center;margin-top:40px;">No runners yet.</p>';
+            return;
+        }
+
+        // Always show top 3
+        top3.innerHTML = data.slice(0, 3).map((r, i) => runnerRow(r, i)).join("");
+
+        // Show "See More" only if there are more than 3
+        if (data.length > 3) {
+            rest.innerHTML = data.slice(3).map((r, i) => runnerRow(r, i + 3)).join("");
+            btn.style.display = "block";
+        } else {
+            btn.style.display = "none";
+        }
+
+    } catch {
+        document.getElementById("leaderboard-top3").innerHTML =
+            '<p style="color:rgba(255,255,255,0.4);font-size:13px;text-align:center;margin-top:40px;">Could not load leaderboard.</p>';
+    }
+}
+
+loadLeaderboard();
+setInterval(loadLeaderboard, 30000);
+
+
+// Fetch and inject promotions into carousel
+async function loadPromotions() {
+    try {
+        const res = await fetch('/Home/GetPromotions');
+        const promos = await res.json();
+        if (!promos.length) return;
+
+        const track = document.getElementById('heroTrack');
+        const dotsContainer = document.getElementById('heroDots');
+
+        promos.forEach(p => {
+            const discountText = p.type === 'Fix Amount'
+                ? `₱${p.totalDiscountFix} OFF`
+                : `${p.totalDiscountPercent}% OFF`;
+
+            const minText = p.minimumPurchaseAmount > 0
+                ? `Min. purchase of ₱${p.minimumPurchaseAmount}` : '';
+
+            const slide = document.createElement('div');
+            slide.style.cssText = 'min-width:100%; position:relative; height:calc(100vh - 56px); flex-shrink:0; background:linear-gradient(135deg,#1a1a1a,#2d2d2d); display:flex; align-items:center;';
+            slide.innerHTML = `
+                <div style="position:absolute; inset:0; background:linear-gradient(to right, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.3) 60%, transparent 100%);"></div>
+                <div style="position:relative; z-index:1; left:7%;">
+                    <p style="color:rgba(255,255,255,0.7); font-size:13px; letter-spacing:3px; text-transform:uppercase; margin:0 0 10px;">LIMITED OFFER</p>
+                    <h1 style="color:white; font-size:clamp(2rem,4vw,3.2rem); font-weight:800; text-transform:uppercase; margin:0 0 10px; line-height:1.1;">${p.name}</h1>
+                    <div style="font-size:clamp(1.5rem,3vw,2.5rem); font-weight:800; color:#e74c3c; margin:10px 0;">${discountText}</div>
+                    ${minText ? `<p style="color:rgba(255,255,255,0.7); font-size:14px; margin:0 0 28px;">${minText}</p>` : '<div style="margin-bottom:28px;"></div>'}
+                    <a href="/Account/Login" style="display:inline-block; background:white; color:#111; padding:12px 32px; font-weight:700; font-size:13px; letter-spacing:2px; text-transform:uppercase; text-decoration:none; border-radius:2px;">SHOP NOW</a>
+                </div>`;
+
+            track.appendChild(slide);
+
+            // Add dot
+            const dotIndex = track.children.length - 1;
+            const dot = document.createElement('button');
+            dot.style.cssText = 'width:8px; height:8px; border-radius:4px; border:none; cursor:pointer; transition:all 0.3s; background:rgba(255,255,255,0.4); padding:0;';
+            dot.onclick = () => heroGoTo(dotIndex);
+            dotsContainer.appendChild(dot);
+        });
+
+        // Update heroTotal to include promo slides
+        heroTotal = track.children.length;
+
+    } catch(e) {
+        console.error('Failed to load promotions', e);
+    }
+}
+
+loadPromotions();
+
+
+</script>
+
+@functions {
+    private static bool IsFootwearProduct(Product product)
+    {
+        var text = $"{product.Category} {product.SubCategory} {product.Name}";
+        return text.Contains("shoe", StringComparison.OrdinalIgnoreCase)
+            || text.Contains("footwear", StringComparison.OrdinalIgnoreCase)
+            || text.Contains("runner", StringComparison.OrdinalIgnoreCase)
+            || text.Contains("sneaker", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsApparelProduct(Product product)
+    {
+        var text = $"{product.Category} {product.SubCategory} {product.Name}";
+        return text.Contains("shirt", StringComparison.OrdinalIgnoreCase)
+            || text.Contains("tee", StringComparison.OrdinalIgnoreCase)
+            || text.Contains("singlet", StringComparison.OrdinalIgnoreCase)
+            || text.Contains("tank", StringComparison.OrdinalIgnoreCase)
+            || text.Contains("apparel", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string ProductImageSrc(string? image)
+    {
+        if (string.IsNullOrWhiteSpace(image))
+        {
+            return "/images/shop-hero-shoe.avif";
+        }
+
+        var trimmed = image.Trim();
+        if (trimmed.StartsWith("http://", StringComparison.OrdinalIgnoreCase)
+            || trimmed.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
+            || trimmed.StartsWith("/", StringComparison.Ordinal))
+        {
+            return trimmed;
+        }
+
+        return "/uploads/products/" + trimmed.TrimStart('~', '/', '\\');
+    }
+}

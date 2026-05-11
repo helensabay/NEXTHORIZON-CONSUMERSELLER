@@ -1,0 +1,59 @@
+@* 
+    Quick Actions Partial View Template
+    
+    Usage in your forms:
+    @await Html.PartialAsync("_QuickActionsPartial", new QuickActionsViewModel 
+    { 
+        InputId = "messageInput",
+        Buttons = new[] 
+        { 
+            new QuickActionButton { Label = "Hello", Value = "Hello there!" },
+            new QuickActionButton { Label = "Thank You", Value = "Thank you for your message!" }
+        }
+    })
+*@
+
+@model QuickActionsViewModel
+
+@if (Model?.Buttons?.Any() == true)
+{
+    <div class="quick-actions-group">
+        <div class="quick-actions-label">
+            <span>QUICK ACTIONS</span>
+            <button class="quick-actions-toggle" onclick="toggleQuickActions(this)" type="button" aria-label="Toggle quick actions">
+                Hide
+            </button>
+        </div>
+        <div class="quick-actions-container">
+            @foreach (var button in Model.Buttons)
+            {
+                <button class="quick-action-btn" 
+                        onclick="@(button.IsSelect ? $"quickActionSelect('{button.Value}', '{Model.InputId}')" : $"insertText('{button.Value.Replace("'", "\\'")}', '{Model.InputId}')")"
+                        type="button"
+                        aria-label="@button.Label">
+                    @button.Label
+                </button>
+            }
+        </div>
+    </div>
+}
+
+@* HTML Example without C# Model:
+<div class="quick-actions-group">
+    <div class="quick-actions-label">
+        <span>QUICK ACTIONS</span>
+        <button class="quick-actions-toggle" onclick="toggleQuickActions(this)" type="button">Hide</button>
+    </div>
+    <div class="quick-actions-container">
+        <button class="quick-action-btn" onclick="insertText('Need help?', 'messageInput')" type="button">Help</button>
+        <button class="quick-action-btn" onclick="insertText('Thank you!', 'messageInput')" type="button">Thanks</button>
+        <button class="quick-action-btn" onclick="insertText('I\'m interested', 'messageInput')" type="button">Interested</button>
+        <button class="quick-action-btn" onclick="insertText('Can you send details?', 'messageInput')" type="button">Details</button>
+        <button class="quick-action-btn" onclick="insertText('What\'s the price?', 'messageInput')" type="button">Price</button>
+    </div>
+</div>
+
+<div class="form-input-wrapper">
+    <input type="text" id="messageInput" class="form-input" placeholder="Type your message...">
+</div>
+*@

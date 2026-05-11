@@ -1,0 +1,91 @@
+@{
+    ViewData["Title"] = "Help Center";
+}
+
+@section Styles {
+    <link href="~/HelpCenter/help-center.css" rel="stylesheet" asp-append-version="true" />
+}
+
+<div class="help-center-page" data-help-view="index">
+    <section class="help-center-hero">
+        <div>
+            <div class="help-center-label">Support</div>
+            <h1>Help Center</h1>
+            <p class="help-center-subtitle">
+                Browse common support topics, search frequently asked questions, and find the fastest path to an answer.
+            </p>
+        </div>
+        <div class="help-center-actions">
+            <a href="/Help/Assistant" class="help-center-action">
+                <i class="fa-solid fa-comments"></i>
+                Open Help Assistant
+            </a>
+            <a href="/Help/Contact" class="help-center-action help-center-action-secondary">
+                <i class="fa-solid fa-headset"></i>
+                Contact Support
+            </a>
+        </div>
+    </section>
+
+    <section class="help-search-bar" aria-label="Search help articles">
+        <input
+            id="help-search-input"
+            type="search"
+            placeholder="Search help questions, topics, and support guidance"
+            autocomplete="off"
+            data-help-search-input />
+        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+    </section>
+
+    <section class="help-search-results help-center-faq loaded" data-help-search-container hidden>
+        <div class="faq-header-mini">
+            <h4>Search results</h4>
+            <span class="help-search-meta" data-help-search-meta></span>
+        </div>
+        <div class="faq-list active" data-help-search-results></div>
+        <div class="help-empty-state" data-help-search-empty hidden>No matching FAQs found.</div>
+    </section>
+
+    <section class="help-home-category-carousel" aria-label="Help Center categories">
+        <button
+            type="button"
+            class="help-carousel-nav help-carousel-nav-prev"
+            data-help-category-prev
+            aria-label="Show previous help categories">
+            <svg class="help-carousel-nav-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="M11.75 4.75L6.5 10L11.75 15.25" />
+            </svg>
+        </button>
+
+        <div class="help-carousel-viewport" data-help-category-viewport>
+            <div class="help-center-grid help-carousel-track" data-help-category-grid>
+                <div class="help-loading-state">Loading help topics...</div>
+            </div>
+        </div>
+
+        <button
+            type="button"
+            class="help-carousel-nav help-carousel-nav-next"
+            data-help-category-next
+            aria-label="Show next help categories">
+            <svg class="help-carousel-nav-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="M8.25 4.75L13.5 10L8.25 15.25" />
+            </svg>
+        </button>
+    </section>
+
+    <section class="help-center-faq loaded" aria-labelledby="popular-topics-heading">
+        <div class="faq-header-mini">
+            <h4 id="popular-topics-heading">Popular questions</h4>
+            <a href="/Help/Contact" class="faq-toggle-all">Need more help?</a>
+        </div>
+
+        <div class="faq-list active" data-help-featured-faqs>
+            <div class="help-loading-state">Loading popular questions...</div>
+        </div>
+    </section>
+</div>
+
+@section Scripts {
+    <script src="~/js/help-center.js" asp-append-version="true"></script>
+}

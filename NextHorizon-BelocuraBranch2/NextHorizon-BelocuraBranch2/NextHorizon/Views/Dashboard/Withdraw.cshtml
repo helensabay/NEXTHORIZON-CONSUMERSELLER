@@ -1,0 +1,141 @@
+@model NextHorizon.Models.WithdrawalDetailsViewModel
+
+
+@{
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+@section Styles{
+    <link rel="stylesheet" href="~/css/finance.css" />
+    <link rel="stylesheet" href="~/css/modal.css" />
+    <link rel="stylesheet" href="~/css/withdraw.css" />
+}
+
+@{
+    ViewData["Title"] = "Withdraw Funds";
+}
+
+<div class="withdraw-container">
+    <!-- Page Actions (Back Button) -->
+    <div class="page-actions">
+        <a class="link-btn" asp-controller="Dashboard" asp-action="Finance">
+            <i class="fas fa-arrow-left"></i> Back to Finance
+        </a>
+    </div>
+
+    <!-- Success/Error Messages -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">
+            <i class="fas fa-check-circle"></i> @TempData["SuccessMessage"]
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">
+            <i class="fas fa-exclamation-circle"></i> @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <div class="withdraw-card">
+        <h2 class="withdraw-title">Withdraw Funds</h2>
+        <p class="withdraw-subtitle">Transfer your earnings to your payout account</p>
+
+        <div class="balance-display">
+            ₱@Model.AvailableBalance.ToString("N2")
+        </div>
+
+        @if (Model.PayoutAccounts.Any())
+        {
+            <form asp-action="ProcessWithdrawal" method="post" id="withdrawForm">
+                @Html.AntiForgeryToken()
+                
+                <div class="form-group">
+                    <label><i class="fas fa-coins"></i> Amount to Withdraw</label>
+                    <div class="amount-input">
+                        <span class="peso">₱</span>
+                        <input type="number" 
+                               name="Amount" 
+                               id="Amount" 
+                               step="0.01" 
+                               min="100" 
+                               max="@Model.AvailableBalance" 
+                               required 
+                               placeholder="Enter amount">
+                        <button type="button" class="max-btn">MAX</button>
+                    </div>
+                    <div class="info-text">
+                        <i class="fas fa-info-circle"></i> Min: ₱100 | Max: ₱@Model.AvailableBalance.ToString("N2")
+                    </div>
+                </div>
+
+                <div class="quick-amounts">
+                    <div class="quick-amount" onclick="setAmount(500)">₱500</div>
+                    <div class="quick-amount" onclick="setAmount(1000)">₱1000</div>
+                    <div class="quick-amount" onclick="setAmount(5000)">₱5000</div>
+                    <div class="quick-amount" onclick="setAmount(10000)">₱10000</div>
+                    <div class="quick-amount" onclick="setAmount(25000)">₱25000</div>
+                    <div class="quick-amount" onclick="setMaxAmount()">MAX</div>
+                </div>
+
+                <div class="form-group">
+                    <label><i class="fas fa-wallet"></i> Withdraw To</label>
+                    <select name="PayoutAccountId" id="PayoutAccountId" class="payment-select" required>
+                        <option value="">Select payout account</option>
+                        @foreach (var account in Model.PayoutAccounts)
+                        {
+                            <option value="@account.AccountId" selected="@(account.IsDefault ? "selected" : null)">
+                                @account.DisplayName
+                                @if (account.IsDefault)
+                                {
+                                    <text> (Default)</text>
+                                }
+                            </option>
+                        }
+                    </select>
+                    <div id="accountDetails" class="selected-account-detail" style="display: none;"></div>
+                </div>
+
+                <button type="submit" class="withdraw-btn" id="submitBtn" disabled>
+                    <i class="fas fa-paper-plane"></i> Request Withdrawal
+                </button>
+            </form>
+        }
+        else
+        {
+            <div class="no-accounts">
+                <i class="fas fa-credit-card"></i>
+                <h3>No Payout Accounts Found</h3>
+                <p>You need to add a payout account before you can withdraw funds.</p>
+                <a href="@Url.Action("AddPayoutAccount", "Dashboard")" class="add-account-link">
+                    <i class="fas fa-plus"></i> Add Payout Account
+                </a>
+            </div>
+        }
+    </div>
+
+    @if (Model.RecentWithdrawals.Any())
+    {
+        <div class="recent-withdrawals">
+            <div class="recent-title">
+                <i class="fas fa-history"></i> Recent Withdrawal Requests
+            </div>
+            @foreach (var withdrawal in Model.RecentWithdrawals)
+            {
+                <div class="withdrawal-item">
+                    <div class="withdrawal-info">
+                        <div class="withdrawal-ref">Requested: @withdrawal.FormattedDate</div>
+                        <div class="withdrawal-amount">₱@withdrawal.FormattedAmount</div>
+                    </div>
+                    <div>
+                        <span class="status-badge @withdrawal.StatusBadgeClass">@withdrawal.Status</span>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@section Scripts{
+    <script src="~/js/withdraw.js"></script>
+}

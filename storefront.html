@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Join the ultimate runners community. Track your progress, compete on leaderboards, and connect with fellow runners.">
+    <title>Home - Next Horizon</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="//localhost">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
+      crossorigin="anonymous">
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/header-login.css">
+    <link rel="stylesheet" href="/css/site-login.css">
+    <link rel="stylesheet" href="/css/loading-login.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        (() => {
+            const warmedOrigins = new Set();
+            const warmNavigation = href => {
+                if (!href) {
+                    return;
+                }
+
+                try {
+                    const url = new URL(href, window.location.origin);
+                    if (url.origin === window.location.origin || warmedOrigins.has(url.origin)) {
+                        return;
+                    }
+
+                    warmedOrigins.add(url.origin);
+
+                    const preconnect = document.createElement('link');
+                    preconnect.rel = 'preconnect';
+                    preconnect.href = url.origin;
+                    document.head.appendChild(preconnect);
+
+                    const prefetch = document.createElement('link');
+                    prefetch.rel = 'prefetch';
+                    prefetch.as = 'document';
+                    prefetch.href = url.href;
+                    document.head.appendChild(prefetch);
+                } catch {
+                }
+            };
+
+            const handleWarmEvent = event => {
+                const anchor = event.target.closest?.('a[href]');
+                if (anchor) {
+                    warmNavigation(anchor.href);
+                }
+            };
+
+            document.addEventListener('pointerenter', handleWarmEvent, true);
+            document.addEventListener('focusin', handleWarmEvent, true);
+            document.addEventListener('touchstart', handleWarmEvent, true);
+        })();
+    </script>
+</head>
+<body>
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-logo">
+        <div class="loading-circle"></div>
+        <i class="fas fa-running loading-icon" aria-hidden="true"></i>
+    </div>
+    <div class="loading-text">Next Horizon</div>
+    <div class="loading-bar-container">
+        <div class="loading-bar"></div>
+    </div>
+    <div class="loading-tagline">Sprint into the future</div>
+</div>
+
+<nav class="navbar" id="navbar">
+
+    <!-- Logo only -->
+    <a class="logo-edge" href="/">
+        <img src="/images/logo.png" alt="Next Horizon" class="logo-image">
+    </a>
+
+    <!-- Center nav links -->
+    <div class="navbar-container">
+        <ul class="nav-links" id="navLinks"></ul>
+    </div>
+
+    <!-- Right actions -->
+    <div class="nav-actions-edge">
+
+        <!-- Search -->
+        <div class="search-wrapper" id="searchWrapper">
+            <button class="search-icon-btn" id="searchToggleBtn" onclick="toggleSearch()">
+                <i class="fas fa-search"></i>
+            </button>
+            <div class="search-expand" id="searchExpand">
+                <form id="searchForm" autocomplete="off" onsubmit="submitSearch(event)">
+                    <input class="search-input" type="search" id="searchInput"
+                           oninput="handleOverlaySearch(this.value)"
+                           placeholder="Search products..." aria-label="Search">
+                    <button type="submit" class="search-submit-btn">
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="nav-divider"></div>
+
+    <a class="btn-login" href="/Account/Login">Log In</a>
+    <a class="btn-signup" href="/Account/register">Sign Up</a>
+
+        <button class="mobile-menu-btn" id="mobileMenuBtn">
+            <i class="fas fa-bars"></i>
+        </button>
+    </div>
+
+</nav>
+
+    <main class="main-content" style="position: relative; min-height: 80vh;">
+
+        
+
+<link rel="stylesheet" href="/css/index.css" />
+<!-- Main Hero Section with Carousel -->
+<section class="hero-section" style="padding-top: 0 px; margin-top: 56px">
+    <div style="display: flex; gap: 0; align-items: flex-start; background: #111;">
+
+        <!-- LEFT: Carousel -->
+        <div style="position: relative; flex: 0 0 75%; overflow: hidden;">
+
+            <div id="heroTrack" style="display: flex; transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94); will-change: transform;">
+                    <div style="min-width: 100%; position: relative; height: calc(100vh - 56px); flex-shrink: 0;">
+                        <img src="/images/1.png"
+                             alt="New Arrivals"
+                             style="width: 100%; height: 100%; object-fit: cover; display: block;"
+                             onerror="this.onerror=null; this.src='https://placehold.co/1400x480/111/fff?text=New Arrivals';">
+                        <div style="position: absolute; inset: 0; background: linear-gradient(to right, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.1) 60%, transparent 100%);"></div>
+                        <div style="position: absolute; top: 50%; left: 7%; transform: translateY(-50%);">
+                            <p style="color: rgba(255,255,255,0.7); font-size: 13px; letter-spacing: 3px; text-transform: uppercase; margin: 0 0 10px;">Next Horizon</p>
+                            <h1 style="color: white; font-size: clamp(2rem, 4vw, 3.2rem); font-weight: 800; text-transform: uppercase; margin: 0 0 10px; line-height: 1.1;">New Arrivals</h1>
+                            <p style="color: rgba(255,255,255,0.8); font-size: 16px; margin: 0 0 28px;">Shop the latest collection</p>
+                            <a href="/Account/Login" style="display: inline-block; background: white; color: #111; padding: 12px 32px; font-weight: 700; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; text-decoration: none; border-radius: 2px; transition: background 0.2s, color 0.2s;"
+                               onmouseenter="this.style.background='#111';this.style.color='white';this.style.border='1px solid white';"
+                               onmouseleave="this.style.background='white';this.style.color='#111';this.style.border='none';">
+                                Shop Now
+                            </a>
+                        </div>
+                    </div>
+                    <div style="min-width: 100%; position: relative; height: calc(100vh - 56px); flex-shrink: 0;">
+                        <img src="/images/2.png"
+                             alt="Flash Sale"
+                             style="width: 100%; height: 100%; object-fit: cover; display: block;"
+                             onerror="this.onerror=null; this.src='https://placehold.co/1400x480/111/fff?text=Flash Sale';">
+                        <div style="position: absolute; inset: 0; background: linear-gradient(to right, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.1) 60%, transparent 100%);"></div>
+                        <div style="position: absolute; top: 50%; left: 7%; transform: translateY(-50%);">
+                            <p style="color: rgba(255,255,255,0.7); font-size: 13px; letter-spacing: 3px; text-transform: uppercase; margin: 0 0 10px;">Next Horizon</p>
+                            <h1 style="color: white; font-size: clamp(2rem, 4vw, 3.2rem); font-weight: 800; text-transform: uppercase; margin: 0 0 10px; line-height: 1.1;">Flash Sale</h1>
+                            <p style="color: rgba(255,255,255,0.8); font-size: 16px; margin: 0 0 28px;">Up to 70% off today only</p>
+                            <a href="/Account/Login" style="display: inline-block; background: white; color: #111; padding: 12px 32px; font-weight: 700; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; text-decoration: none; border-radius: 2px; transition: background 0.2s, color 0.2s;"
+                               onmouseenter="this.style.background='#111';this.style.color='white';this.style.border='1px solid white';"
+                               onmouseleave="this.style.background='white';this.style.color='#111';this.style.border='none';">
+                                Shop Now
+                            </a>
+                        </div>
+                    </div>
+                    <div style="min-width: 100%; position: relative; height: calc(100vh - 56px); flex-shrink: 0;">
+                        <img src="/images/3.png"
+                             alt="Top Picks"
+                             style="width: 100%; height: 100%; object-fit: cover; display: block;"
+                             onerror="this.onerror=null; this.src='https://placehold.co/1400x480/111/fff?text=Top Picks';">
+                        <div style="position: absolute; inset: 0; background: linear-gradient(to right, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.1) 60%, transparent 100%);"></div>
+                        <div style="position: absolute; top: 50%; left: 7%; transform: translateY(-50%);">
+                            <p style="color: rgba(255,255,255,0.7); font-size: 13px; letter-spacing: 3px; text-transform: uppercase; margin: 0 0 10px;">Next Horizon</p>
+                            <h1 style="color: white; font-size: clamp(2rem, 4vw, 3.2rem); font-weight: 800; text-transform: uppercase; margin: 0 0 10px; line-height: 1.1;">Top Picks</h1>
+                            <p style="color: rgba(255,255,255,0.8); font-size: 16px; margin: 0 0 28px;">Curated for runners</p>
+                            <a href="/Account/Login" style="display: inline-block; background: white; color: #111; padding: 12px 32px; font-weight: 700; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; text-decoration: none; border-radius: 2px; transition: background 0.2s, color 0.2s;"
+                               onmouseenter="this.style.background='#111';this.style.color='white';this.style.border='1px solid white';"
+                               onmouseleave="this.style.background='white';this.style.color='#111';this.style.border='none';">
+                                Shop Now
+                            </a>
+                        </div>
+                    </div>
+                    <div style="min-width: 100%; position: relative; height: calc(100vh - 56px); flex-shrink: 0;">
+                        <img src="/images/4.png"
+                             alt="Run Further"
+                             style="width: 100%; height: 100%; object-fit: cover; display: block;"
+                             onerror="this.onerror=null; this.src='https://placehold.co/1400x480/111/fff?text=Run Further';">
+                        <div style="position: absolute; inset: 0; background: linear-gradient(to right, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.1) 60%, transparent 100%);"></div>
+                        <div style="position: absolute; top: 50%; left: 7%; transform: translateY(-50%);">
+                            <p style="color: rgba(255,255,255,0.7); font-size: 13px; letter-spacing: 3px; text-transform: uppercase; margin: 0 0 10px;">Next Horizon</p>
+                            <h1 style="color: white; font-size: clamp(2rem, 4vw, 3.2rem); font-weight: 800; text-transform: uppercase; margin: 0 0 10px; line-height: 1.1;">Run Further</h1>
+                            <p style="color: rgba(255,255,255,0.8); font-size: 16px; margin: 0 0 28px;">Gear that goes the distance</p>
+                            <a href="/Account/Login" style="display: inline-block; background: white; color: #111; padding: 12px 32px; font-weight: 700; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; text-decoration: none; border-radius: 2px; transition: background 0.2s, color 0.2s;"
+                               onmouseenter="this.style.background='#111';this.style.color='white';this.style.border='1px solid white';"
+                               onmouseleave="this.style.background='white';this.style.color='#111';this.style.border='none';">
+                                Shop Now
+                            </a>
+                        </div>
+                    </div>
+                    <div style="min-width: 100%; position: relative; height: calc(100vh - 56px); flex-shrink: 0;">
+                        <img src="/images/5.png"
+                             alt="Beat Your Best"
+                             style="width: 100%; height: 100%; object-fit: cover; display: block;"
+                             onerror="this.onerror=null; this.src='https://placehold.co/1400x480/111/fff?text=Beat Your Best';">
+                        <div style="position: absolute; inset: 0; background: linear-gradient(to right, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.1) 60%, transparent 100%);"></div>
+                        <div style="position: absolute; top: 50%; left: 7%; transform: translateY(-50%);">
+                            <p style="color: rgba(255,255,255,0.7); font-size: 13px; letter-spacing: 3px; text-transform: uppercase; margin: 0 0 10px;">Next Horizon</p>
+                            <h1 style="color: white; font-size: clamp(2rem, 4vw, 3.2rem); font-weight: 800; text-transform: uppercase; margin: 0 0 10px; line-height: 1.1;">Beat Your Best</h1>
+                            <p style="color: rgba(255,255,255,0.8); font-size: 16px; margin: 0 0 28px;">Unlock your potential</p>
+                            <a href="/Account/Login" style="display: inline-block; background: white; color: #111; padding: 12px 32px; font-weight: 700; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; text-decoration: none; border-radius: 2px; transition: background 0.2s, color 0.2s;"
+                               onmouseenter="this.style.background='#111';this.style.color='white';this.style.border='1px solid white';"
+                               onmouseleave="this.style.background='white';this.style.color='#111';this.style.border='none';">
+                                Shop Now
+                            </a>
+                        </div>
+                    </div>
+            </div>
+
+            <!-- Prev / Next arrows -->
+            <button onclick="heroSlide(-1)" style="position: absolute; left: 20px; top: 50%; transform: translateY(-50%);
+                background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: white;
+                width: 44px; height: 44px; border-radius: 50%; font-size: 18px; cursor: pointer;
+                display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px);
+                transition: background 0.2s;"
+                onmouseenter="this.style.background='rgba(255,255,255,0.3)'"
+                onmouseleave="this.style.background='rgba(255,255,255,0.15)'">&#8249;</button>
+
+            <button onclick="heroSlide(1)" style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%);
+                background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: white;
+                width: 44px; height: 44px; border-radius: 50%; font-size: 18px; cursor: pointer;
+                display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px);
+                transition: background 0.2s;"
+                onmouseenter="this.style.background='rgba(255,255,255,0.3)'"
+                onmouseleave="this.style.background='rgba(255,255,255,0.15)'">&#8250;</button>
+
+            <!-- Dot indicators -->
+            <div id="heroDots" style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+                 display: flex; gap: 8px; align-items: center;">
+                    <button onclick="heroGoTo(0)" style="width: 24px; height: 8px;
+                        border-radius: 4px; border: none; cursor: pointer; transition: all 0.3s;
+                        background: white;
+                        padding: 0;"></button>
+                    <button onclick="heroGoTo(1)" style="width: 8px; height: 8px;
+                        border-radius: 4px; border: none; cursor: pointer; transition: all 0.3s;
+                        background: rgba(255,255,255,0.4);
+                        padding: 0;"></button>
+                    <button onclick="heroGoTo(2)" style="width: 8px; height: 8px;
+                        border-radius: 4px; border: none; cursor: pointer; transition: all 0.3s;
+                        background: rgba(255,255,255,0.4);
+                        padding: 0;"></button>
+                    <button onclick="heroGoTo(3)" style="width: 8px; height: 8px;
+                        border-radius: 4px; border: none; cursor: pointer; transition: all 0.3s;
+                        background: rgba(255,255,255,0.4);
+                        padding: 0;"></button>
+                    <button onclick="heroGoTo(4)" style="width: 8px; height: 8px;
+                        border-radius: 4px; border: none; cursor: pointer; transition: all 0.3s;
+                        background: rgba(255,255,255,0.4);
+                        padding: 0;"></button>
+            </div>
+        </div>
+
+<!-- RIGHT: Leaderboard Sidebar -->
+<!-- RIGHT: Leaderboard Sidebar -->
+<!-- RIGHT: Leaderboard Sidebar -->
+<div style="flex: 0 0 25%; background: #111; color: white; padding: 24px 20px;
+            display: flex; flex-direction: column; border-left: 1px solid rgba(255,255,255,0.1);
+            align-self: flex-start;">
+
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+        <h6 style="color: white; font-weight: 700; font-size: 13px; letter-spacing: 2px; text-transform: uppercase; margin: 0;">
+            🏅 Top Runners
+        </h6>
+        <span style="background: #e74c3c; color: white; font-size: 10px; font-weight: 700;
+                     padding: 2px 8px; border-radius: 3px; letter-spacing: 1px;">LIVE</span>
+    </div>
+
+    <!-- All runners list, scrollable -->
+    <div id="leaderboard-top3"></div>
+
+    <!-- Hidden runners dropdown -->
+    <div id="leaderboard-expanded" style="display:none; overflow-y: auto; max-height: 300px;
+         scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.2) transparent;">
+        <div id="leaderboard-rest"></div>
+
+        <!-- Join Challenge CTA inside dropdown -->
+        <div style="margin-top: 14px; padding: 14px; background: rgba(255,255,255,0.05); 
+             border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; text-align: center;">
+            <p style="color: rgba(255,255,255,0.7); font-size: 12px; margin: 0 0 10px; line-height: 1.5;">
+                🏆 Want to join the challenge?
+            </p>
+            <a href="/Account/Login" style="display: block; text-align: center; background: white; color: #111;
+               padding: 9px; font-weight: 700; font-size: 11px; letter-spacing: 1px; text-transform: uppercase;
+               text-decoration: none; border-radius: 2px;">
+                Login to Join
+            </a>
+        </div>
+    </div>
+
+    <!-- See More button always at the bottom -->
+    <button id="see-more-btn" onclick="toggleLeaderboard()" 
+        style="display:none; margin-top: auto; padding-top: 16px; background: transparent; border: none;
+               border-top: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.5); 
+               font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; 
+               cursor: pointer; width: 100%; padding: 16px 0 0; text-align: center; transition: color 0.2s;"
+        onmouseenter="this.style.color='white'"
+        onmouseleave="this.style.color='rgba(255,255,255,0.5)'">
+        SEE MORE ▾
+    </button>
+</div>
+</section>
+
+<!-- Feature Icons Section - Modern Grid -->
+<section class="features-section">
+
+        <div class="features-grid">
+            <!-- SALE -->
+<div class="feature-item" onclick="window.location='/Home/SearchPage?tag=sale'" style="cursor:pointer;">
+    <div class="feature-icon">
+        <i class="fas fa-percentage"></i>
+    </div>
+    <div class="feature-content">
+        <h4>SALE</h4>
+        <p>Up to 70% OFF</p>
+    </div>
+</div>
+<div class="feature-item">
+    <a href="/Account/Login" style="text-decoration:none; display:flex; flex-direction:column; align-items:center; gap:0.5rem;">
+        <div class="feature-icon">
+            <i class="fas fa-bullhorn"></i>
+        </div>
+        <div class="feature-content">
+            <h4>JOIN THE CHALLENGE</h4>
+            <p>Compete & Win</p>
+        </div>
+    </a>
+</div>
+
+<div class="feature-item" onclick="window.location='/Home/SearchPage?tag=flashdeals'" style="cursor:pointer;">
+    <div class="feature-icon">
+        <i class="fas fa-bolt"></i>
+    </div>
+    <div class="feature-content">
+        <h4>FLASH DEALS</h4>
+        <p>Limited Time Offers</p>
+    </div>
+</div>
+
+<!-- NEXT HORIZON -->
+<div class="feature-item" onclick="window.location='/Home/SearchPage?tag=new'" style="cursor:pointer;">
+    <div class="feature-icon">
+        <i class="fas fa-rocket"></i>
+    </div>
+    <div class="feature-content">
+        <h4>NEXT HORIZON</h4>
+        <p>New Arrivals</p>
+    </div>
+</div>
+
+            <div class="feature-item">
+                 <a href="/Account/Login" style="text-decoration:none; display:flex; flex-direction:column; align-items:center; gap:0.5rem;">
+                <div class="feature-icon">
+                    <i class="fas fa-shipping-fast"></i>
+                </div>
+                <div class="feature-content">
+                    <h4>FREE SHIPPING</h4>
+                    <p>On Orders $50+</p>
+                </div>
+            </div>
+<div class="feature-item">
+    <a href="/Account/Login" style="text-decoration:none; display:flex; flex-direction:column; align-items:center; gap:0.5rem;">
+        <div class="feature-icon">
+            <i class="fas fa-coins"></i>
+        </div>
+        <div class="feature-content">
+            <h4>COINS REWARDS</h4>
+            <p>Earn & Redeem</p>
+        </div>
+    </a>
+</div>
+           <div class="feature-item">
+    <a href="/Account/Login" style="text-decoration:none; display:flex; flex-direction:column; align-items:center; gap:0.5rem;">
+        <div class="feature-icon">
+            <i class="fas fa-medal"></i>
+        </div>
+        <div class="feature-content">
+            <h4>ACHIEVEMENTS</h4>
+            <p>Unlock Badges</p>
+        </div>
+    </a>
+</div>
+<div class="feature-item">
+    <a href="/Account/Login" style="text-decoration:none; display:flex; flex-direction:column; align-items:center; gap:0.5rem;">
+        <div class="feature-icon">
+            <i class="fas fa-handshake"></i>
+        </div>
+        <div class="feature-content">
+            <h4>PARTNER PROMOS</h4>
+            <p>Exclusive Deals</p>
+        </div>
+    </a>
+</div>
+</section>
+
+<!-- Product Grid Section - Professional E-commerce Style -->
+<section class="category-shelf">
+    <div class="container">
+        <div class="shelf-header">
+            <h2>FOOTWEAR COLLECTION</h2>
+             <p class="category-subtitle">Official Merchandise Collection</p>
+        </div>
+        
+        <div class="product-slider-wrapper">
+            <div class="product-auto-slider" id="shoes-slider">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- TSHIRTS -->
+<section class="category-shelf">
+    <div class="container">
+        <div class="shelf-header">
+            <h2> ESSENTIAL TEES</h2>
+            <p class="category-subtitle">Official Merchandise Collection</p>
+        </div>
+        
+        <div class="product-slider-wrapper">
+            <div class="product-auto-slider" id="tshirt-slider">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- buttons for men, women, unisex -->
+<section class="gender-category-section">
+    <div class="container">
+        <div class="shelf-header">
+            <h2 class="category-title">FEATURED COLLECTIONS</h2>
+            <div class="category-tabs">
+                <button class="tab-btn active" onclick="filterByGender('all', this)">ALL</button>
+                <button class="tab-btn" onclick="filterByGender('Men', this)">MEN</button>
+                <button class="tab-btn" onclick="filterByGender('Women', this)">WOMEN</button>
+                <button class="tab-btn" onclick="filterByGender('Unisex', this)">UNISEX</button>
+            </div>
+        </div>
+
+            <div class="slider-content-window">
+                <div class="product-slider-track" id="gender-slider-track">
+                </div>
+            </div>
+            <!-- ADD THIS BELOW -->
+<div class="text-center mt-4">
+        <a class="btn btn-outline-dark btn-lg px-5" style="border:2px solid #111; font-weight:700; letter-spacing:1px;" href="/Account/Login?returnUrl=%2F">
+            LOGIN TO SEE MORE
+        </a>
+</div>
+        </div>
+    </div>
+
+    <!-- Quick View Modal -->
+<div id="quickViewModal" class="qv-modal" onclick="closeQuickView(event)">
+    <div class="qv-modal-content">
+        <button class="qv-close" onclick="closeModal()">✕</button>
+        <div class="qv-flex">
+            <div class="qv-image-side">
+                <img id="qv-img" src="" alt="Product Image">
+            </div>
+            <div class="qv-details-side">
+                <p id="qv-brand" class="qv-brand"></p>
+                <h2 id="qv-name" class="qv-name"></h2>
+                <p id="qv-price" class="qv-price"></p>
+
+                <div class="qv-size-section">
+                    <p class="qv-size-label">Size: <span id="qv-selected-size"></span></p>
+                    <div id="qv-sizes" class="qv-sizes"></div>
+                </div>
+
+                <div class="qv-meta">
+                    <div class="qv-meta-row">
+                        <span class="qv-meta-label">Sku:</span>
+                        <span id="qv-sku"></span>
+                    </div>
+                    <div class="qv-meta-row">
+                        <span class="qv-meta-label">Available:</span>
+                        <span id="qv-stock"></span>
+                    </div>
+                    <div class="qv-meta-row">
+                        <span class="qv-meta-label">Category:</span>
+                        <span id="qv-category"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</section>
+
+
+<!-- Call to Action Section -->
+<section class="cta-banner">
+    <div class="container">
+        <div class="cta-content">
+            <h2>Ready to Join the Community?</h2>
+            <p>Sign up today and start tracking your progress, competing with others, and achieving your fitness goals.</p>
+            <div class="cta-buttons">
+                <a class="btn btn-primary btn-lg" href="/Account/Signup">Get Started</a>
+                <a class="btn btn-outline" href="/Account/BecomeSeller">Become a Seller</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+const landingRequiresLogin = true;
+
+function buildLandingLoginUrl() {
+    const returnUrl = window.location.pathname + window.location.search + window.location.hash;
+    return `/Account/Login?returnUrl=${encodeURIComponent(returnUrl)}`;
+}
+
+function requireLoginForLandingAction(event) {
+    if (!landingRequiresLogin) {
+        return false;
+    }
+
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+
+    window.location.href = buildLandingLoginUrl();
+    return true;
+}
+
+function landingQuickView(image, name, brand, price, category, sku, sizes, stock) {
+    if (requireLoginForLandingAction()) {
+        return;
+    }
+
+    openQuickView(image, name, brand, price, category, sku, sizes, stock);
+}
+
+let heroIndex = 0;
+let heroTotal = 5;
+let heroTimer = null;
+
+function heroGoTo(index) {
+    heroIndex = index;
+    document.getElementById('heroTrack').style.transform = `translateX(-${heroIndex * 100}%)`;
+    const dots = document.getElementById('heroDots').querySelectorAll('button');
+    dots.forEach((d, i) => {
+        d.style.width      = i === heroIndex ? '24px' : '8px';
+        d.style.background = i === heroIndex ? 'white' : 'rgba(255,255,255,0.4)';
+    });
+    resetHeroTimer();
+}
+
+function heroSlide(dir) {
+    heroGoTo((heroIndex + dir + heroTotal) % heroTotal);
+}
+
+function resetHeroTimer() {
+    clearInterval(heroTimer);
+    heroTimer = setInterval(() => heroSlide(1), 4000);
+}
+
+resetHeroTimer();
+
+document.addEventListener("DOMContentLoaded", function() {
+    const sliders = document.querySelectorAll('.product-auto-slider');
+
+    sliders.forEach(slider => {
+        let scrollAmount = 0;
+        const step = 300; // Width of card + gap
+
+        setInterval(() => {
+            const maxScroll = slider.scrollWidth - slider.parentElement.clientWidth;
+            
+            if (scrollAmount >= maxScroll) {
+                scrollAmount = 0; // Reset to start
+            } else {
+                scrollAmount += step;
+            }
+            
+            slider.style.transform = `translateX(-${scrollAmount}px)`;
+        }, 3000); // 3 seconds interval
+    });
+});
+
+function filterByGender(gender, element) {
+    // highlight active tab
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    element.classList.add('active');
+
+    const cards = document.querySelectorAll('#gender-slider-track .small-product-card');
+
+    cards.forEach(card => {
+        const productGender = (card.dataset.gender || "Unisex").trim().toLowerCase();
+        const targetGender = gender.toLowerCase();
+
+        if (targetGender === 'all' || productGender === targetGender) {
+            card.style.display = "block";
+        } else {
+            card.style.display = "none";
+        }
+    });
+
+    // reset slider position
+    currentScroll = 0;
+    document.getElementById('gender-slider-track').style.transform = "translateX(0px)";
+}
+let currentScroll = 0;
+
+function addToCart(productId) {
+    if (requireLoginForLandingAction()) {
+        return;
+    }
+
+    window.location.href = "http://localhost:5297/Home/Shop";
+}
+
+
+
+// Leaderboard
+// Leaderboard
+const API_URL = '/Home/GetLeaderboard?scope=National&take=100';
+const MEDALS = ["🥇", "🥈", "🥉"];
+let leaderboardExpanded = false;
+
+function fmt(sec) {
+    const m = Math.floor(sec / 60), s = sec % 60;
+    return m + "m " + String(s).padStart(2, "0") + "s";
+}
+function initials(n) {
+    return n.split(" ").map(w => w[0]).join("").substring(0, 2).toUpperCase();
+}
+
+function runnerRow(r, i) {
+    return `
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.07);">
+            <span style="font-size:16px;width:22px;text-align:center;">${i < 3 ? MEDALS[i] : i + 1}</span>
+            <div style="width:30px;height:30px;border-radius:50%;background:#1a2e45;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#64b5f6;flex-shrink:0;">
+                ${initials(r.athleteName)}
+            </div>
+            <div style="flex:1;min-width:0;">
+                <div style="font-size:13px;font-weight:600;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.athleteName}</div>
+                <div style="font-size:11px;color:rgba(255,255,255,0.35);">${new Date(r.activityDate).toLocaleDateString("en-US",{month:"short",day:"numeric"})}</div>
+            </div>
+            <div style="text-align:right;flex-shrink:0;">
+                <div style="font-size:13px;font-weight:600;color:#fff;">${parseFloat(r.distanceKm).toFixed(2)} km</div>
+                <div style="font-size:11px;color:rgba(255,255,255,0.35);">${fmt(r.durationSeconds)}</div>
+            </div>
+        </div>`;
+}
+
+function toggleLeaderboard() {
+    leaderboardExpanded = !leaderboardExpanded;
+    const expanded = document.getElementById("leaderboard-expanded");
+    const btn = document.getElementById("see-more-btn");
+
+    if (leaderboardExpanded) {
+        expanded.style.display = "block";
+        btn.innerHTML = "SEE LESS ▴";
+    } else {
+        expanded.style.display = "none";
+        btn.innerHTML = "SEE MORE ▾";
+    }
+}
+
+async function loadLeaderboard() {
+    try {
+        const res = await fetch(API_URL);
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+
+        const top3 = document.getElementById("leaderboard-top3");
+        const rest = document.getElementById("leaderboard-rest");
+        const btn  = document.getElementById("see-more-btn");
+
+        if (!data.length) {
+            top3.innerHTML = '<p style="color:rgba(255,255,255,0.4);font-size:13px;text-align:center;margin-top:40px;">No runners yet.</p>';
+            return;
+        }
+
+        // Always show top 3
+        top3.innerHTML = data.slice(0, 3).map((r, i) => runnerRow(r, i)).join("");
+
+        // Show "See More" only if there are more than 3
+        if (data.length > 3) {
+            rest.innerHTML = data.slice(3).map((r, i) => runnerRow(r, i + 3)).join("");
+            btn.style.display = "block";
+        } else {
+            btn.style.display = "none";
+        }
+
+    } catch {
+        document.getElementById("leaderboard-top3").innerHTML =
+            '<p style="color:rgba(255,255,255,0.4);font-size:13px;text-align:center;margin-top:40px;">Could not load leaderboard.</p>';
+    }
+}
+
+loadLeaderboard();
+setInterval(loadLeaderboard, 30000);
+
+
+// Fetch and inject promotions into carousel
+async function loadPromotions() {
+    try {
+        const res = await fetch('/Home/GetPromotions');
+        const promos = await res.json();
+        if (!promos.length) return;
+
+        const track = document.getElementById('heroTrack');
+        const dotsContainer = document.getElementById('heroDots');
+
+        promos.forEach(p => {
+            const discountText = p.type === 'Fix Amount'
+                ? `₱${p.totalDiscountFix} OFF`
+                : `${p.totalDiscountPercent}% OFF`;
+
+            const minText = p.minimumPurchaseAmount > 0
+                ? `Min. purchase of ₱${p.minimumPurchaseAmount}` : '';
+
+            const slide = document.createElement('div');
+            slide.style.cssText = 'min-width:100%; position:relative; height:calc(100vh - 56px); flex-shrink:0; background:linear-gradient(135deg,#1a1a1a,#2d2d2d); display:flex; align-items:center;';
+            slide.innerHTML = `
+                <div style="position:absolute; inset:0; background:linear-gradient(to right, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.3) 60%, transparent 100%);"></div>
+                <div style="position:relative; z-index:1; left:7%;">
+                    <p style="color:rgba(255,255,255,0.7); font-size:13px; letter-spacing:3px; text-transform:uppercase; margin:0 0 10px;">LIMITED OFFER</p>
+                    <h1 style="color:white; font-size:clamp(2rem,4vw,3.2rem); font-weight:800; text-transform:uppercase; margin:0 0 10px; line-height:1.1;">${p.name}</h1>
+                    <div style="font-size:clamp(1.5rem,3vw,2.5rem); font-weight:800; color:#e74c3c; margin:10px 0;">${discountText}</div>
+                    ${minText ? `<p style="color:rgba(255,255,255,0.7); font-size:14px; margin:0 0 28px;">${minText}</p>` : '<div style="margin-bottom:28px;"></div>'}
+                    <a href="/Account/Login" style="display:inline-block; background:white; color:#111; padding:12px 32px; font-weight:700; font-size:13px; letter-spacing:2px; text-transform:uppercase; text-decoration:none; border-radius:2px;">SHOP NOW</a>
+                </div>`;
+
+            track.appendChild(slide);
+
+            // Add dot
+            const dotIndex = track.children.length - 1;
+            const dot = document.createElement('button');
+            dot.style.cssText = 'width:8px; height:8px; border-radius:4px; border:none; cursor:pointer; transition:all 0.3s; background:rgba(255,255,255,0.4); padding:0;';
+            dot.onclick = () => heroGoTo(dotIndex);
+            dotsContainer.appendChild(dot);
+        });
+
+        // Update heroTotal to include promo slides
+        heroTotal = track.children.length;
+
+    } catch(e) {
+        console.error('Failed to load promotions', e);
+    }
+}
+
+loadPromotions();
+
+
+</script>
+
+
+    </main>
+
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-top">
+                <div class="footer-brand">
+                    <a class="logo" href="/">
+                        <img src="/images/logo.png" alt="Next Horizon" class="logo-image">
+                        <span class="logo-text">Next Horizon</span>
+                    </a>
+                    <p>Connecting runners worldwide. Track, compete, and achieve your fitness goals together.</p>
+                </div>
+                <div class="footer-column">
+                    <h4>Quick Links</h4>
+                    <ul class="footer-links">
+                        <li><a href="/">Home</a></li>
+                        <li><a href="/Home/SearchPage">Products</a></li>
+                        <li><a href="/">Leaderboard</a></li>
+                        <li><a href="/Account/BecomeSeller">Become a Seller</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>Account</h4>
+                    <ul class="footer-links">
+                        <li><a href="/Account/Login">Log in</a></li>
+                        <li><a href="/Account/register">Sign Up</a></li>
+                        <li><a href="/Account/ForgotPassword">Forgot Password</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>Legal</h4>
+                    <ul class="footer-links">
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a href="/Home/Terms">Terms of Service</a></li>
+                        <li><a href="#">Cookie Policy</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column footer-support-section">
+                    <h4 style="color:#fff;">Payment</h4>
+                    <div class="footer-payment-methods">
+                        <img src="/images/payment/gcash.svg" alt="GCash" class="payment-logo" title="GCash">
+                        <img src="/images/payment/shopee.svg" alt="ShopeePay" class="payment-logo" title="ShopeePay">
+                        <img src="/images/payment/dragonpay.svg" alt="Dragonpay" class="payment-logo" title="Dragonpay">
+                        <img src="/images/payment/mastercard.svg" alt="Mastercard" class="payment-logo" title="Mastercard">
+                        <img src="/images/payment/jcb.svg" alt="JCB" class="payment-logo" title="JCB">
+                        <img src="/images/payment/bpi.svg" alt="BPI" class="payment-logo" title="BPI">
+                        <img src="/images/payment/visa.svg" alt="Visa" class="payment-logo" title="Visa">
+                        <img src="/images/payment/maya.svg" alt="Maya" class="payment-logo" title="Maya">
+                    </div>
+                </div>
+                <div class="footer-column footer-support-section">
+                    <h4 style="color:#fff;">Follow Us</h4>
+                    <div class="footer-social">
+                        <a href="https://www.facebook.com/NextHorizon25" class="social-link" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="social-link" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="social-link" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="social-link" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+                <div class="footer-column footer-support-section">
+                    <h4 style="color:#fff;">Logistics</h4>
+                    <div class="footer-logistics">
+                        <img src="/images/logistics/spx.svg" alt="SPX" class="logistics-logo" title="SPX">
+                        <img src="/images/logistics/flash.svg" alt="Flash" class="logistics-logo" title="Flash">
+                        <img src="/images/logistics/jet.svg" alt="JET" class="logistics-logo" title="JET">
+                        <img src="/images/logistics/2go.svg" alt="2Go" class="logistics-logo" title="2Go">
+                        <img src="/images/logistics/xde.svg" alt="XDE" class="logistics-logo" title="XDE">
+                        <img src="/images/logistics/yto.svg" alt="YTO" class="logistics-logo" title="YTO">
+                        <img src="/images/logistics/workunion.svg" alt="Workunion" class="logistics-logo" title="Workunion">
+                    </div>
+                </div>
+                <div class="footer-column footer-support-section">
+                    <h4 style="color:#fff;">Shopee App Download</h4>
+                    <div class="footer-app-download">
+                        <div class="app-badge-row">
+                            <img src="/images/qrcode.svg" alt="QR Code" class="qr-code" title="Scan to Download App">
+                            <div class="app-badges">
+                                <a href="https://apps.apple.com" target="_blank" rel="noopener noreferrer" class="app-badge" aria-label="App Store">
+                                    <i class="fab fa-apple"></i>
+                                    <span>App Store</span>
+                                </a>
+                                <a href="https://play.google.com" target="_blank" rel="noopener noreferrer" class="app-badge" aria-label="Google Play">
+                                    <i class="fab fa-google-play"></i>
+                                    <span>Google Play</span>
+                                </a>
+                                <a href="#" class="app-badge" aria-label="AppGallery">
+                                    <i class="fas fa-cube"></i>
+                                    <span>AppGallery</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Next Horizon. All rights reserved.</p>
+                <div class="social-links">
+                    <a href="https://www.facebook.com/NextHorizon25"><i class="fab fa-facebook-f"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+<!-- Quick View Modal (global) -->
+<div id="quickViewModal" class="qv-modal" onclick="closeQuickView(event)">
+    <div class="qv-modal-content">
+        <button class="qv-close" onclick="closeModal()">✕</button>
+        <div class="qv-flex">
+            <div class="qv-image-side">
+                <img id="qv-img" src="" alt="Product Image">
+            </div>
+            <div class="qv-details-side">
+                <p id="qv-brand" class="qv-brand"></p>
+                <h2 id="qv-name" class="qv-name"></h2>
+                <p id="qv-price" class="qv-price"></p>
+                <div class="qv-size-section">
+                    <p class="qv-size-label">Size: <span id="qv-selected-size"></span></p>
+                    <div id="qv-sizes" class="qv-sizes"></div>
+                </div>
+                <div class="qv-meta">
+                    <div class="qv-meta-row"><span class="qv-meta-label">Sku:</span><span id="qv-sku"></span></div>
+                    <div class="qv-meta-row"><span class="qv-meta-label">Available:</span><span id="qv-stock"></span></div>
+                    <div class="qv-meta-row"><span class="qv-meta-label">Category:</span><span id="qv-category"></span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+        crossorigin="anonymous"></script>
+  
+  <script src="/js/loading-login.js"></script>
+<script>
+let searchDebounceTimer = null;
+
+function handleOverlaySearch(value) {
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(() => {
+        const query = value.trim();
+        if (query.length === 0) { closeSuggestionsDropdown(); return; }
+        fetchSuggestions(query);
+    }, 250);
+}
+
+async function fetchSuggestions(query) {
+    try {
+        const res = await fetch(`/Home/SearchSuggestions?query=${encodeURIComponent(query)}`);
+        const data = await res.json();
+        renderSuggestionsDropdown(data, query);
+    } catch (e) { console.error('Suggestion fetch failed', e); }
+}
+
+function renderSuggestionsDropdown(suggestions, query) {
+    closeSuggestionsDropdown();
+    if (!suggestions || suggestions.length === 0) return;
+
+    const input = document.getElementById('searchInput');
+    const dropdown = document.createElement('div');
+    dropdown.id = 'searchDropdown';
+    dropdown.style.cssText = `
+        position:fixed;
+        top:${input.getBoundingClientRect().bottom + 4}px;
+        left:${input.getBoundingClientRect().left}px;
+        width:${input.offsetWidth + 40}px;
+        background:white;
+        border:1px solid #ddd;
+        border-radius:8px;
+        box-shadow:0 8px 24px rgba(0,0,0,0.15);
+        z-index:99999;
+        overflow:hidden;
+    `;
+
+    suggestions.forEach(item => {
+        const div = document.createElement('div');
+        div.style.cssText = `padding:10px 16px; cursor:pointer; display:flex;
+            align-items:center; gap:10px; font-size:14px; color:#111;`;
+
+        const text = item.suggestion;
+        const idx = text.toLowerCase().indexOf(query.toLowerCase());
+        let highlighted = text;
+        if (idx >= 0) {
+            highlighted = text.slice(0, idx) +
+                `<strong>${text.slice(idx, idx + query.length)}</strong>` +
+                text.slice(idx + query.length);
+        }
+
+        div.innerHTML = `<i class="fas fa-search" style="color:#aaa;font-size:12px;flex-shrink:0;"></i><span>${highlighted}</span>`;
+        div.onmouseenter = () => div.style.background = '#f5f5f5';
+        div.onmouseleave = () => div.style.background = 'white';
+        div.onclick = () => {
+            closeSuggestionsDropdown();
+            window.location.href = `/Home/SearchPage?query=${encodeURIComponent(item.suggestion)}`;
+        };
+        dropdown.appendChild(div);
+    });
+
+    document.body.appendChild(dropdown);
+}
+
+function closeSuggestionsDropdown() {
+    const existing = document.getElementById('searchDropdown');
+    if (existing) existing.remove();
+}
+
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('#searchForm')) closeSuggestionsDropdown();
+});
+
+async function submitSearch(event) {
+    if (event) event.preventDefault();
+    const query = document.getElementById('searchInput').value.trim();
+    if (!query) return;
+    closeSuggestionsDropdown();
+    window.location.href = `/Home/SearchPage?query=${encodeURIComponent(query)}`;
+}
+
+function toggleSearch() {
+    const expand = document.getElementById('searchExpand');
+    const input  = document.getElementById('searchInput');
+    const isOpen = expand.classList.contains('open');
+    expand.classList.toggle('open');
+    if (!isOpen) {
+        setTimeout(() => input.focus(), 350);
+    } else {
+        input.value = '';
+        closeSuggestionsDropdown();
+    }
+}
+
+document.addEventListener('click', (e) => {
+    const wrapper = document.getElementById('searchWrapper');
+    if (wrapper && !wrapper.contains(e.target)) {
+        document.getElementById('searchExpand').classList.remove('open');
+    }
+    if (!e.target.closest('#searchForm')) closeSuggestionsDropdown();
+});
+
+function openQuickView(image, name, brand, price, category, sku, sizes, stock) {
+    const imgPath = image && image.trim() !== ''
+        ? '/uploads/products/' + image
+        : '';
+    document.getElementById('qv-img').src = imgPath;
+    document.getElementById('qv-name').textContent = name;
+    document.getElementById('qv-brand').textContent = brand;
+    document.getElementById('qv-price').textContent = '₱' + parseFloat(price).toFixed(2);
+    document.getElementById('qv-category').textContent = category || 'N/A';
+    document.getElementById('qv-sku').textContent = sku || 'N/A';
+    document.getElementById('qv-stock').textContent = stock > 0 ? stock + ' left in stock' : 'Out of Stock';
+    document.getElementById('qv-selected-size').textContent = '';
+
+    const sizesContainer = document.getElementById('qv-sizes');
+    sizesContainer.innerHTML = '';
+    if (sizes) {
+        sizes.split(',').forEach(size => {
+            if (size.trim()) {
+                const btn = document.createElement('button');
+                btn.className = 'qv-size-btn';
+                btn.textContent = size.trim();
+                btn.onclick = function() {
+                    document.querySelectorAll('.qv-size-btn').forEach(b => b.classList.remove('selected'));
+                    this.classList.add('selected');
+                    document.getElementById('qv-selected-size').textContent = this.textContent;
+                };
+                sizesContainer.appendChild(btn);
+            }
+        });
+    } else {
+        sizesContainer.innerHTML = '<span style="color:#999;font-size:0.8rem;">No sizes available</span>';
+    }
+
+    document.getElementById('quickViewModal').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+    document.getElementById('quickViewModal').style.display = 'none';
+    document.body.style.overflow = '';
+}
+
+function closeQuickView(event) {
+    if (event.target === document.getElementById('quickViewModal')) {
+        closeModal();
+    }
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+    
+
+</body>
+</html>

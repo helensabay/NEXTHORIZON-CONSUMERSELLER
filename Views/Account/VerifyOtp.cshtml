@@ -1,0 +1,367 @@
+@model WebApplication1.ViewModels.VerifyOtpViewModel
+@{
+    ViewData["Title"] = "Verify OTP - Next Horizon";
+}
+
+<div class="auth-page">
+    <div class="auth-container">
+        <div class="auth-form-container">
+            <div class="auth-header">
+                <h2>Verify OTP</h2>
+                <p>Check your email and enter the 6-digit OTP</p>
+            </div>
+
+            <form asp-action="VerifyOtp" method="post" class="auth-form" id="otpForm">
+                <input type="hidden" asp-for="Email" />
+
+                <div class="form-group">
+                    <label for="Otp">OTP Code</label>
+                    <div class="otp-input-wrapper">
+                        <input asp-for="Otp"
+                               id="otpInput"
+                               class="form-input otp-input"
+                               placeholder="Enter 6-digit code"
+                               maxlength="6"
+                               inputmode="numeric"
+                               autocomplete="one-time-code" />
+                        <i class="fas fa-shield-alt otp-icon"></i>
+                    </div>
+                    <span asp-validation-for="Otp" class="text-danger"></span>
+                </div>
+
+                <div class="resend-row">
+                    <span class="resend-label">Didn't receive a code?</span>
+                    <button type="button" class="resend-btn" id="resendBtn" onclick="resendOtp()">
+                        Resend OTP
+                    </button>
+                    <span class="resend-timer" id="resendTimer"></span>
+                </div>
+
+                <button type="submit" class="btn btn-primary auth-submit" id="submitBtn">
+                    <i class="fas fa-check-circle"></i> Verify OTP
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@* Pass server-side result to JS *@
+@if (ViewData["OtpError"] != null)
+{
+    <input type="hidden" id="otpError" value="@ViewData["OtpError"]" />
+}
+@if (ViewData["OtpSuccess"] != null)
+{
+    <input type="hidden" id="otpSuccess" value="@ViewData["OtpSuccess"]" />
+    <input type="hidden" id="redirectEmail" value="@ViewData["RedirectEmail"]" />
+}
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    // --- Show server-side feedback via SweetAlert ---
+    document.addEventListener('DOMContentLoaded', function () {
+
+        const errorMsg   = document.getElementById('otpError')?.value;
+        const successMsg = document.getElementById('otpSuccess')?.value;
+
+        if (errorMsg) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Invalid OTP',
+                text: errorMsg,
+                confirmButtonText: 'Try Again',
+                customClass: {
+                    popup:         'nh-alert',
+                    title:         'nh-alert-title',
+                    htmlContainer: 'nh-alert-text',
+                    confirmButton: 'nh-alert-btn'
+                }
+            });
+        }
+
+if (successMsg) {
+    const email = document.getElementById('redirectEmail')?.value;
+    Swal.fire({
+        icon: 'success',
+        title: 'Verified!',
+        text: successMsg,
+        confirmButtonText: 'Continue',
+        customClass: {
+            popup:         'nh-alert',
+            title:         'nh-alert-title',
+            htmlContainer: 'nh-alert-text',
+            confirmButton: 'nh-alert-btn'
+        }
+    }).then(() => {
+        // Redirect to ResetPassword with email
+        window.location.href = '/Account/ResetPassword?email=' + encodeURIComponent(email);
+    });
+}
+        // Start resend cooldown on load
+        startResendCooldown(60);
+    });
+
+    // --- Client-side validation before submit ---
+    document.getElementById('otpForm').addEventListener('submit', function (e) {
+        const otp = document.getElementById('otpInput').value.trim();
+
+        if (otp === '') {
+            e.preventDefault();
+            Swal.fire({
+                icon: 'warning',
+                title: 'OTP Required',
+                text: 'Please enter the 6-digit OTP sent to your email.',
+                confirmButtonText: 'OK',
+                customClass: {
+                    popup:         'nh-alert',
+                    title:         'nh-alert-title',
+                    htmlContainer: 'nh-alert-text',
+                    confirmButton: 'nh-alert-btn'
+                }
+            });
+            return;
+        }
+
+        if (!/^\d{6}$/.test(otp)) {
+            e.preventDefault();
+            Swal.fire({
+                icon: 'error',
+                title: 'Invalid Format',
+                text: 'OTP must be exactly 6 digits.',
+                confirmButtonText: 'OK',
+                customClass: {
+                    popup:         'nh-alert',
+                    title:         'nh-alert-title',
+                    htmlContainer: 'nh-alert-text',
+                    confirmButton: 'nh-alert-btn'
+                }
+            });
+            return;
+        }
+
+        // Show loading state
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying...';
+    });
+
+    // --- Only allow numeric input ---
+    document.getElementById('otpInput').addEventListener('input', function () {
+        this.value = this.value.replace(/\D/g, '').slice(0, 6);
+    });
+
+    // --- Resend OTP cooldown ---
+    let cooldownTimer = null;
+
+    function startResendCooldown(seconds) {
+        const btn   = document.getElementById('resendBtn');
+        const timer = document.getElementById('resendTimer');
+        btn.disabled = true;
+        btn.style.opacity = '0.4';
+
+        let remaining = seconds;
+        timer.textContent = `(${remaining}s)`;
+
+        cooldownTimer = setInterval(() => {
+            remaining--;
+            timer.textContent = `(${remaining}s)`;
+            if (remaining <= 0) {
+                clearInterval(cooldownTimer);
+                btn.disabled = false;
+                btn.style.opacity = '1';
+                timer.textContent = '';
+            }
+        }, 1000);
+    }
+
+    function resendOtp() {
+        const email = document.querySelector("input[name='Email']").value;
+        if (!email) return;
+
+        fetch('@Url.Action("ResendOtp", "Account")', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? ''
+            },
+            body: JSON.stringify({ email })
+        })
+        .then(res => res.json())
+        .then(data => {
+            Swal.fire({
+                icon: data.success ? 'success' : 'error',
+                title: data.success ? 'OTP Sent!' : 'Failed',
+                text: data.message,
+                confirmButtonText: 'OK',
+                customClass: {
+                    popup:         'nh-alert',
+                    title:         'nh-alert-title',
+                    htmlContainer: 'nh-alert-text',
+                    confirmButton: 'nh-alert-btn'
+                }
+            });
+            if (data.success) startResendCooldown(60);
+        })
+        .catch(() => {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Something went wrong. Please try again.',
+                confirmButtonText: 'OK',
+                customClass: {
+                    popup:         'nh-alert',
+                    title:         'nh-alert-title',
+                    htmlContainer: 'nh-alert-text',
+                    confirmButton: 'nh-alert-btn'
+                }
+            });
+        });
+    }
+</script>
+
+<style>
+    .auth-page {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--color-off-white);
+        padding: 1.5rem;
+    }
+
+    .auth-container {
+        width: 100%;
+        max-width: 450px;
+        background: var(--color-white);
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow-xl);
+        overflow: hidden;
+    }
+
+    .auth-form-container {
+        padding: 3rem;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .auth-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .auth-header h2 {
+        font-size: 1.75rem;
+        margin-bottom: 0.5rem;
+        font-weight: 700;
+    }
+
+    .auth-header p {
+        color: var(--color-gray);
+        font-size: 0.95rem;
+    }
+
+    .auth-form .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .auth-form label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+
+    /* OTP input with icon */
+    .otp-input-wrapper {
+        position: relative;
+    }
+
+    .otp-input {
+        width: 100%;
+        padding: 0.875rem 1.25rem 0.875rem 3rem;
+        border: 2px solid var(--color-lighter-gray);
+        border-radius: var(--border-radius-md);
+        font-size: 1.4rem;
+        letter-spacing: 0.5rem;
+        text-align: center;
+        box-sizing: border-box;
+        transition: border-color 0.2s;
+    }
+
+    .otp-input:focus {
+        outline: none;
+        border-color: var(--color-black);
+    }
+
+    .otp-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--color-gray);
+        font-size: 1rem;
+    }
+
+    /* Resend row */
+    .resend-row {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        margin-bottom: 1.5rem;
+        font-size: 0.875rem;
+        color: var(--color-gray);
+    }
+
+    .resend-btn {
+        background: none;
+        border: none;
+        color: var(--color-black);
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 0.875rem;
+        padding: 0;
+        text-decoration: underline;
+    }
+
+    .resend-btn:disabled {
+        cursor: not-allowed;
+    }
+
+    .resend-timer {
+        color: var(--color-gray);
+        font-size: 0.8rem;
+    }
+
+    .auth-submit {
+        width: 100%;
+        padding: 0.875rem;
+        font-size: 1rem;
+        background-color: var(--color-black);
+        color: white;
+        border: none;
+        border-radius: var(--border-radius-md);
+        cursor: pointer;
+        font-weight: 600;
+        transition: opacity 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .auth-submit:hover   { opacity: 0.85; }
+    .auth-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    /* SweetAlert theme */
+    .nh-alert          { background: #fff !important; color: #000 !important; border-radius: 12px; padding: 30px; }
+    .nh-alert-title    { color: #000 !important; font-size: 22px; font-weight: 600; }
+    .nh-alert-text     { color: #000 !important; font-size: 15px; }
+    .nh-alert-btn      { background: #000 !important; color: #fff !important; padding: 10px 28px; border-radius: 6px; }
+    .swal2-icon.swal2-error   { border-color: #000 !important; }
+    .swal2-icon.swal2-success { border-color: #000 !important; }
+    .swal2-x-mark-line-left,
+    .swal2-x-mark-line-right  { background: #000 !important; }
+    .swal2-success-line-tip,
+    .swal2-success-line-long  { background: #000 !important; }
+</style>

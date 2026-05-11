@@ -1,0 +1,410 @@
+﻿@{
+    ViewData["Title"] = "Leaderboard Dashboard";
+}
+
+<style>
+    /* Base Variables & Reset */
+    :root {
+        --bg-dark: #000000;
+        --bg-light: #ffffff;
+        --podium-grey: #a1a5a6;
+        --text-dark: #1a1a1a;
+        --text-light: #ffffff;
+    }
+
+    html, body {
+        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        overflow-x: hidden; /* Prevents whole-page side-scrolling */
+        background-color: var(--bg-light);
+        color: var(--text-dark);
+    }
+
+    /* --- TOP SECTION (Full Screen) --- */
+    .top-section {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center; /* Centers content vertically */
+        align-items: center;
+        padding: 20px;
+        box-sizing: border-box;
+    }
+
+    .hero-podium-wrapper {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        width: 100%;
+        max-width: 1200px;
+        margin-bottom: 100px;
+    }
+
+    .hero-text {
+        max-width: 500px;
+        padding-bottom: 20px;
+    }
+
+        .hero-text h1 {
+            font-size: 5rem;
+            font-weight: 900;
+            margin: 0 0 10px 0;
+            line-height: 1;
+            letter-spacing: -2px;
+        }
+
+        .hero-text h2 {
+            font-size: 1.7rem;
+            font-weight: 600;
+            font-style: italic;
+            margin: 0 0 10px 0;
+        }
+
+        .hero-text p {
+            font-size: 1rem;
+            color: #555;
+            font-style: italic;
+            margin: 0;
+        }
+
+    /* Podium Section */
+    .podium-container {
+        display: flex;
+        align-items: flex-end;
+        gap: 20px;
+    }
+
+    .podium-pillar {
+        background-color: var(--podium-grey);
+        border-top-left-radius: 100px;
+        border-top-right-radius: 100px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        text-align: center;
+    }
+
+        .podium-pillar.first {
+            height: 400px;
+            width: 160px;
+        }
+
+        .podium-pillar.second {
+            height: 320px;
+            width: 160px;
+        }
+
+        .podium-pillar.third {
+            height: 270px;
+            width: 160px;
+        }
+
+    .podium-avatar {
+        width: 140px;
+        height: 140px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid var(--bg-dark);
+        position: absolute;
+        top: -15px;
+    }
+
+    .podium-info {
+        margin-top: 140px;
+        padding: 0 10px;
+    }
+
+        .podium-info h3 {
+            font-size: 0.85rem;
+            margin: 0 0 5px 0;
+            text-transform: uppercase;
+        }
+
+        .podium-info p {
+            font-size: 0.8rem;
+            margin: 0;
+        }
+
+    /* Toggles */
+    .toggle-container {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+    }
+
+    .toggle-btn {
+        padding: 8px 30px;
+        border-radius: 25px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        border: 1px solid var(--bg-dark);
+        text-decoration: none;
+    }
+
+        .toggle-btn.outline {
+            background: transparent;
+            color: var(--text-dark);
+        }
+
+        .toggle-btn.filled {
+            background: var(--bg-dark);
+            color: var(--text-light);
+        }
+
+
+    /* --- LEADERBOARD SECTION (Black, Full Width) --- */
+    .leaderboard-section {
+        background-color: var(--bg-dark);
+        color: var(--text-light);
+        /* THE FIX: Break out of the ASP.NET _Layout container */
+        width: 100vw;
+        position: relative;
+        left: 50%;
+        right: 50%;
+        margin-left: -50vw;
+        margin-right: -50vw;
+        padding: 60px 0 0 0;
+        text-align: center;
+        box-sizing: border-box;
+    }
+
+
+        .leaderboard-section h2 {
+            font-size: 4rem;
+            font-weight: 900;
+            margin: 0 0 30px 0;
+            letter-spacing: 2px;
+        }
+
+    /* Horizontal Scrolling Container */
+    .scrolling-wrapper {
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding: 40px 40px 80px 40px; /* Padding accommodates the popping elements */
+        gap: 30px;
+        /* Hide scrollbar */
+        -webkit-overflow-scrolling: touch;
+        -ms-overflow-style: none; /* IE and Edge */
+        scrollbar-width: none; /* Firefox */
+    }
+
+        .scrolling-wrapper::-webkit-scrollbar {
+            display: none; /* Chrome, Safari and Opera */
+        }
+
+    /* Leaderboard Cards (Matching 4th Screenshot) */
+    .card {
+        flex: 0 0 auto;
+        width: 280px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .card-image-wrapper {
+        position: relative;
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    .card-rank {
+        position: absolute;
+        top: -20px;
+        left: -20px;
+        background: var(--bg-light);
+        color: var(--text-dark);
+        width: 55px;
+        height: 55px;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 1.3rem;
+        font-weight: 800;
+        z-index: 10;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    }
+
+    .card-image {
+        width: 100%;
+        height: 420px;
+        border: 3px solid var(--bg-light);
+        border-radius: 12px;
+        object-fit: cover;
+        display: block;
+        box-sizing: border-box;
+    }
+
+    .card-avatar {
+        width: 90px;
+        height: 90px;
+        border-radius: 50%;
+        border: 4px solid var(--bg-light);
+        position: absolute;
+        bottom: -45px; /* Pulls it down over the edge of the image */
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 5;
+        object-fit: cover;
+        background-color: var(--bg-dark); /* Failsafe if image is transparent */
+    }
+
+    .card-nameplate {
+        background: var(--bg-light);
+        color: var(--text-dark);
+        width: 100%;
+        padding: 50px 10px 15px 10px; /* Extra top padding prevents text from hiding behind avatar */
+        border-radius: 8px;
+        text-align: center;
+        font-weight: 700;
+        font-size: 0.95rem;
+        box-sizing: border-box;
+    }
+
+    /* Footer Links */
+    .view-all-link {
+        display: inline-block;
+        color: var(--text-light);
+        text-decoration: none;
+        font-size: 0.9rem;
+        font-weight: 600;
+        letter-spacing: 1px;
+        border-bottom: 1px solid var(--text-light);
+        padding-bottom: 2px;
+        margin-bottom: 20px;
+        text-transform: uppercase;
+    }
+
+    .upload-section {
+        background-color: var(--bg-light);
+        padding: 40px;
+        text-align: center;
+        width: 100%;
+    }
+
+    .upload-btn {
+        display: inline-block;
+        color: var(--text-dark);
+        text-decoration: none;
+        font-size: 1.1rem;
+        font-weight: 600;
+        letter-spacing: 1px;
+        border-bottom: 1px solid var(--text-dark);
+        padding-bottom: 2px;
+    }
+</style>
+
+<section class="top-section">
+    <div class="hero-podium-wrapper">
+        <div class="hero-text">
+            <h1>CHAMPIONS</h1>
+            <h2>Train hard. Stay focused.</h2>
+            <p>Progress is built daily.</p>
+        </div>
+
+        <div class="podium-container">
+            <div class="podium-pillar second">
+                <img src="https://i.pravatar.cc/150?img=32" alt="Alexandra" class="podium-avatar">
+                <div class="podium-info">
+                    <h3>ALEXANDRA EALA</h3>
+                    <p>5.11 KM Distance</p>
+                </div>
+            </div>
+
+            <div class="podium-pillar first">
+                <img src="https://i.pravatar.cc/150?img=11" alt="Cristiano" class="podium-avatar">
+                <div class="podium-info">
+                    <h3>CRISTIANO RONALDO</h3>
+                    <p>7.09KM Distance</p>
+                </div>
+            </div>
+
+            <div class="podium-pillar third">
+                <img src="https://i.pravatar.cc/150?img=12" alt="Carlos" class="podium-avatar">
+                <div class="podium-info">
+                    <h3>CARLOS YULO</h3>
+                    <p>5.02KM Distance</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toggle-container">
+        <a href="#" class="toggle-btn outline">REGION</a>
+        <a href="#" class="toggle-btn filled">NATIONAL</a>
+    </div>
+</section>
+
+<section class="leaderboard-section">
+    <h2>LEADERBOARD</h2>
+
+    <div class="scrolling-wrapper">
+        <div class="card">
+            <div class="card-image-wrapper">
+                <div class="card-rank">1st</div>
+                <img src="https://images.unsplash.com/photo-1551632811-561732d1e306?q=80&w=400&auto=format&fit=crop" alt="Run Track" class="card-image">
+                <img src="https://i.pravatar.cc/150?img=11" alt="Profile" class="card-avatar">
+            </div>
+            <div class="card-nameplate">CRISTIANO RONALDO</div>
+        </div>
+
+        <div class="card">
+            <div class="card-image-wrapper">
+                <div class="card-rank">2nd</div>
+                <img src="https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?q=80&w=400&auto=format&fit=crop" alt="Run Track" class="card-image">
+                <img src="https://i.pravatar.cc/150?img=32" alt="Profile" class="card-avatar">
+            </div>
+            <div class="card-nameplate">ALEXANDRA EALA</div>
+        </div>
+
+        <div class="card">
+            <div class="card-image-wrapper">
+                <div class="card-rank">3rd</div>
+                <img src="https://images.unsplash.com/photo-1530143311094-34d807799e8f?q=80&w=400&auto=format&fit=crop" alt="Run Track" class="card-image">
+                <img src="https://i.pravatar.cc/150?img=12" alt="Profile" class="card-avatar">
+            </div>
+            <div class="card-nameplate">CARLOS YULO</div>
+        </div>
+
+        <div class="card">
+            <div class="card-image-wrapper">
+                <div class="card-rank">4th</div>
+                <img src="https://images.unsplash.com/photo-1502224562085-639556652f33?q=80&w=400&auto=format&fit=crop" alt="Run Track" class="card-image">
+                <img src="https://i.pravatar.cc/150?img=15" alt="Profile" class="card-avatar">
+            </div>
+            <div class="card-nameplate">MANNY P</div>
+        </div>
+
+        <div class="card">
+            <div class="card-image-wrapper">
+                <div class="card-rank">4th</div>
+                <img src="https://images.unsplash.com/photo-1502224562085-639556652f33?q=80&w=400&auto=format&fit=crop" alt="Run Track" class="card-image">
+                <img src="https://i.pravatar.cc/150?img=15" alt="Profile" class="card-avatar">
+            </div>
+            <div class="card-nameplate">MANNY P</div>
+        </div>
+
+        <div class="card">
+            <div class="card-image-wrapper">
+                <div class="card-rank">4th</div>
+                <img src="https://images.unsplash.com/photo-1502224562085-639556652f33?q=80&w=400&auto=format&fit=crop" alt="Run Track" class="card-image">
+                <img src="https://i.pravatar.cc/150?img=15" alt="Profile" class="card-avatar">
+            </div>
+            <div class="card-nameplate">MANNY P</div>
+        </div>
+
+    </div>
+
+    <a href="viewallboard.cshtml" class="view-all-link">VIEW ALL</a>
+</section>
+
+<section class="upload-section">
+    <a href="uploadtrack.cshtml" class="upload-btn">UPLOAD YOURS NOW</a>
+</section>
+
+

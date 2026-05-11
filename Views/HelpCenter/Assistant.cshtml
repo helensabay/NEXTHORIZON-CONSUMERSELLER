@@ -1,0 +1,171 @@
+@{
+    ViewData["Title"] = "Help Assistant";
+}
+
+@section Styles {
+    <link href="~/HelpCenter/help-center.css" rel="stylesheet" asp-append-version="true" />
+    <link href="~/HelpCenter/chat-component.css" rel="stylesheet" asp-append-version="true" />
+}
+
+<div class="help-center-page help-assistant-page" data-help-view="assistant">
+    <section class="help-center-hero">
+        <div>
+            <div class="help-center-label">Support</div>
+            <h1>Need help? We've got your back.</h1>
+            <p class="help-center-subtitle">
+                Explore quick answers, switch between live-agent and bot guidance, and jump into deeper help topics when you need them.
+            </p>
+        </div>
+        <div class="help-center-actions">
+            <a href="/Help/Contact" class="help-center-action">
+                <i class="fa-solid fa-headset"></i>
+                Contact Support
+            </a>
+            <a href="/Help" class="help-center-action help-center-action-secondary">
+                <i class="fa-solid fa-grid-2"></i>
+                Browse Help Topics
+            </a>
+        </div>
+    </section>
+
+    <section class="help-search-bar" aria-label="Filter help categories">
+        <input
+            id="assistant-category-search"
+            type="search"
+            placeholder="Search help topics..."
+            autocomplete="off"
+            data-help-assistant-search />
+        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+    </section>
+
+    <section class="help-category-carousel" aria-label="Assistant help categories">
+        <button
+            type="button"
+            class="help-carousel-nav help-carousel-nav-prev"
+            data-help-assistant-prev
+            aria-label="Show previous help categories">
+            <svg class="help-carousel-nav-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="M11.75 4.75L6.5 10L11.75 15.25" />
+            </svg>
+        </button>
+
+        <div class="help-carousel-viewport" data-help-assistant-viewport>
+            <div class="help-center-grid help-carousel-track" data-help-assistant-grid>
+                <div class="help-loading-state">Loading help topics...</div>
+            </div>
+        </div>
+
+        <button
+            type="button"
+            class="help-carousel-nav help-carousel-nav-next"
+            data-help-assistant-next
+            aria-label="Show next help categories">
+            <svg class="help-carousel-nav-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path d="M8.25 4.75L13.5 10L8.25 15.25" />
+            </svg>
+        </button>
+    </section>
+
+    <section class="help-content-split">
+        <div class="help-center-faq loaded">
+            <div class="faq-header-mini">
+                <h4>Quick Answers</h4>
+                <button type="button" class="faq-toggle-all faq-toggle-button" data-help-assistant-toggle-all>Expand All</button>
+            </div>
+
+            <div class="faq-category-carousel" aria-label="Quick answer categories">
+                <button
+                    type="button"
+                    class="faq-category-nav"
+                    data-help-assistant-faq-prev
+                    aria-label="Show previous quick answer categories">
+                    <svg class="faq-category-nav-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                        <path d="M11.75 4.75L6.5 10L11.75 15.25" />
+                    </svg>
+                </button>
+
+                <div class="faq-category-viewport" data-help-assistant-faq-viewport>
+                    <div class="faq-category-track" data-help-assistant-faq-track>
+                        <span class="faq-category-chip active">Loading...</span>
+                    </div>
+                </div>
+
+                <button
+                    type="button"
+                    class="faq-category-nav"
+                    data-help-assistant-faq-next
+                    aria-label="Show next quick answer categories">
+                    <svg class="faq-category-nav-icon" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                        <path d="M8.25 4.75L13.5 10L8.25 15.25" />
+                    </svg>
+                </button>
+            </div>
+
+            <div class="faq-list active" data-help-assistant-faq-list>
+                <div class="help-loading-state">Loading FAQs...</div>
+            </div>
+        </div>
+
+        <div class="help-chat" id="helpChat">
+            <div class="help-chat-header">
+                <div class="chat-header-left">
+                    <i class="fas fa-robot" id="chatModeIcon"></i>
+                    <span id="chatModeLabel">Quick Help Chat</span>
+                </div>
+                <div class="chat-header-controls">
+                    <div class="chat-mode-toggle">
+                        <button class="mode-btn active" data-mode="bot" title="Quick Help Bot" type="button">
+                            <i class="fas fa-robot"></i>
+                        </button>
+                        <button class="mode-btn" data-mode="agent" title="Live Agent" type="button">
+                            <i class="fas fa-headset"></i>
+                            <span>Live Agent</span>
+                        </button>
+                    </div>
+                    <button class="chat-resolve-btn" id="resolveChatBtn" title="Resolve current live agent conversation" type="button" hidden>
+                        <i class="fas fa-check"></i>
+                        <span>Resolve</span>
+                    </button>
+                    <button class="chat-clear-btn" id="clearChatBtn" title="Clear current chat" type="button">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="chat-status-bar" id="chatStatusBar">
+                <span class="status-dot online"></span>
+                <span class="status-text">Bot ready to help</span>
+            </div>
+
+            <div class="help-chat-body" id="helpChatBox"></div>
+
+            <div class="chat-quick-solutions" id="quickSolutions">
+                <div class="quick-solutions-header">
+                    <span class="quick-solutions-label">Quick Actions</span>
+                    <button class="quick-solutions-toggle" id="toggleQuickSolutions" title="Toggle quick solutions" type="button">
+                        <span>Hide</span>
+                        <i class="fas fa-chevron-up"></i>
+                    </button>
+                </div>
+
+                <div class="quick-solutions-content" data-help-quick-actions>
+                    <div class="help-loading-state">Loading quick actions...</div>
+                </div>
+            </div>
+
+            <div class="help-chat-input">
+                <input type="text" id="chatInput" placeholder="Type your message here..." />
+                <button id="sendBtn" type="button">Send</button>
+            </div>
+
+            <div class="help-chat-footer">
+                <span class="chat-hint" id="chatHint">Tip: Click a category or question for instant help.</span>
+            </div>
+        </div>
+    </section>
+</div>
+
+@section Scripts {
+    <script src="~/js/help-assistant.js" asp-append-version="true"></script>
+    <script src="~/js/help-assistant-chat.js" asp-append-version="true"></script>
+}

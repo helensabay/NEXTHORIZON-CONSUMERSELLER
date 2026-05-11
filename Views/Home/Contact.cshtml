@@ -1,0 +1,116 @@
+@{
+    ViewData["Title"] = "Contact";
+}
+
+<div class="contact-page">
+    <!-- Hero -->
+    <div class="contact-hero">
+        <div class="container">
+            <p class="contact-eyebrow">GET IN TOUCH</p>
+            <h1>We'd Love to Hear<br>From You</h1>
+            <p class="contact-hero-sub">Questions, feedback, or partnership inquiries — our team is ready to help.</p>
+        </div>
+    </div>
+
+    <!-- Contact Layout -->
+    <div class="contact-layout container">
+        <!-- Form -->
+        <div class="contact-form-wrap">
+            <h2>Send a Message</h2>
+            <form class="contact-form" onsubmit="submitContactForm(event)">
+                <div class="contact-form-row">
+                    <div class="form-group">
+                        <label for="cf-name">Full Name</label>
+                        <input type="text" id="cf-name" placeholder="John Doe" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="cf-email">Email Address</label>
+                        <input type="email" id="cf-email" placeholder="john@example.com" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="cf-subject">Subject</label>
+                    <select id="cf-subject">
+                        <option value="">Select a subject</option>
+                        <option value="order">Order Inquiry</option>
+                        <option value="return">Returns &amp; Exchanges</option>
+                        <option value="product">Product Question</option>
+                        <option value="partnership">Partnership</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="cf-message">Message</label>
+                    <textarea id="cf-message" rows="6" placeholder="Tell us what's on your mind…" required></textarea>
+                </div>
+                <button type="submit" class="contact-submit-btn">Send Message</button>
+            </form>
+        </div>
+
+        <!-- Info Panel -->
+        <div class="contact-info-wrap">
+            <div class="contact-info-card">
+                <div class="ci-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                        <polyline points="22,6 12,13 2,6"></polyline>
+                    </svg>
+                </div>
+                <div>
+                    <h4>Email Us</h4>
+                    <p>support@nexthorizon.ph</p>
+                    <p>We reply within 24 hours</p>
+                </div>
+            </div>
+            <div class="contact-info-card">
+                <div class="ci-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.56 3.38a2 2 0 0 1 1.76-2.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.91a16 16 0 0 0 6.06 6.06l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h4>Call Us</h4>
+                    <p>+63 917 123 4567</p>
+                    <p>Mon – Fri, 9am – 6pm PHT</p>
+                </div>
+            </div>
+            <div class="contact-info-card">
+                <div class="ci-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                        <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
+                </div>
+                <div>
+                    <h4>Visit Us</h4>
+                    <p>Bonifacio Global City</p>
+                    <p>Taguig, Metro Manila</p>
+                </div>
+            </div>
+            <div class="contact-info-card">
+                <div class="ci-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                </div>
+                <div>
+                    <h4>Business Hours</h4>
+                    <p>Monday – Saturday</p>
+                    <p>9:00 AM – 8:00 PM</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+function submitContactForm(event) {
+    event.preventDefault();
+    const name = document.getElementById('cf-name').value;
+    toast.success(`Thanks, ${name}! We'll get back to you soon.`);
+    event.target.reset();
+}
+</script>
+}

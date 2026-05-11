@@ -1,0 +1,237 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Next Horizon</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/admin_css/adminDashboard.css" asp-append-version="true" />
+
+    @await RenderSectionAsync("Styles", required: false)
+
+    <style>
+
+        * {
+            font-family: 'Poppins', sans-serif !important;
+        }
+
+        :root {
+            --sidebar-width: 260px;
+            --header-height: 72px;
+        }
+
+        body {
+            background-color: #f8f9fa;
+            overflow-x: hidden;
+            /* Applying here as a fallback */
+            font-family: 'Poppins', sans-serif;
+        }
+
+        /* Sidebar Base */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: var(--sidebar-width);
+            z-index: 1060; /* Higher than header */
+            background: #fff;
+            border-right: 1px solid #eee;
+            transition: transform 0.3s ease-in-out;
+        }
+
+        /* Overlay for mobile */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 1050;
+            backdrop-filter: blur(2px);
+        }
+
+        .nav-link i {
+            width: 20px; /* Keeps text aligned even if icons vary in width */
+            font-size: 1.1rem;
+            display: inline-flex;
+            justify-content: center;
+        }
+
+        .nav-link.active {
+            background-color: #f8f9fa; /* Light background for active state */
+            border-radius: 8px;
+        }
+
+        .fixed-header {
+            position: fixed;
+            top: 0;
+            right: 0;
+            left: var(--sidebar-width);
+            height: var(--header-height);
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease-in-out;
+        }
+
+        .main-content {
+            margin-left: var(--sidebar-width);
+            margin-top: var(--header-height);
+            padding: 1.5rem;
+            min-height: calc(100vh - var(--header-height));
+            transition: all 0.3s ease-in-out;
+        }
+
+        /* Responsive Breakpoint */
+        @@media (max-width: 991.98px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+                /* When active on mobile, it slides in */
+                .sidebar.show {
+                    transform: translateX(0);
+                }
+
+            .sidebar-overlay.show {
+                display: block;
+            }
+
+            .fixed-header, .main-content {
+                left: 0;
+                margin-left: 0;
+                width: 100%;
+            }
+        }
+
+        /* 1. Fix Notification Badge (Make it a Circle) */
+        .custom-badge {
+            position: absolute;
+            top: -2px;
+            right: -5px;
+            background-color: #000;
+            color: #fff;
+            font-size: 9px;
+            font-weight: bold;
+            width: 16px;
+            height: 16px;
+            border-radius: 50% !important; /* Forces it to be a circle */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #fff;
+        }
+
+
+        /* Prevent blue outline on monochrome search */
+        .form-control:focus {
+            border-color: #000 !important;
+            box-shadow: none !important;
+            background-color: transparent !important;
+        }
+
+        /* Ensure the sidebar links stay monochrome */
+        .sidebar .nav-link {
+            color: #666; /* Default gray text */
+            padding: 10px 20px;
+            transition: all 0.2s ease;
+            border-radius: 0; /* Keeps it sharp and rectangular */
+            font-weight: 500;
+        }
+
+            .sidebar .nav-link.active {
+                background-color: #000 !important;
+                color: #fff !important; /* White text on black background */
+                font-weight: 700;
+                margin-left: -8px; /* Pulls the background slightly left to touch the edge */
+                margin-right: -8px; /* Pulls the background slightly right */
+                padding-left: 28px; /* Compensates for the negative margin to keep text aligned */
+            }
+
+            /* Hover effect for inactive tabs */
+            .sidebar .nav-link:hover:not(.active) {
+                color: #000;
+                background-color: #f8f9fa;
+            }
+
+        /* Black Logout Style */
+        .logout-link {
+            color: #000 !important;
+            font-weight: 700 !important;
+            display: flex;
+            align-items: center;
+        }
+
+            .logout-link:hover {
+                background-color: #000 !important;
+                color: #fff !important; /* Inverts to white on black background */
+            }
+
+        /* 2. Remove Blue Background on Dropdown Items */
+        .notif-item {
+            transition: background-color 0.2s;
+            background-color: #fff !important;
+            color: #000 !important;
+            white-space: normal; /* Allows text to wrap */
+        }
+
+            .notif-item:hover, .notif-item:active, .notif-item:focus {
+                background-color: #f8f9fa !important; /* Light gray instead of blue */
+                color: #000 !important;
+            }
+
+        /* 3. View All Button Hover */
+        .view-all-btn:hover {
+            background-color: #333 !important;
+            color: #fff !important;
+        }
+
+        /* 4. Search Focus Border */
+        .custom-search:focus {
+            border-color: #000 !important;
+            box-shadow: none !important;
+            outline: none !important;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+    <nav class="sidebar shadow-sm" id="adminSidebar">
+        @await Html.PartialAsync("_AdminSidebar")
+    </nav>
+
+    <div class="wrapper">
+        <header class="fixed-header px-3">
+            @await Html.PartialAsync("_AdminHeader")
+        </header>
+
+        <main class="main-content">
+            @RenderBody()
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('adminSidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.toggle('show');
+            overlay.classList.toggle('show');
+        }
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

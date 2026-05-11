@@ -1,0 +1,273 @@
+﻿/* =============================================================
+   UPLOAD ACTIVITY - PROFESSIONAL MONOCHROME DESIGN
+   ============================================================= */
+
+:root {
+    --black: #000000;
+    --white: #ffffff;
+    --light-gray: #f5f5f5;
+    --medium-gray: #e0e0e0;
+    --dark-gray: #666666;
+    --border-radius: 4px; /* Professional sharp corners */
+    --transition: 0.2s ease-in-out;
+}
+
+/* Layout & Container */
+.profile-layout-container {
+    display: flex;
+    width: 100%;
+    min-height: 100vh;
+    background-color: var(--white);
+}
+
+.main-content-wrapper {
+    flex: 1;
+    padding: 10px 0;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.address-container-centered {
+    width: 90%;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+/* Header Section */
+.header-with-action {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 15px;
+}
+
+.page-title {
+    font-size: 1.75rem;
+    font-weight: 900; /* Bold branding from sidebar */
+    text-transform: uppercase;
+    letter-spacing: -0.5px;
+    margin: 0;
+    color: var(--black);
+}
+
+.section-divider {
+    border: 0;
+    border-top: 1px solid var(--medium-gray);
+    margin-bottom: 30px;
+}
+
+/* Activity Form Card */
+.address-form-card {
+    background-color: var(--white);
+    padding: 30px;
+    border: 1px solid var(--medium-gray);
+    border-radius: var(--border-radius);
+}
+
+.form-section-title {
+    font-size: 1rem;
+    font-weight: 800;
+    border-bottom: 2px solid var(--black);
+    display: inline-block;
+    margin-bottom: 30px;
+    padding-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Grid Layout */
+.upload-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr; /* Form slightly wider than dropzone */
+    gap: 40px;
+    margin-bottom: 30px;
+}
+
+/* Input Styling */
+.input-field {
+    margin-bottom: 20px;
+}
+
+    .input-field label {
+        font-weight: 800;
+        font-size: 11px;
+        color: var(--black);
+        margin-bottom: 8px;
+        display: block;
+        text-transform: uppercase;
+    }
+
+.custom-input {
+    width: 100%;
+    padding: 14px;
+    border: 1px solid var(--medium-gray);
+    border-radius: var(--border-radius);
+    font-size: 14px;
+    background-color: var(--white);
+    transition: var(--transition);
+    outline: none;
+}
+
+    .custom-input:focus {
+        border-color: var(--black);
+    }
+
+/* Custom Select Styling */
+.select-wrapper {
+    position: relative;
+}
+
+.select-icon {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    font-size: 0.8rem;
+    color: var(--dark-gray);
+}
+
+/* Dropzone (Matching Payment Methods UI) */
+.upload-dropzone {
+    border: 1px dashed var(--medium-gray); /* Dashed border from image_b90cb0.png */
+    border-radius: var(--border-radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition);
+    background-color: var(--white);
+    text-align: center;
+    padding: 20px;
+}
+
+    .upload-dropzone:hover {
+        background-color: var(--light-gray);
+        border-color: var(--black);
+    }
+
+.empty-icon-wrapper {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 15px;
+}
+
+.light-icon {
+    font-size: 60px;
+    color: #eeeeee; /* Light gray icon from image_b90cb0.png */
+}
+
+.plus-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -20%);
+    font-size: 30px;
+    color: #cccccc;
+    font-weight: 300;
+}
+
+.empty-text {
+    font-weight: 800;
+    font-size: 13px;
+    color: var(--black);
+    text-transform: uppercase;
+    margin-bottom: 5px;
+}
+
+.empty-subtext {
+    color: var(--dark-gray);
+    font-size: 0.85rem;
+}
+
+/* Buttons */
+.form-buttons {
+    display: flex;
+    justify-content: flex-start;
+    border-top: 1px solid var(--light-gray);
+    padding-top: 25px;
+}
+
+.btn-black {
+    background: var(--black);
+    color: var(--white);
+    border: none;
+    padding: 16px 45px;
+    font-weight: 800;
+    font-size: 12px;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: var(--transition);
+}
+
+    .btn-black:hover {
+        opacity: 0.85;
+    }
+
+/* Mobile Adjustments */
+@media (max-width: 992px) {
+    .upload-grid {
+        grid-template-columns: 1fr; /* Stack vertically on small screens */
+    }
+
+    .upload-dropzone {
+        min-height: 250px;
+        order: -1; /* Place dropzone above inputs on mobile */
+    }
+
+    .main-content-wrapper {
+        padding: 20px;
+    }
+}
+
+/* Reset default browser select appearance */
+.select-black {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    cursor: pointer;
+    background-color: #ffffff !important;
+    font-weight: 700 !important;
+    text-transform: uppercase;
+}
+
+/* Custom Select Wrapper for the Icon */
+.select-wrapper-monochrome {
+    position: relative;
+    width: 100%;
+}
+
+/* The Black Chevron Icon */
+.select-icon-black {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: #000000;
+    font-size: 0.9rem;
+    font-weight: 900;
+}
+
+/* High-Contrast Focus State */
+.select-black:focus {
+    border: 2px solid #000000 !important;
+    background-color: #ffffff;
+}
+
+/* Styling the Dropdown Options (Note: Limited CSS support by browsers) */
+.select-black option {
+    background-color: #ffffff;
+    color: #000000;
+    padding: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+/* Hover state for the entire field */
+.input-field:hover .custom-input {
+    border-color: #000000;
+}

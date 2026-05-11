@@ -1,0 +1,166 @@
+@model MyAspNetApp.Models.ViewModels.PromotionApprovalDashboardViewModel
+@{
+    ViewData["Title"] = "Promotion Approvals";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Promotion Approvals</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { margin: 0; font-family: 'Inter', sans-serif; background: #f5efe6; color: #111; }
+        .page { max-width: 1180px; margin: 0 auto; padding: 32px 20px 48px; }
+        .header { display: flex; justify-content: space-between; align-items: end; gap: 16px; margin-bottom: 24px; }
+        .header h1 { margin: 0; font-size: 2.2rem; }
+        .header p { margin: 8px 0 0; color: #675f56; }
+        .nav { display: flex; gap: 12px; flex-wrap: wrap; }
+        .nav a { text-decoration: none; background: #111; color: #fff; padding: 10px 16px; border-radius: 999px; font-weight: 700; }
+        .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+        .stat { background: #fff; border: 1px solid #ddd2c5; border-radius: 18px; padding: 18px; }
+        .stat small { display:block; color:#675f56; text-transform:uppercase; letter-spacing:.12em; font-weight:700; }
+        .stat strong { display:block; margin-top:8px; font-size:2rem; }
+        .layout { display: grid; grid-template-columns: 1.1fr .9fr; gap: 20px; }
+        .panel { background:#fff; border:1px solid #ddd2c5; border-radius:22px; padding:20px; }
+        .panel h2 { margin: 0; }
+        .panel p { color:#675f56; }
+        .queue { display:grid; gap:14px; }
+        .card { border:1px solid #e5dbcf; border-radius:18px; padding:14px; display:flex; justify-content:space-between; align-items:center; gap:16px; }
+        .meta h3 { margin:0 0 6px; }
+        .meta p { margin:0; color:#675f56; }
+        .chips { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+        .chip, .tag { padding:6px 10px; border-radius:999px; font-size:.82rem; font-weight:700; }
+        .chip { background:#f2eadf; color:#675f56; }
+        .tag.approved { background:#d8ecdd; color:#1a6a38; }
+        .tag.rejected { background:#f2d8d4; color:#a83428; }
+        .actions { display:flex; gap:10px; flex-wrap:wrap; }
+        .actions button { border:0; border-radius:999px; padding:10px 14px; font-weight:700; cursor:pointer; }
+        .approve { background:#d8ecdd; color:#1a6a38; }
+        .reject { background:#f2d8d4; color:#a83428; }
+        .list { display:grid; gap:12px; }
+        .row { display:flex; justify-content:space-between; gap:12px; border-bottom:1px solid #eee2d5; padding-bottom:12px; }
+        .row:last-child { border-bottom:0; padding-bottom:0; }
+        .empty { border:1px dashed #ddd2c5; border-radius:18px; padding:24px; text-align:center; color:#675f56; }
+        .toast { position:fixed; right:24px; bottom:24px; background:#111; color:#fff; padding:14px 18px; border-radius:12px; }
+        @@media (max-width: 900px) { .stats, .layout { grid-template-columns:1fr; } .card { flex-direction:column; align-items:flex-start; } }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <div class="header">
+            <div>
+                <h1>Promotion Approval Panel</h1>
+                <p>Seller-submitted promotions stay pending until an admin approves them.</p>
+            </div>
+            <div class="nav">
+                <a href="/Promotions/Promotion">Seller Promotions</a>
+                <a href="/Admin/ProductApprovals">Product Approvals</a>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat"><small>Pending</small><strong>@Model.PendingPromotions.Count</strong></div>
+            <div class="stat"><small>Approved</small><strong>@Model.ApprovedPromotions.Count</strong></div>
+            <div class="stat"><small>Rejected</small><strong>@Model.RejectedPromotions.Count</strong></div>
+        </div>
+
+        <div class="layout">
+            <section class="panel">
+                <h2>Pending Promotions</h2>
+                <p>Approve or reject new promotion submissions.</p>
+                @if (Model.PendingPromotions.Any())
+                {
+                    <div class="queue">
+                        @foreach (var promo in Model.PendingPromotions)
+                        {
+                            <article class="card">
+                                <div class="meta">
+                                    <h3>@promo.Name</h3>
+                                    <p>@promo.Type</p>
+                                    <div class="chips">
+                                        <span class="chip">@promo.BannerSize</span>
+                                        <span class="chip">Status: @promo.Status</span>
+                                    </div>
+                                </div>
+                                <div class="actions">
+                                    <form asp-action="ApprovePromotion" asp-controller="Admin" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@promo.Id" />
+                                        <button type="submit" class="approve">Approve</button>
+                                    </form>
+                                    <form asp-action="RejectPromotion" asp-controller="Admin" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@promo.Id" />
+                                        <button type="submit" class="reject">Reject</button>
+                                    </form>
+                                </div>
+                            </article>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="empty">No pending promotions.</div>
+                }
+            </section>
+
+            <div style="display:grid; gap:20px;">
+                <section class="panel">
+                    <h2>Approved Promotions</h2>
+                    <p>Promotions already cleared by admin.</p>
+                    @if (Model.ApprovedPromotions.Any())
+                    {
+                        <div class="list">
+                            @foreach (var promo in Model.ApprovedPromotions)
+                            {
+                                <div class="row">
+                                    <div>
+                                        <strong>@promo.Name</strong>
+                                        <div style="color:#675f56;">@promo.Type</div>
+                                    </div>
+                                    <span class="tag approved">Approved</span>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="empty">No approved promotions.</div>
+                    }
+                </section>
+
+                <section class="panel">
+                    <h2>Rejected Promotions</h2>
+                    <p>Promotions that need changes before approval.</p>
+                    @if (Model.RejectedPromotions.Any())
+                    {
+                        <div class="list">
+                            @foreach (var promo in Model.RejectedPromotions)
+                            {
+                                <div class="row">
+                                    <div>
+                                        <strong>@promo.Name</strong>
+                                        <div style="color:#675f56;">@promo.Type</div>
+                                    </div>
+                                    <span class="tag rejected">Rejected</span>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="empty">No rejected promotions.</div>
+                    }
+                </section>
+            </div>
+        </div>
+    </div>
+
+    @if (TempData["AdminSuccessMessage"] != null)
+    {
+        <div class="toast">@TempData["AdminSuccessMessage"]</div>
+    }
+</body>
+</html>

@@ -1,0 +1,129 @@
+@model NextHorizon.Models.SellerDashboardViewModel
+@{
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+@section Styles{
+    <link rel="stylesheet" href="~/css/sellerdashboard.css" asp-append-version="true" />
+}
+
+@{
+    ViewData["Title"] = "Seller Dashboard";
+    ViewData["DashboardHeading"] = "Dashboard";
+    ViewData["SellerName"] = Model.SellerName;
+}
+
+<div class="greeting">
+    <h1 id="greeting-text">Good Morning, @Model.SellerName!</h1>
+    <p>@Model.CurrentDate.ToString("dddd, MMMM dd, yyyy") &nbsp;<span id="live-time" style="font-weight:600;"></span></p>
+</div>
+
+@section Scripts {
+<script>
+    function updateGreetingAndTime() {
+        const now = new Date();
+        const hour = now.getHours();
+        const name = "@Model.SellerName";
+
+        let greeting;
+        if (hour >= 5 && hour < 12) greeting = 'Good Morning';
+        else if (hour >= 12 && hour < 18) greeting = 'Good Afternoon';
+        else greeting = 'Good Evening';
+
+        document.getElementById('greeting-text').textContent = greeting + ', ' + name + '!';
+
+        const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        document.getElementById('live-time').textContent = timeStr;
+    }
+
+    updateGreetingAndTime();
+    setInterval(updateGreetingAndTime, 1000);
+</script>
+}
+
+<section class="section">
+    <h2 class="section-title">Critical Action</h2>
+    <div class="cards-grid">
+        <a class="card critical-card critical-action-link" asp-controller="Dashboard" asp-action="OrderManagement" asp-route-status="Return">
+            <div class="card-content">
+                <div class="card-info">
+                    <span class="card-label">Return Requests</span>
+                </div>
+                <div class="card-badge urgent">@Model.ReturnRequests</div>
+            </div>
+        </a>
+
+        <a class="card critical-card critical-action-link" asp-controller="Dashboard" asp-action="OrderManagement" asp-route-status="Pending">
+            <div class="card-content">
+                <div class="card-info">
+                    <span class="card-label">Pending Orders</span>
+                </div>
+                <div class="card-badge pending">@Model.PendingOrders</div>
+            </div>
+        </a>
+
+        <a class="card critical-card critical-action-link" asp-controller="Seller" asp-action="Index">
+            <div class="card-content">
+                <div class="card-info">
+                    <span class="card-label">Low Stock Alerts</span>
+                </div>
+                <div class="card-badge alert">@Model.LowStockAlerts</div>
+            </div>
+        </a>
+    </div>
+</section>
+
+<div class="bottom-grid">
+    <section class="section">
+        <h2 class="section-title">Recent Orders</h2>
+        <div class="table-container">
+            <table class="orders-table">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Product</th>
+                        <th>SKU</th>
+                        <th>Size</th>
+                        <th>Customer</th>
+                        <th>Time</th>
+                        <th>Preferred Courier</th>
+                        <th>Status</th>
+                        <th>Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var order in Model.RecentOrders)
+                    {
+                        var orderDisplayStatus = string.IsNullOrWhiteSpace(order.EffectiveStatus)
+                            ? order.Status ?? string.Empty
+                            : order.EffectiveStatus;
+                        <tr>
+                            <td>@order.OrderID</td>
+                            <td>
+                                <div class="recent-product-cell">
+                                    <img src="@order.ProductImage"
+                                         alt="@order.ProductName"
+                                         onerror="this.style.visibility='hidden'" />
+                                    <div class="recent-product-meta">
+                                        <div class="recent-product-name">@order.ProductName</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>@order.Sku</td>
+                            <td>@order.Size</td>
+                            <td>@order.FullName</td>
+                            <td>@order.OrderDate.ToString("MMM dd, yyyy h:mm tt")</td>
+                            <td>@order.Courier</td>
+                            <td>
+                                <span class="status-badge @(orderDisplayStatus.ToLower().Replace(" ", "-"))">
+                                    @orderDisplayStatus
+                                </span>
+                            </td>
+                            <td>&#8369;@order.Amount.ToString("N2")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>

@@ -1,0 +1,92 @@
+@using System.Text.Json
+@{
+    var apiMode = (ViewData["ApiMode"]?.ToString() ?? "main").ToLowerInvariant();
+    var actorUserId = ViewData["ActorUserId"] as int? ?? 0;
+    var conversationId = ViewData["ConversationId"] as int?;
+    var consumerId = ViewData["ConsumerId"] as int?;
+    var orderId = ViewData["OrderId"] as int?;
+    var debugUserId = ViewData["DebugUserId"] as int?;
+    var devMessagingEnabled = ViewData["DevMessagingEnabled"] as bool? ?? false;
+    var currentUserId = actorUserId > 0 ? actorUserId.ToString() : string.Empty;
+
+    var bootConfig = new
+    {
+        apiMode,
+        actorUserId,
+        currentUserId,
+        initialConversationId = conversationId,
+        consumerId,
+        orderId,
+        debugUserId,
+        devMessagingEnabled
+    };
+}
+
+@{
+    ViewData["Title"] = "Seller Messenger";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+@section Styles {
+<link rel="stylesheet" href="~/css/messenger.css" asp-append-version="true" />
+}
+
+<section class="seller-messenger-page" data-seller-messenger-root>
+    <aside class="conversations-panel" aria-label="Conversations">
+        <div class="conversations-panel-header">
+            <div class="conversations-panel-title">Inbox</div>
+            <p class="conversations-panel-subtitle">Manage buyer conversations and order questions.</p>
+        </div>
+
+        <div class="search-conversations">
+            <input type="text" placeholder="Search conversations" class="search-input" data-conversation-search>
+        </div>
+
+        <div class="message-status" data-messenger-status hidden></div>
+        <div class="conversations-list" data-conversations-list></div>
+        <div class="no-results" data-no-results hidden>No conversations found.</div>
+    </aside>
+
+    <section class="chat-panel" aria-label="Active chat panel">
+        <div class="chat-header">
+            <div class="chat-user-info">
+                <div class="chat-avatar">
+                    <div class="avatar-placeholder" data-chat-avatar>--</div>
+                </div>
+
+                <div class="chat-heading">
+                    <h3 class="chat-user-name" data-chat-title>Conversation</h3>
+                    <p class="status-online" data-chat-subtitle>Select a conversation to start messaging.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="messages-container" data-messages-container>
+            <div class="empty-state">Select a conversation from the left to view messages.</div>
+        </div>
+
+        <div class="composer-shell">
+            <div class="composer-attachment-preview" data-composer-attachment-preview hidden></div>
+            <div class="message-input-area">
+                <input type="file" class="message-attachment-input" data-message-attachment-input accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" hidden>
+                <button class="attachment-btn" type="button" title="Attach image" aria-label="Attach image" data-attach-message disabled>
+                    <i class="fas fa-image"></i>
+                </button>
+                <input type="text" class="message-input" placeholder="Type a message" data-message-input disabled>
+                <button class="send-btn" type="button" title="Send" aria-label="Send message" data-send-message disabled>
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <button type="button" class="messenger-hidden-refresh" data-refresh-conversations tabindex="-1" aria-hidden="true">Refresh</button>
+</section>
+
+@section Scripts {
+<script>
+    window.sellerMessengerConfig = @Html.Raw(JsonSerializer.Serialize(bootConfig));
+</script>
+<script src="~/js/messenger.js" asp-append-version="true"></script>
+}
+

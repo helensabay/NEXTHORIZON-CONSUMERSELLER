@@ -1,0 +1,259 @@
+﻿@{
+    ViewData["Title"] = "Daily Fitness Overview";
+}
+
+
+
+<div class="centered-layout-container">
+    <div class="fitness-content-wrapper">
+        <div class="fitness-container">
+            <div class="back-navigation">
+                <a asp-controller="AccountProfile" asp-action="ProfileView"><i class="bi bi-chevron-left"></i> Back</a>
+            </div>
+
+            <div class="fitness-header">
+                <h1>FITNESS OVERVIEW <span>(Today)</span></h1>
+            </div>
+
+            <div class="period-navbar">
+                <a asp-controller="FitnessOverview"  asp-action="DailyFitnessOverview" class="period-btn active">DAILY</a>
+                <a asp-controller="FitnessOverview" asp-action="WeeklyFitnessOverview" class="period-btn">Weekly</a>
+                <a asp-controller="FitnessOverview"  asp-action="MonthlyFitnessOverview" class="period-btn">MONTHLY</a>
+                <a asp-controller="FitnessOverview" asp-action="YearlyFitnessOverview" class="period-btn">YEARLY</a>
+            </div>
+
+            <div class="fitness-charts-grid">
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <small>Total Distance</small>
+                        <h3>42.2 KM</h3>
+                    </div>
+                    <div class="chart-body">
+                        <div class="chart-y-axis">
+                            <span>75</span><span>50</span><span>25</span><span>0</span>
+                        </div>
+                        <div class="chart-placeholder">
+                            <div class="mock-grid"></div>
+                            <div class="bar-container">
+                                <div class="bar" style="height: 15%; left: 25%;"></div>
+                                <div class="bar" style="height: 18%; left: 35%;"></div>
+                                <div class="bar" style="height: 25%; left: 75%;"></div>
+                            </div>
+                        </div>
+                        <div class="chart-labels">
+                            <span>12 AM</span><span>6 AM</span><span>12 PM</span><span>6 PM</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <small>Total Time</small>
+                        <h3>04:35:20</h3>
+                    </div>
+                    <div class="chart-body">
+                        <div class="chart-y-axis">
+                            <span>6</span><span>4</span><span>2</span><span>0</span>
+                        </div>
+                        <div class="chart-placeholder">
+                            <div class="mock-grid"></div>
+                            <div class="bar-container">
+                                <div class="bar" style="height: 75%; left: 45%;"></div>
+                            </div>
+                        </div>
+                        <div class="chart-labels">
+                            <span>12 AM</span><span>6 AM</span><span>12 PM</span><span>6 PM</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <small>Count</small>
+                        <h3>3,581</h3>
+                    </div>
+                    <div class="chart-body">
+                        <div class="chart-y-axis">
+                            <span>6,000</span><span>4,000</span><span>2,000</span><span>0</span>
+                        </div>
+                        <div class="chart-placeholder">
+                            <div class="mock-grid"></div>
+                            <div class="bar-container">
+                                <div class="bar" style="height: 25%; left: 25%;"></div>
+                                <div class="bar" style="height: 30%; left: 35%;"></div>
+                                <div class="bar" style="height: 40%; left: 75%;"></div>
+                            </div>
+                        </div>
+                        <div class="chart-labels">
+                            <span>12 AM</span><span>6 AM</span><span>12 PM</span><span>6 PM</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Expanded Layout (Consistent across all 4 views) */
+    .centered-layout-container {
+        display: block;
+        width: 100%;
+        min-height: 100vh;
+        background-color: #fff;
+    }
+
+    .fitness-content-wrapper {
+        width: 100%;
+        max-width: 100%; /* Expanded width */
+        margin: 0;
+        padding: 20px 60px 40px 60px; /* Unified horizontal padding */
+    }
+
+    .back-navigation a {
+        text-decoration: none;
+        color: #000;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .fitness-header h1 {
+        font-size: 1.8rem;
+        font-weight: 800;
+        margin: 15px 0;
+    }
+
+        .fitness-header h1 span {
+            font-weight: 400;
+            font-size: 1.2rem;
+            color: #444;
+        }
+
+    /* Period Navbar */
+    .period-navbar {
+        display: flex;
+        background-color: #000;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-bottom: 30px;
+        width: 100%;
+    }
+
+    .period-btn {
+        flex: 1;
+        background: transparent;
+        color: #fff;
+        border: none;
+        padding: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        text-align: center;
+        text-decoration: none;
+        cursor: pointer;
+        border-right: 1px solid #444;
+    }
+
+        .period-btn.active {
+            background-color: #777;
+        }
+
+    /* Charts Grid */
+    .fitness-charts-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+        width: 100%;
+    }
+
+    .chart-card {
+        background-color: #f0f0f0;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+
+    .chart-header {
+        background-color: #000;
+        color: #fff;
+        padding: 12px 15px;
+    }
+
+        .chart-header small {
+            display: block;
+            font-size: 0.75rem;
+            opacity: 0.8;
+        }
+
+        .chart-header h3 {
+            margin: 0;
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+    .chart-body {
+        padding: 15px;
+        position: relative;
+    }
+
+    .chart-y-axis {
+        position: absolute;
+        right: 10px;
+        top: 15px;
+        height: 180px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        font-size: 0.65rem;
+        color: #666;
+    }
+
+    .chart-placeholder {
+        height: 180px;
+        width: calc(100% - 35px);
+        position: relative;
+        border: 1px solid #000;
+        background: #e8e8e8;
+    }
+
+    .mock-grid {
+        height: 100%;
+        width: 100%;
+        background-image: linear-gradient(#ccc 1px, transparent 1px), linear-gradient(90deg, #ccc 1px, transparent 1px);
+        background-size: 33.33% 33.33%;
+    }
+
+    .bar-container {
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+        height: 100%;
+    }
+
+    .bar {
+        position: absolute;
+        bottom: 0;
+        width: 15px;
+        background-color: #000;
+    }
+
+    .chart-labels {
+        display: flex;
+        justify-content: space-between;
+        padding-right: 35px;
+        margin-top: 5px;
+        font-size: 0.65rem;
+        color: #666;
+    }
+
+    /* Responsive scaling */
+    @@media (max-width: 1200px) {
+        .fitness-charts-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .fitness-content-wrapper {
+            padding: 20px 20px;
+        }
+    }
+
+</style>

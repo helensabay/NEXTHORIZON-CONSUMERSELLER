@@ -1,0 +1,411 @@
+@model NextHorizon.Models.FinanceViewModel
+
+@{
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+@section Styles{
+    <link rel="stylesheet" href="~/css/finance.css" />
+}
+
+@{
+    ViewData["Title"] = "Finance";
+    ViewData["DashboardHeading"] = "Finance";
+    ViewData["SellerName"] = Model.SellerName;
+}
+
+<!-- Success/Error Messages -->
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<section class="section">
+    <h3 class="finance-section-title">Finance Overview</h3>
+    <div class="cards-grid performance-grid">
+        <!-- Available Balance Card - Clickable to Withdraw -->
+        <div class="card performance-card clickable-card" 
+             onclick="window.location.href='@Url.Action("Withdraw", "Dashboard")'">
+            <div class="card-header">
+                <span class="card-label">Available Balance</span>
+            </div>
+            <div class="card-body">
+                <div class="metric-value">&#8369;@Model.AvailableBalance.ToString("N2")</div>
+                <div class="metric-growth positive">
+                    <i class="fas fa-wallet"></i>
+                    <span>Ready to withdraw</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Payout Card - Clickable to Pending Payouts -->
+        <div class="card performance-card clickable-card" 
+             onclick="window.location.href='@Url.Action("TransactionHistory", "Dashboard", new { status = "Pending" })'">
+            <div class="card-header">
+                <span class="card-label">Pending Balance</span>
+
+            </div>
+            <div class="card-body">
+                <div class="metric-value">&#8369;@Model.PendingBalance.ToString("N2")</div>
+                <div class="metric-growth">
+                    <i class="fas fa-clock"></i>
+                    <span>pending request(s)</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Total Gross Card -->
+        <div class="card performance-card">
+            <div class="card-header">
+                <span class="card-label">Total Gross</span>
+            </div>
+            <div class="card-body">
+                <div class="metric-value">&#8369;@Model.TotalEarned.ToString("N2")</div>
+                <div class="metric-growth positive">
+                    <i class="fas fa-check-circle"></i>
+                    <span>All-time sales</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section">
+    <h3 class="finance-section-title">Revenue Snapshot</h3>
+    <div class="cards-grid">
+        <div class="card">
+            <span class="card-label">Today Revenue</span>
+            <div class="card-value">&#8369;@Model.TodayRevenue.ToString("N2")</div>
+        </div>
+        <div class="card">
+            <span class="card-label">This Month Revenue</span>
+            <div class="card-value">&#8369;@Model.ThisMonthRevenue.ToString("N2")</div>
+        </div>
+        <div class="card">
+            <span class="card-label">Last Updated</span>
+            <div class="card-value">@(Model.CurrentDate.Year > 2000 ? 
+                Model.CurrentDate.ToString("MMM dd, yyyy hh:mm tt") : 
+                DateTime.Now.ToString("MMM dd, yyyy hh:mm tt"))</div>
+        </div>
+    </div>
+</section>
+
+<section class="section">
+    <div class="transaction-header">
+        <h3 class="finance-section-title">Transaction History</h3> 
+        <div class="page-actions">
+            <a class="link-btn" asp-controller="Dashboard" asp-action="TransactionHistory">
+                <i class="fas fa-list"></i> See All
+            </a>
+        </div>
+    </div>
+    <div class="table-container">
+        <table class="orders-table">
+            <thead>
+                <tr>
+                    <th>Reference</th>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Method</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (var i = 0; i < Math.Min(5, Model.Transactions.Count); i++)
+                {
+                    var tx = Model.Transactions[i];
+                    <tr>
+                        <td>@tx.ReferenceId</td>
+                        <td>@tx.TransactionDate.ToString("MMM dd, yyyy hh:mm tt")</td>
+                        <td>
+                            <span class="transaction-type">
+                                @if (tx.Type.Contains("Withdrawal"))
+                                {
+                                    <i class="fas fa-arrow-up text-warning"></i>
+                                }
+                                else if (tx.Type.Contains("Payout"))
+                                {
+                                    <i class="fas fa-arrow-down text-success"></i>
+                                }
+                                else if (tx.Type.Contains("Refund"))
+                                {
+                                    <i class="fas fa-undo text-danger"></i>
+                                }
+                                else
+                                {
+                                    <i class="fas fa-exchange-alt"></i>
+                                }
+                                @tx.Type
+                            </span>
+                        </td>
+                        <td>@tx.Method</td>
+                        <td class="@(tx.Amount < 0 ? "text-danger" : "text-success")">
+                            @if (tx.Amount < 0)
+                            {
+                                <span>- &#8369;@Math.Abs(tx.Amount).ToString("N2")</span>
+                            }
+                            else
+                            {
+                                <span>+ &#8369;@tx.Amount.ToString("N2")</span>
+                            }
+                        </td>
+                        <td>
+                            <span class="badge status @(tx.Status.Equals("Pending", StringComparison.OrdinalIgnoreCase) ? "pending" : 
+                                                    tx.Status.Equals("Completed", StringComparison.OrdinalIgnoreCase) ? "complete" : 
+                                                    tx.Status.Equals("Failed", StringComparison.OrdinalIgnoreCase) ? "failed" : "")">
+                                @tx.Status
+                            </span>
+                        </td>
+                        <td>
+                            <button onclick="openTransactionModal('@tx.ReferenceId')" class="btn-view" title="View Details">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </td>
+                    </tr>
+                }
+                @if (!Model.Transactions.Any())
+                {
+                    <tr>
+                        <td colspan="7" class="empty-state-cell">
+                            <div class="empty-state-content">
+                                <div class="empty-state-icon">
+                                    <i class="fas fa-receipt"></i>
+                                </div>
+                                <h5 class="empty-state-title">No transactions yet</h5>
+                                <p class="empty-state-message">Your transactions will appear here</p>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Finance Quick Actions Cards -->
+    <div class="finance-cards">
+        <a asp-controller="Dashboard" asp-action="MyBalance" class="finance-card">
+            <div class="finance-card-icon">
+                <i class="fas fa-wallet"></i>
+            </div>
+            <div class="finance-card-info">
+                <h4>My Balance</h4>
+                <p>View your available balance</p>
+                <small class="text-muted">&#8369;@Model.AvailableBalance.ToString("N2")</small>
+            </div>
+        </a>
+
+        <a asp-controller="Dashboard" asp-action="PayoutAccounts" class="finance-card">
+            <div class="finance-card-icon">
+                <i class="fas fa-university"></i>
+            </div>
+            <div class="finance-card-info">
+                <h4>Payout Accounts</h4>
+                <p>Manage payout methods</p>
+            </div>
+        </a>
+    </div>
+</section>
+
+<!-- Transaction Details Modal -->
+<div id="transactionModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Transaction Details</h3>
+            <button class="modal-close" onclick="closeTransactionModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="modalBody">
+            <div class="modal-loader">
+                <i class="fas fa-spinner"></i>
+                <p>Loading transaction details...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function openTransactionModal(referenceId) {
+            document.getElementById('transactionModal').style.display = 'block';
+            document.body.style.overflow = 'hidden';
+            
+            // Load transaction details via AJAX
+            fetch(`/Dashboard/GetTransactionDetailsSP?referenceId=${encodeURIComponent(referenceId)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        displayTransactionDetails(data.transaction);
+                    } else {
+                        document.getElementById('modalBody').innerHTML = `
+                            <div class="empty-state">
+                                <i class="fas fa-exclamation-circle fa-3x mb-3 text-danger"></i>
+                                <h5>Error Loading Details</h5>
+                                <p class="text-muted">${data.message || 'Unable to load transaction details'}</p>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('modalBody').innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-exclamation-circle fa-3x mb-3 text-danger"></i>
+                            <h5>Error</h5>
+                            <p class="text-muted">An error occurred while loading transaction details</p>
+                        </div>
+                    `;
+                });
+        }
+
+        function displayTransactionDetails(tx) {
+            const typeIcon = getTypeIcon(tx.type);
+            const statusClass = getStatusClass(tx.status);
+            const amountClass = tx.amount < 0 ? 'amount-negative' : 'amount-positive';
+            const amountSign = tx.amount < 0 ? '-' : '+';
+            const absoluteAmount = Math.abs(tx.amount).toFixed(2);
+
+            // Check if this is a pending withdrawal (from withdrawal_requests table)
+            const isPendingWithdrawal = tx.source === 'withdrawal_request' && tx.status === 'Pending';
+            
+            const pendingWithdrawalInfo = isPendingWithdrawal ? `
+                <div class="info-message">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Pending Withdrawal:</strong> This withdrawal request is still pending approval. Funds are still in your available balance.
+                </div>
+            ` : '';
+
+            // Build additional details HTML if they exist
+            let additionalDetailsHtml = '';
+            if (tx.additionalDetails && Object.keys(tx.additionalDetails).length > 0) {
+                let detailsRows = '';
+                for (const [key, value] of Object.entries(tx.additionalDetails)) {
+                    detailsRows += `
+                        <div class="detail-row">
+                            <span class="detail-label">${key}</span>
+                            <span class="detail-value">${value || 'N/A'}</span>
+                        </div>
+                    `;
+                }
+                
+                additionalDetailsHtml = `
+                    <div class="detail-card">
+                        <h4 style="margin-top: 0; margin-bottom: 15px; font-size: 1rem; color: #4a5568;">Additional Details</h4>
+                        ${detailsRows}
+                    </div>
+                `;
+            }
+
+            const detailsHtml = `
+                <div class="transaction-detail-grid">
+                    ${pendingWithdrawalInfo}
+                    
+                    <div class="detail-card" style="display: flex; align-items: center; gap: 15px;">
+                        <div class="type-icon-lg ${typeIcon.class}">
+                            <i class="${typeIcon.icon}"></i>
+                        </div>
+                        <div>
+                            <h4 style="margin: 0 0 5px 0; font-size: 1.1rem; color: #1a202c;">${tx.type}</h4>
+                            <span class="status-badge ${statusClass}">${tx.status}</span>
+                        </div>
+                    </div>
+
+                    <div class="detail-card">
+                        <div class="detail-row">
+                            <span class="detail-label">Reference Number</span>
+                            <span class="detail-value">${tx.referenceId}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Transaction Date</span>
+                            <span class="detail-value">${new Date(tx.transactionDate).toLocaleString()}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Transaction Type</span>
+                            <span class="detail-value">${tx.type}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Payment Method</span>
+                            <span class="detail-value">${tx.method || 'N/A'}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Amount</span>
+                            <span class="detail-value ${amountClass}">${amountSign} ₱${absoluteAmount}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Status</span>
+                            <span class="detail-value">
+                                <span class="status-badge ${statusClass}">${tx.status}</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    ${additionalDetailsHtml}
+                    
+                    <div class="detail-card" style="background: #f7fafc;">
+                        <div class="detail-row">
+                            <span class="detail-label">Source</span>
+                            <span class="detail-value">${tx.source === 'wallet_transaction' ? 'Completed Transaction' : 'Pending Withdrawal Request'}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('modalBody').innerHTML = detailsHtml;
+        }
+
+        function getTypeIcon(type) {
+            if (type.includes('Withdrawal')) {
+                return { icon: 'fas fa-arrow-up', class: 'withdrawal' };
+            } else if (type.includes('Payout')) {
+                return { icon: 'fas fa-arrow-down', class: 'payout' };
+            } else if (type.includes('Refund')) {
+                return { icon: 'fas fa-undo', class: 'refund' };
+            } else {
+                return { icon: 'fas fa-exchange-alt', class: 'other' };
+            }
+        }
+
+        function getStatusClass(status) {
+            status = status.toLowerCase();
+            if (status === 'completed') return 'completed';
+            if (status === 'pending') return 'pending';
+            if (status === 'failed') return 'failed';
+            return '';
+        }
+
+        function closeTransactionModal() {
+            document.getElementById('transactionModal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+            document.getElementById('modalBody').innerHTML = `
+                <div class="modal-loader">
+                    <i class="fas fa-spinner"></i>
+                    <p>Loading transaction details...</p>
+                </div>
+            `;
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('transactionModal');
+            if (event.target === modal) {
+                closeTransactionModal();
+            }
+        }
+
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeTransactionModal();
+            }
+        });
+    </script>   
+}

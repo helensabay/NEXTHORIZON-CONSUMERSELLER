@@ -1,0 +1,107 @@
+@{
+    ViewData["Title"] = "My Activity";
+    Layout = "_ProfileLayout";
+}
+
+@section Styles {
+    <link href="~/MemberTracker/css/MyActivity.css" rel="stylesheet" asp-append-version="true" />
+}
+
+<div class="page-wrapper" data-activities-url="@Url.Action("MemberActivities", "AccountProfile")">
+    <div class="upload-container">
+        <div class="section-title">My Activity</div>
+
+        <div class="header-row">
+            <div class="tabs">
+                <a asp-controller="AccountProfile" asp-action="UploadActivity" class="tab">Upload Activity</a>
+                <a asp-controller="AccountProfile" asp-action="MyActivity" class="tab active">My Activity</a>
+            </div>
+
+            <div class="filter-group">
+                <div class="select-wrapper">
+                    <select id="sortSelect" class="form-control">
+                        <option value="createdAt_desc">Sort By</option>
+                        <option value="activityDate_desc">Date</option>
+                        <option value="longestDistance">Distance</option>
+                        <option value="bestPace">Average Pace</option>
+                    </select>
+                </div>
+
+                <div class="select-wrapper">
+                    <select id="dateFilterSelect" class="form-control">
+                        <option value="all">Filter by Date</option>
+                        <option value="today">Today</option>
+                        <option value="thisWeek">This Week</option>
+                        <option value="thisMonth">This Month</option>
+                        <option value="last7Days">Last 7 Days</option>
+                        <option value="last30Days">Last 30 Days</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div id="activityStatus" class="no-activities" style="display:none;"></div>
+
+        <div class="activity-grid-shell">
+            <div class="activity-grid" id="activityGrid" aria-live="polite" aria-busy="false" data-loading="false">
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="activity-modal" class="activity-modal">
+    <div class="activity-modal-content">
+        <button type="button" class="close-modal" onclick="closeActivityModal()"
+                aria-label="Close activity details">&times;</button>
+        <div class="activity-modal-stage">
+            <div class="activity-modal-stage__header">
+                <span class="activity-modal-stage__eyebrow">Proof Upload</span>
+            </div>
+            <div class="activity-modal-frame">
+                <img id="modal-activity-img" src="" alt="Activity Image" />
+                <div id="modal-activity-empty" class="activity-modal-empty hidden" aria-hidden="true">
+                    <span class="activity-modal-empty__label">No image available</span>
+                </div>
+            </div>
+        </div>
+        <div id="modal-activity-info" class="modal-activity-info">
+            <div class="modal-activity-header">
+                <div class="modal-activity-overline">Activity Entry</div>
+                <div class="modal-activity-summary">
+                    <h2 id="modal-activity-title" class="modal-activity-title"></h2>
+                    <span id="modal-activity-type" class="modal-activity-type"></span>
+                </div>
+            </div>
+
+            <div class="modal-activity-primary">
+                <div class="detail-card detail-card--metric">
+                    <span class="detail-card__label">Distance</span>
+                    <span id="modal-activity-distance" class="detail-card__value"></span>
+                </div>
+                <div class="detail-card detail-card--metric">
+                    <span class="detail-card__label">Avg Pace</span>
+                    <span id="modal-activity-pace" class="detail-card__value"></span>
+                </div>
+                <div class="detail-card detail-card--metric">
+                    <span class="detail-card__label">Moving Time</span>
+                    <span id="modal-activity-time" class="detail-card__value"></span>
+                </div>
+                <div class="detail-card detail-card--metric">
+                    <span class="detail-card__label">Steps</span>
+                    <span id="modal-activity-steps" class="detail-card__value"></span>
+                </div>
+            </div>
+
+            <div class="modal-activity-secondary">
+                <div class="detail-card detail-card--row">
+                    <strong>Date</strong>
+                    <span id="modal-activity-date"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/MemberTracker/js/MyActivity.js" asp-append-version="true"></script>
+}

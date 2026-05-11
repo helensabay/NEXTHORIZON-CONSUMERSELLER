@@ -1,0 +1,186 @@
+@model MyAspNetApp.Models.OrderConfirmationViewModel
+
+@{
+    ViewData["Title"] = "Order Confirmed";
+}
+
+@section Styles {
+<style>
+    .confirm-page {
+        max-width: 620px; margin: 60px auto 80px; padding: 0 24px;
+        display: flex; flex-direction: column; align-items: center; text-align: center;
+    }
+
+    /* Check icon */
+    .confirm-icon {
+        width: 72px; height: 72px; background: #0a0a0a; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center; margin-bottom: 24px;
+    }
+    .confirm-icon svg { color: #fff; width: 32px; height: 32px; }
+
+    .confirm-heading { font-size: 26px; font-weight: 700; margin-bottom: 6px; font-family: 'Space Grotesk', sans-serif; }
+    .confirm-sub { font-size: 14px; color: #666; margin-bottom: 8px; }
+    .confirm-order-id { font-size: 13px; color: #888; margin-bottom: 20px; }
+    .confirm-order-id strong { color: #0a0a0a; }
+
+    .confirm-email-notice {
+        display: flex; align-items: center; gap: 10px;
+        background: #f5f5f5; border-radius: 8px;
+        padding: 12px 18px; font-size: 13px; color: #555;
+        margin-bottom: 32px; text-align: left;
+    }
+    .confirm-email-notice span { font-weight: 700; color: #0a0a0a; }
+
+    /* Steps breadcrumb */
+    .steps {
+        display: flex; align-items: center; justify-content: center;
+        gap: 0; margin-bottom: 36px;
+    }
+    .step { font-size: 13px; color: #aaa; font-weight: 500; }
+    .step.done   { color: #0a0a0a; font-weight: 600; }
+    .step-sep { width: 56px; height: 1.5px; background: #d4d4d4; margin: 0 10px; }
+    .step-sep.done { background: #0a0a0a; }
+
+    /* Order card */
+    .confirm-card {
+        width: 100%; border: 1.5px solid #e8e8e8; border-radius: 12px;
+        padding: 24px; margin-bottom: 20px; text-align: left;
+    }
+    .confirm-card-title { font-size: 13px; font-weight: 700; margin-bottom: 16px; text-transform: uppercase; letter-spacing: .5px; }
+
+    /* Shipping summary */
+    .confirm-address { font-size: 13px; color: #555; line-height: 1.7; }
+    .confirm-address strong { color: #0a0a0a; display: block; margin-bottom: 4px; }
+
+    /* Items */
+    .confirm-item { display: flex; gap: 12px; align-items: center; margin-bottom: 14px; }
+    .confirm-item-img {
+        width: 54px; height: 54px; border-radius: 7px;
+        object-fit: cover; background: #f5f5f5; flex-shrink: 0;
+    }
+    .confirm-item-info { flex: 1; }
+    .confirm-item-name { font-size: 13px; font-weight: 600; }
+    .confirm-item-sub  { font-size: 12px; color: #888; }
+    .confirm-item-qty {
+        display: inline-flex; align-items: center; justify-content: center;
+        background: #f0f0f0; border-radius: 4px;
+        padding: 1px 7px; font-size: 12px; font-weight: 700;
+        color: #0a0a0a; margin-top: 5px;
+    }
+    .confirm-item-price { font-size: 13px; font-weight: 700; margin-left: auto; }
+
+    /* Totals */
+    .confirm-totals { font-size: 13px; }
+    .totals-row { display: flex; justify-content: space-between; margin-bottom: 7px; }
+    .totals-divider { border: none; border-top: 1px solid #e8e8e8; margin: 10px 0; }
+    .totals-grand { font-size: 16px; font-weight: 700; }
+
+    /* Delivery badge */
+    .delivery-badge {
+        display: inline-flex; align-items: center; gap: 8px;
+        background: #f5f5f5; border-radius: 6px; padding: 8px 14px;
+        font-size: 12px; margin-bottom: 28px;
+    }
+
+    /* Actions */
+    .confirm-actions { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+    .btn-black {
+        background: #0a0a0a; color: #fff; border: none;
+        padding: 13px 24px; border-radius: 7px; font-size: 14px; font-weight: 600;
+        cursor: pointer; text-decoration: none; font-family: 'Inter', sans-serif;
+        transition: background .2s;
+    }
+    .btn-black:hover { background: #333; }
+    .btn-outline {
+        background: #fff; color: #0a0a0a;
+        border: 1.5px solid #0a0a0a;
+        padding: 12px 24px; border-radius: 7px; font-size: 14px; font-weight: 600;
+        cursor: pointer; text-decoration: none; font-family: 'Inter', sans-serif;
+        transition: background .15s;
+    }
+    .btn-outline:hover { background: #f5f5f5; }
+</style>
+}
+
+<div class="confirm-page">
+
+    <!-- Breadcrumb -->
+    <div class="steps">
+        <span class="step done">Cart</span>
+        <div class="step-sep done"></div>
+        <span class="step done">Checkout</span>
+        <div class="step-sep done"></div>
+        <span class="step done">Confirmation</span>
+    </div>
+
+    <!-- Check Icon -->
+    <div class="confirm-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+        </svg>
+    </div>
+
+    <div class="confirm-heading">Order Placed!</div>
+    <p class="confirm-sub">Thank you, @Model.FullName. Your order has been confirmed.</p>
+    <p class="confirm-order-id">Order ID: <strong>@Model.OrderId</strong></p>
+
+    <div class="delivery-badge">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="1" y="3" width="15" height="13"></rect>
+            <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+            <circle cx="5.5" cy="18.5" r="2.5"></circle>
+            <circle cx="18.5" cy="18.5" r="2.5"></circle>
+        </svg>
+        Estimated delivery: <strong>@Model.EstimatedDeliveryDate.ToString("MMMM d, yyyy")</strong>
+        &nbsp;·&nbsp; @(Model.DeliveryOption == "Express" ? "Express (1–2 days)" : "Standard (3–5 days)")
+    </div>
+
+    <!-- Shipping Details -->
+    <div class="confirm-card">
+        <div class="confirm-card-title">Shipping Details</div>
+        <div class="confirm-address">
+            <strong>@Model.FullName</strong>
+            @Model.Address, @Model.City @Model.PostalCode<br/>
+            @Model.Email
+        </div>
+    </div>
+
+    <!-- Order Items -->
+    <div class="confirm-card">
+        <div class="confirm-card-title">Items Ordered</div>
+        @foreach (var item in Model.OrderItems)
+        {
+            <div class="confirm-item">
+                <img class="confirm-item-img"
+                     src="@item.Image" alt="@item.Name"
+                     onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27200%27 height=%27200%27%3E%3Crect width=%27200%27 height=%27200%27 fill=%27%23f5f5f5%27/%3E%3C/svg%3E'" />
+                <div class="confirm-item-info">
+                    <div class="confirm-item-name">@item.Name</div>
+                    <div class="confirm-item-sub">Size: @item.Size</div>
+                    <div class="confirm-item-qty">Qty: @item.Quantity</div>
+                </div>
+                <div class="confirm-item-price">₱@((item.Price * item.Quantity).ToString("N0"))</div>
+            </div>
+        }
+
+        <hr class="totals-divider" />
+        <div class="confirm-totals">
+            <div class="totals-row"><span>Subtotal</span><span>₱@Model.Subtotal.ToString("N0")</span></div>
+            <div class="totals-row"><span>Shipping</span><span>₱@Model.ShippingFee.ToString("N0")</span></div>
+            <hr class="totals-divider" />
+            <div class="totals-row totals-grand"><span>Total</span><span>₱@Model.Total.ToString("N0")</span></div>
+        </div>
+    </div>
+
+    <!-- Email Notice -->
+    <div class="confirm-email-notice">
+        ✉️&nbsp; A confirmation email has been sent to <span>@Model.Email</span>
+    </div>
+
+    <!-- Actions -->
+    <div class="confirm-actions">
+        <a class="btn-outline" href="/AccountProfile/MyPurchases?orderId=@Model.OrderId">View Order Details</a>
+        <a class="btn-black" href="/Home/Shop">Continue Shopping</a>
+    </div>
+
+</div>

@@ -1,0 +1,388 @@
+@model MyAspNetApp.Models.OrderConfirmationViewModel
+
+@{
+    ViewData["Title"] = "Order " + Model.OrderId;
+}
+
+@section Styles {
+<style>
+    .detail-page {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 40px 24px 80px;
+    }
+
+    .back-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        color: #888;
+        text-decoration: none;
+        margin-bottom: 24px;
+        transition: color .15s;
+    }
+    .back-link:hover { color: #0a0a0a; }
+
+    .detail-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        margin-bottom: 28px;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+    .detail-title {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 26px;
+        font-weight: 700;
+        letter-spacing: 1px;
+    }
+    .detail-date { font-size: 12px; color: #888; margin-top: 4px; }
+
+    .status-pill-lg {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 8px 16px;
+        border-radius: 24px;
+        font-size: 13px;
+        font-weight: 700;
+    }
+    .status-dot-lg {
+        width: 8px; height: 8px;
+        border-radius: 50%;
+        background: currentColor;
+    }
+
+    .detail-card {
+        border: 1.5px solid #e8e8e8;
+        border-radius: 10px;
+        overflow: hidden;
+        margin-bottom: 16px;
+    }
+    .detail-section { padding: 20px 24px; }
+    .detail-section + .detail-section { border-top: 1px solid #e8e8e8; }
+
+    .section-title {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: #888;
+        margin-bottom: 14px;
+    }
+
+    /* Tracking */
+    .track-steps {
+        display: flex;
+        align-items: flex-start;
+        margin-bottom: 8px;
+    }
+    .track-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        flex: 1;
+        position: relative;
+    }
+    .track-step:not(:last-child)::after {
+        content: '';
+        position: absolute;
+        top: 16px;
+        left: 50%;
+        width: 100%;
+        height: 2px;
+        background: #e8e8e8;
+        z-index: 0;
+    }
+    .track-step.done:not(:last-child)::after { background: #0a0a0a; }
+
+    .track-dot {
+        width: 32px; height: 32px;
+        border-radius: 50%;
+        border: 2px solid #e8e8e8;
+        background: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        z-index: 1;
+        font-size: 14px;
+    }
+    .track-dot.active  { background: #0a0a0a; border-color: #0a0a0a; color: #fff; }
+    .track-dot.done-bg { background: #f5f5f5; border-color: #0a0a0a; }
+
+    .track-label {
+        font-size: 11px;
+        color: #888;
+        white-space: nowrap;
+        text-align: center;
+    }
+    .track-step.done .track-label { color: #0a0a0a; font-weight: 600; }
+
+    /* Info grid */
+    .info-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+    .info-label {
+        font-size: 11px;
+        color: #888;
+        margin-bottom: 3px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+    }
+    .info-value { font-size: 14px; color: #0a0a0a; font-weight: 500; }
+
+    /* Items */
+    .detail-item {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 14px;
+    }
+    .detail-item-img {
+        width: 56px; height: 56px;
+        border-radius: 7px;
+        object-fit: cover;
+        background: #f5f5f5;
+        flex-shrink: 0;
+    }
+    .detail-item-info { flex: 1; }
+    .detail-item-name { font-size: 13px; font-weight: 600; }
+    .detail-item-sub  { font-size: 12px; color: #888; }
+    .detail-item-qty {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: #f0f0f0;
+        border-radius: 4px;
+        padding: 1px 7px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #0a0a0a;
+        margin-top: 4px;
+    }
+    .detail-item-price { font-size: 13px; font-weight: 700; margin-left: auto; }
+
+    /* Totals */
+    .total-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 13px;
+        color: #3a3a3a;
+        margin-bottom: 8px;
+    }
+    .total-row.grand {
+        font-size: 17px;
+        font-weight: 700;
+        color: #0a0a0a;
+        padding-top: 12px;
+        margin-top: 4px;
+        border-top: 1px solid #e8e8e8;
+    }
+
+    /* Payment badge */
+    .payment-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #f5f5f5;
+        border-radius: 5px;
+        padding: 6px 12px;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    /* Actions */
+    .detail-actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 8px;
+        flex-wrap: wrap;
+    }
+    .btn-black {
+        flex: 1;
+        background: #0a0a0a;
+        color: #fff;
+        padding: 13px;
+        text-align: center;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 700;
+        text-decoration: none;
+        font-family: 'Inter', sans-serif;
+        transition: background .2s;
+    }
+    .btn-black:hover { background: #333; color: #fff; }
+
+    .btn-outline {
+        flex: 1;
+        border: 1.5px solid #0a0a0a;
+        color: #0a0a0a;
+        padding: 13px;
+        text-align: center;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 700;
+        text-decoration: none;
+        font-family: 'Inter', sans-serif;
+        transition: all .2s;
+    }
+    .btn-outline:hover { background: #0a0a0a; color: #fff; }
+
+    @@media (max-width: 480px) {
+        .info-grid { grid-template-columns: 1fr; }
+        .detail-title { font-size: 20px; }
+    }
+</style>
+}
+
+<div class="detail-page">
+
+    <a class="back-link" href="/Home/MyOrders">← Back to My Orders</a>
+
+    <div class="detail-header">
+        <div>
+            <div class="detail-title">Order #@Model.OrderId</div>
+            <div class="detail-date">Placed on @Model.CreatedAt.ToString("MMMM d, yyyy 'at' h:mm tt")</div>
+        </div>
+        <span class="status-pill-lg"
+              style="background:@(Model.StatusColor)22; color:@Model.StatusColor;">
+            <span class="status-dot-lg"></span>
+            @Model.OrderStatus
+        </span>
+    </div>
+
+    <!-- Order Tracking -->
+    <div class="detail-card">
+        <div class="detail-section">
+            <div class="section-title">Order Tracking</div>
+            @{
+                var statuses = new[] { "Placed", "Processing", "Shipped", "Delivered" };
+                var icons    = new[] { "📋", "⚙️", "🚚", "✅" };
+                int current  = Model.CurrentStep;
+            }
+            <div class="track-steps">
+                @for (int i = 0; i < statuses.Length; i++)
+                {
+                    bool isActive = i == current;
+                    bool isDone   = i < current;
+                    <div class="track-step @(i <= current ? "done" : "")">
+                        <div class="track-dot @(isActive ? "active" : isDone ? "done-bg" : "")">
+                            @icons[i]
+                        </div>
+                        <span class="track-label">@statuses[i]</span>
+                    </div>
+                }
+            </div>
+            <p style="font-size:12px;color:#888;margin-top:10px;text-align:center;">
+                @if (Model.OrderStatus == "Placed")
+                {
+                    <span>Your order has been placed and will be processed soon.</span>
+                }
+                else if (Model.OrderStatus == "Processing")
+                {
+                    <span>We are preparing your order for shipment.</span>
+                }
+                else if (Model.OrderStatus == "Shipped")
+                {
+                    <span>Your order is on its way!</span>
+                }
+                else
+                {
+                    <span>Your order has been delivered. Enjoy!</span>
+                }
+            </p>
+        </div>
+    </div>
+
+    <!-- Shipping & Payment -->
+    <div class="detail-card">
+        <div class="detail-section">
+            <div class="section-title">Shipping Information</div>
+            <div class="info-grid">
+                <div>
+                    <div class="info-label">Full Name</div>
+                    <div class="info-value">@Model.FullName</div>
+                </div>
+                <div>
+                    <div class="info-label">Phone</div>
+                    <div class="info-value">@(string.IsNullOrEmpty(Model.Phone) ? "—" : Model.Phone)</div>
+                </div>
+                <div style="grid-column:1/-1;">
+                    <div class="info-label">Address</div>
+                    <div class="info-value">@Model.Address, @Model.City @Model.PostalCode</div>
+                </div>
+                <div>
+                    <div class="info-label">Email</div>
+                    <div class="info-value">@Model.Email</div>
+                </div>
+                <div>
+                    <div class="info-label">Delivery Option</div>
+                    <div class="info-value">@(Model.DeliveryOption == "Express" ? "Express (1–2 days)" : "Standard (3–5 days)")</div>
+                </div>
+            </div>
+        </div>
+        <div class="detail-section">
+            <div class="section-title">Payment Method</div>
+            <div class="payment-badge">
+                @if (Model.PaymentMethod == "Card")
+                {
+                    <span>💳</span>
+                }
+                else if (Model.PaymentMethod == "PayPal")
+                {
+                    <span>🅿️</span>
+                }
+                else
+                {
+                    <span>💵</span>
+                }
+                @Model.PaymentMethod
+            </div>
+        </div>
+    </div>
+
+    <!-- Items Ordered -->
+    <div class="detail-card">
+        <div class="detail-section">
+            <div class="section-title">Items Ordered</div>
+            @foreach (var item in Model.OrderItems)
+            {
+                <div class="detail-item">
+                    <img class="detail-item-img"
+                         src="@item.Image" alt="@item.Name"
+                         onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27200%27 height=%27200%27%3E%3Crect width=%27200%27 height=%27200%27 fill=%27%23f5f5f5%27/%3E%3C/svg%3E'" />
+                    <div class="detail-item-info">
+                        <div class="detail-item-name">@item.Name</div>
+                        <div class="detail-item-sub">Size: @item.Size</div>
+                        <div class="detail-item-qty">Qty: @item.Quantity</div>
+                    </div>
+                    <div class="detail-item-price">₱@((item.Price * item.Quantity).ToString("N0"))</div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Order Summary -->
+    <div class="detail-card">
+        <div class="detail-section">
+            <div class="section-title">Order Summary</div>
+            <div class="total-row"><span>Subtotal</span><span>₱@Model.Subtotal.ToString("N0")</span></div>
+            <div class="total-row"><span>Shipping (@Model.DeliveryOption)</span><span>₱@Model.ShippingFee.ToString("N0")</span></div>
+            <div class="total-row grand"><span>Total</span><span>₱@Model.Total.ToString("N0")</span></div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="detail-actions">
+        <a class="btn-outline" href="/Home/MyOrders">← My Orders</a>
+        <a class="btn-black" href="/Home/Shop">Continue Shopping</a>
+    </div>
+
+</div>

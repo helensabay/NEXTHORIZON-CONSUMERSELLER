@@ -1,0 +1,172 @@
+@model MyAspNetApp.Models.ViewModels.ProductApprovalDashboardViewModel
+@{
+    ViewData["Title"] = "Product Approvals";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Product Approvals</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { margin: 0; font-family: 'Inter', sans-serif; background: #f5efe6; color: #171717; }
+        .page { max-width: 1200px; margin: 0 auto; padding: 32px 20px 48px; }
+        .header { display: flex; justify-content: space-between; align-items: end; gap: 16px; margin-bottom: 24px; }
+        .header h1 { margin: 0; font-size: 2.2rem; }
+        .header p { margin: 8px 0 0; color: #675f56; }
+        .nav { display: flex; gap: 12px; flex-wrap: wrap; }
+        .nav a { text-decoration: none; background: #171717; color: #fff; padding: 10px 16px; border-radius: 999px; font-weight: 700; }
+        .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+        .stat { background: #fff; border: 1px solid #ddd2c5; border-radius: 18px; padding: 18px; }
+        .stat small { display: block; color: #675f56; text-transform: uppercase; letter-spacing: .12em; font-weight: 700; }
+        .stat strong { display: block; margin-top: 8px; font-size: 2rem; }
+        .layout { display: grid; grid-template-columns: 1.2fr .8fr; gap: 20px; }
+        .panel { background: #fff; border: 1px solid #ddd2c5; border-radius: 22px; padding: 20px; }
+        .panel h2 { margin: 0; }
+        .panel p { color: #675f56; }
+        .queue { display: grid; gap: 14px; }
+        .card { display: grid; grid-template-columns: 88px 1fr auto; gap: 16px; align-items: center; border: 1px solid #e5dbcf; border-radius: 18px; padding: 14px; }
+        .card img { width: 88px; height: 88px; object-fit: cover; border-radius: 14px; background: #eee5db; }
+        .meta h3 { margin: 0 0 6px; }
+        .meta p { margin: 0; color: #675f56; }
+        .chip-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+        .chip { background: #f2eadf; color: #675f56; padding: 6px 10px; border-radius: 999px; font-size: .82rem; font-weight: 700; }
+        .actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+        .actions button { border: 0; border-radius: 999px; padding: 10px 14px; font-weight: 700; cursor: pointer; }
+        .approve { background: #d8ecdd; color: #1a6a38; }
+        .reject { background: #f2d8d4; color: #a83428; }
+        .list { display: grid; gap: 12px; }
+        .row { display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px solid #eee2d5; padding-bottom: 12px; }
+        .row:last-child { border-bottom: 0; padding-bottom: 0; }
+        .tag { align-self: start; padding: 6px 10px; border-radius: 999px; font-size: .8rem; font-weight: 700; }
+        .tag.approved { background: #d8ecdd; color: #1a6a38; }
+        .tag.rejected { background: #f2d8d4; color: #a83428; }
+        .empty { border: 1px dashed #ddd2c5; border-radius: 18px; padding: 24px; text-align: center; color: #675f56; }
+        .toast { position: fixed; right: 24px; bottom: 24px; background: #171717; color: #fff; padding: 14px 18px; border-radius: 12px; }
+        @@media (max-width: 900px) { .stats, .layout { grid-template-columns: 1fr; } .card { grid-template-columns: 72px 1fr; } .card img { width: 72px; height: 72px; } .actions { grid-column: 1 / -1; justify-content: flex-start; } }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <div class="header">
+            <div>
+                <h1>Product Approval Panel</h1>
+                <p>Approve or reject seller submissions without changing the existing seller dashboard.</p>
+            </div>
+            <div class="nav">
+                <a href="/Seller">Seller Dashboard</a>
+                <a href="/Seller/PendingProducts">Pending Page</a>
+                <a href="/Seller/ApprovedProducts">Approved Page</a>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat"><small>Pending</small><strong>@Model.PendingProducts.Count</strong></div>
+            <div class="stat"><small>Approved</small><strong>@Model.ApprovedProducts.Count</strong></div>
+            <div class="stat"><small>Rejected</small><strong>@Model.RejectedProducts.Count</strong></div>
+        </div>
+
+        <div class="layout">
+            <section class="panel">
+                <h2>Pending Products</h2>
+                <p>These products are waiting for review.</p>
+                @if (Model.PendingProducts.Any())
+                {
+                    <div class="queue">
+                        @foreach (var product in Model.PendingProducts)
+                        {
+                            <article class="card">
+                                <img src="@(string.IsNullOrWhiteSpace(product.ImagePath) ? "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='88' height='88'%3E%3Crect width='88' height='88' fill='%23eee5db'/%3E%3C/svg%3E" : product.ImagePath)" alt="@product.ProductName" />
+                                <div class="meta">
+                                    <h3>@product.ProductName</h3>
+                                    <p>@(string.IsNullOrWhiteSpace(product.Category) ? "Uncategorized" : product.Category)</p>
+                                    <div class="chip-row">
+                                        <span class="chip">@product.Gender</span>
+                                        @if (!string.IsNullOrWhiteSpace(product.Brand))
+                                        {
+                                            <span class="chip">@product.Brand</span>
+                                        }
+                                    </div>
+                                </div>
+                                <div class="actions">
+                                    <form asp-action="ApproveProduct" asp-controller="Admin" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@product.ProductId" />
+                                        <button type="submit" class="approve">Approve</button>
+                                    </form>
+                                    <form asp-action="RejectProduct" asp-controller="Admin" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@product.ProductId" />
+                                        <button type="submit" class="reject">Reject</button>
+                                    </form>
+                                </div>
+                            </article>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="empty">No pending products.</div>
+                }
+            </section>
+
+            <div style="display:grid; gap:20px;">
+                <section class="panel">
+                    <h2>Approved Products</h2>
+                    <p>Products already accepted for display.</p>
+                    @if (Model.ApprovedProducts.Any())
+                    {
+                        <div class="list">
+                            @foreach (var product in Model.ApprovedProducts.Take(8))
+                            {
+                                <div class="row">
+                                    <div>
+                                        <strong>@product.ProductName</strong>
+                                        <div style="color:#675f56;">@product.Category</div>
+                                    </div>
+                                    <span class="tag approved">Approved</span>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="empty">No approved products.</div>
+                    }
+                </section>
+
+                <section class="panel">
+                    <h2>Rejected Products</h2>
+                    <p>Products currently rejected by admin.</p>
+                    @if (Model.RejectedProducts.Any())
+                    {
+                        <div class="list">
+                            @foreach (var product in Model.RejectedProducts.Take(8))
+                            {
+                                <div class="row">
+                                    <div>
+                                        <strong>@product.ProductName</strong>
+                                        <div style="color:#675f56;">@product.Category</div>
+                                    </div>
+                                    <span class="tag rejected">Rejected</span>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="empty">No rejected products.</div>
+                    }
+                </section>
+            </div>
+        </div>
+    </div>
+
+    @if (TempData["AdminSuccessMessage"] != null)
+    {
+        <div class="toast">@TempData["AdminSuccessMessage"]</div>
+    }
+</body>
+</html>

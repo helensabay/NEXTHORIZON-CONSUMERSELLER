@@ -1,0 +1,776 @@
+@model WebApplication1.ViewModels.LoginViewModel
+@{
+    ViewData["Title"] = "Log In - Next Horizon";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"]</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/styles.css">
+    <link rel="stylesheet" href="~/css/loading.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <!-- Auth Page -->
+    <div class="auth-page">
+
+        <!-- Left Panel: Typographic / Visual -->
+        <div class="auth-left">
+            <div class="left-inner">
+                <div class="brand-mark">NH</div>
+                <div class="vertical-label">NEXT HORIZON</div>
+
+                <div class="hero-image-wrap">
+                    <img src="~/images/hero-runner.jpg" alt="Runner" class="hero-img">
+                    <div class="image-grain"></div>
+                </div>
+
+                <div class="left-bottom">
+                    <p class="tagline">"Every mile<br>rewrites<br>your limits."</p>
+                    <div class="stat-row">
+                        <div class="stat">
+                            <span class="stat-num">12K+</span>
+                            <span class="stat-label">Athletes</span>
+                        </div>
+                        <div class="stat-divider"></div>
+                        <div class="stat">
+                            <span class="stat-num">4.9</span>
+                            <span class="stat-label">Rating</span>
+                        </div>
+                        <div class="stat-divider"></div>
+                        <div class="stat">
+                            <span class="stat-num">98%</span>
+                            <span class="stat-label">Retention</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Form -->
+        <div class="auth-right">
+            <div class="auth-right-inner">
+
+                <!-- Top Nav -->
+                <div class="form-topbar">
+                    <a asp-controller="Home" asp-action="Index" class="logo-link">
+                        <img src="~/images/Next Horizon Logo.png" alt="Next Horizon" class="logo-img">
+                        <span class="logo-text">Next Horizon</span>
+                    </a>
+                    <a asp-controller="Account" asp-action="Register" class="register-pill">Create account →</a>
+                </div>
+
+                <!-- Form Card -->
+                <div class="form-card">
+                    <div class="form-card-header">
+                        <h1 class="form-title">Welcome<br><em>back.</em></h1>
+                        <p class="form-subtitle">Sign in to continue your journey</p>
+                    </div>
+
+                    @{
+                        string loginErrorMessage = "";
+                        if (TempData["LoginError"] is string code)
+                        {
+                            loginErrorMessage = code switch
+                            {
+                                "user_not_found" => "No account found for that email, phone, or username.",
+                                "wrong_password" => "Incorrect password. Please try again.",
+                                "seller_not_found" => "Seller profile not found. Please contact support.",
+                                "seller_pending" => "Your seller account is still pending approval.",
+                                "seller_rejected" => "Your seller application was rejected. Please contact support.",
+                                _ => "Unable to sign in. Please try again."
+                            };
+                        }
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(loginErrorMessage))
+                    {
+                        <div class="validation-summary" role="alert">
+                            @loginErrorMessage
+                        </div>
+                    }
+
+                    <form class="auth-form" id="loginForm" asp-controller="Account" asp-action="Login" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <!-- Validation summary -->
+                        <div asp-validation-summary="All" class="validation-summary"></div>
+                        <input asp-for="ReturnUrl" type="hidden" />
+
+                        <!-- Email -->
+                        <div class="field-group">
+                            <label asp-for="Email" class="field-label"></label>
+                            <div class="field-wrap">
+                                <i class="fas fa-envelope field-icon"></i>
+                                <input asp-for="Email" class="field-input" placeholder="Email, phone, or username" autocomplete="username" />
+                            </div>
+                            <span asp-validation-for="Email" class="field-error"></span>
+                        </div>
+
+                        <!-- Password -->
+                        <div class="field-group">
+                            <label asp-for="Password" class="field-label"></label>
+                            <div class="field-wrap password-field">
+                                <i class="fas fa-lock field-icon"></i>
+                                <input asp-for="Password" id="loginPassword" class="field-input" placeholder="••••••••" type="password" autocomplete="current-password" />
+                                <button type="button" class="password-toggle" onclick="togglePassword('loginPassword')" aria-label="Toggle password">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <span asp-validation-for="Password" class="field-error"></span>
+                        </div>
+
+                        <!-- Options row -->
+                        <div class="options-row">
+                            <label class="remember-label">
+                                <input asp-for="RememberMe" class="remember-checkbox" />
+                                <span class="remember-custom"></span>
+                                <span>Remember me</span>
+                            </label>
+                            <a asp-controller="Account" asp-action="ForgotPassword" class="forgot-link">Forgot password?</a>
+                        </div>
+
+                        <!-- Submit -->
+                        <button type="submit" class="btn-submit">
+                            <span>Log In</span>
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+
+                        <!-- Divider -->
+                        <div class="or-divider"><span>or</span></div>
+
+                        <!-- Google -->
+                        <button type="button" class="btn-google">
+                            <svg class="google-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                            </svg>
+                            Continue with Google
+                        </button>
+
+                        <!-- Footer link -->
+                        <p class="form-footer-text">
+                            Don't have an account?
+                            <a asp-controller="Account" asp-action="Register" class="form-footer-link">Sign up free</a>
+                        </p>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+<script>
+    function goBack() {
+        if (document.referrer && document.referrer !== window.location.href) {
+            window.history.back();
+        } else {
+            window.location.href = '@Url.Action("Index", "Home")';
+        }
+    }
+
+    function togglePassword(inputId) {
+        const input = document.getElementById(inputId);
+        if (!input) return;
+        const container = input.closest('.password-field');
+        let button = container ? container.querySelector('.password-toggle') : null;
+        if (!button) {
+            const sibling = input.nextElementSibling;
+            if (sibling && sibling.classList && sibling.classList.contains('password-toggle')) button = sibling;
+        }
+        const icon = button ? button.querySelector('i') : null;
+        if (input.type === 'password') {
+            input.type = 'text';
+            if (icon) { icon.classList.remove('fa-eye'); icon.classList.add('fa-eye-slash'); }
+        } else {
+            input.type = 'password';
+            if (icon) { icon.classList.remove('fa-eye-slash'); icon.classList.add('fa-eye'); }
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // Hide validation summary if it has no real error text
+        const vs = document.querySelector('.validation-summary');
+        if (vs) {
+            const text = vs.innerText.trim();
+            if (!text || text === '') vs.style.display = 'none';
+        }
+        // Staggered entrance animation
+        const els = document.querySelectorAll('.field-group, .options-row, .btn-submit, .or-divider, .btn-google, .form-footer-text');
+        els.forEach((el, i) => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(18px)';
+            setTimeout(() => {
+                el.style.transition = 'opacity 0.48s ease, transform 0.48s ease';
+                el.style.opacity = '1';
+                el.style.transform = 'translateY(0)';
+            }, 120 + i * 70);
+        });
+
+        // Hide loading overlay if present
+        const overlay = document.getElementById('loadingOverlay');
+        if (overlay) {
+            setTimeout(() => overlay.classList.add('hidden'), 1500);
+        }
+    });
+</script>
+
+<style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+        --black: #0a0a0a;
+        --white: #ffffff;
+        --off-white: #f6f5f3;
+        --gray-100: #f0efed;
+        --gray-200: #e0dfdb;
+        --gray-400: #a0a09a;
+        --gray-600: #5c5c58;
+        --accent: #0a0a0a;
+        --radius-sm: 8px;
+        --radius-md: 14px;
+        --radius-lg: 24px;
+    }
+
+    html, body {
+        height: 100%;
+        font-family: 'DM Sans', sans-serif;
+        background: var(--black);
+        color: var(--black);
+        -webkit-font-smoothing: antialiased;
+    }
+
+    a { text-decoration: none; color: inherit; }
+
+    /* ── Layout ── */
+    .auth-page {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        min-height: 100vh;
+    }
+
+    /* ── LEFT PANEL ── */
+    .auth-left {
+        position: relative;
+        background: var(--black);
+        overflow: hidden;
+    }
+
+    .left-inner {
+        position: relative;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        padding: 2.5rem;
+    }
+
+    /* Brand initials watermark */
+    .brand-mark {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: clamp(5rem, 12vw, 10rem);
+        color: rgba(255, 255, 255, 0.04);
+        position: absolute;
+        top: -1rem;
+        left: -0.5rem;
+        line-height: 1;
+        pointer-events: none;
+        user-select: none;
+        letter-spacing: -0.02em;
+    }
+
+    .vertical-label {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 0.7rem;
+        letter-spacing: 0.35em;
+        color: rgba(255, 255, 255, 0.35);
+        writing-mode: vertical-rl;
+        text-orientation: mixed;
+        transform: rotate(180deg);
+        position: absolute;
+        top: 2.5rem;
+        right: 2rem;
+    }
+
+    /* Hero image */
+    .hero-image-wrap {
+        position: relative;
+        flex: 1;
+        margin: 4rem -2.5rem 0;
+        overflow: hidden;
+    }
+
+    .hero-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        filter: grayscale(100%) contrast(1.1);
+        display: block;
+    }
+
+    .image-grain {
+        position: absolute;
+        inset: 0;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E");
+        mix-blend-mode: overlay;
+        pointer-events: none;
+    }
+
+    /* Bottom content */
+    .left-bottom {
+        background: var(--black);
+        padding: 2rem 2.5rem;
+        margin: 0 -2.5rem -2.5rem;
+        border-top: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .tagline {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: clamp(2.2rem, 4vw, 3.2rem);
+        color: var(--white);
+        line-height: 1.05;
+        letter-spacing: 0.01em;
+        margin-bottom: 1.75rem;
+    }
+
+    .stat-row {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+    }
+
+    .stat {
+        display: flex;
+        flex-direction: column;
+        gap: 0.15rem;
+    }
+
+    .stat-num {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 1.6rem;
+        color: var(--white);
+        letter-spacing: 0.02em;
+        line-height: 1;
+    }
+
+    .stat-label {
+        font-size: 0.7rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--gray-400);
+        font-weight: 500;
+    }
+
+    .stat-divider {
+        width: 1px;
+        height: 36px;
+        background: rgba(255,255,255,0.12);
+    }
+
+    /* ── RIGHT PANEL ── */
+    .auth-right {
+        background: var(--off-white);
+        display: flex;
+        align-items: stretch;
+        min-height: 100vh;
+    }
+
+    .auth-right-inner {
+        width: 100%;
+        max-width: 520px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        padding: 2.5rem 3rem 3rem;
+    }
+
+    /* Top bar */
+    .form-topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 3.5rem;
+    }
+
+    .logo-link {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+    }
+
+    .logo-img {
+        width: 32px;
+        height: 32px;
+        object-fit: contain;
+    }
+
+    .logo-text {
+        font-weight: 600;
+        font-size: 0.95rem;
+        letter-spacing: -0.01em;
+        color: var(--black);
+    }
+
+    .register-pill {
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: var(--gray-600);
+        background: var(--white);
+        border: 1px solid var(--gray-200);
+        border-radius: 999px;
+        padding: 0.45rem 1rem;
+        transition: all 0.2s ease;
+    }
+
+    .register-pill:hover {
+        background: var(--black);
+        color: var(--white);
+        border-color: var(--black);
+    }
+
+    /* Form card */
+    .form-card {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .form-card-header {
+        margin-bottom: 2.5rem;
+    }
+
+    .form-title {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: clamp(3rem, 6vw, 4.5rem);
+        line-height: 0.92;
+        letter-spacing: -0.01em;
+        color: var(--black);
+        margin-bottom: 0.75rem;
+    }
+
+    .form-title em {
+        font-style: italic;
+        color: var(--gray-400);
+    }
+
+    .form-subtitle {
+        font-size: 0.95rem;
+        color: var(--gray-600);
+        font-weight: 300;
+    }
+
+    /* Validation */
+    .validation-summary {
+        display: none;
+        background: #fff0f0;
+        border: 1px solid #ffc0c0;
+        border-radius: var(--radius-sm);
+        padding: 0.75rem 1rem;
+        font-size: 0.85rem;
+        color: #c00;
+        margin-bottom: 1.25rem;
+    }
+
+    .validation-summary:not(:empty) { display: block; }
+
+    /* ASP.NET renders a <ul> inside even when "empty" — hide if only whitespace/empty list */
+    .validation-summary ul:empty { display: none; }
+    .validation-summary:has(ul:empty) { display: none; }
+
+    /* Field groups */
+    .field-group {
+        margin-bottom: 1.35rem;
+    }
+
+    .field-label {
+        display: block;
+        font-size: 0.78rem;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--black);
+        margin-bottom: 0.5rem;
+    }
+
+    .field-wrap {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .field-icon {
+        position: absolute;
+        left: 1rem;
+        color: var(--gray-400);
+        font-size: 0.85rem;
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    .field-input {
+        width: 100%;
+        padding: 0.9rem 1rem 0.9rem 2.6rem;
+        border: 1.5px solid var(--gray-200);
+        border-radius: var(--radius-sm);
+        font-size: 0.95rem;
+        font-family: 'DM Sans', sans-serif;
+        font-weight: 400;
+        background: var(--white);
+        color: var(--black);
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        outline: none;
+    }
+
+    .field-input::placeholder { color: var(--gray-400); }
+
+    .field-input:focus {
+        border-color: var(--black);
+        box-shadow: 0 0 0 3px rgba(10,10,10,0.08);
+    }
+
+    .password-field .field-input {
+        padding-right: 3rem;
+    }
+
+    .password-toggle {
+        position: absolute;
+        right: 0.85rem;
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: var(--gray-400);
+        font-size: 0.9rem;
+        padding: 0.25rem;
+        transition: color 0.15s ease;
+    }
+
+    .password-toggle:hover { color: var(--black); }
+
+    .field-error {
+        display: block;
+        font-size: 0.78rem;
+        color: #c00;
+        margin-top: 0.35rem;
+    }
+
+    /* Options row */
+    .options-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.75rem;
+    }
+
+    .remember-label {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        font-size: 0.85rem;
+        color: var(--gray-600);
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .remember-checkbox { display: none; }
+
+    .remember-custom {
+        width: 17px;
+        height: 17px;
+        border: 1.5px solid var(--gray-200);
+        border-radius: 4px;
+        background: var(--white);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.15s ease;
+        flex-shrink: 0;
+    }
+
+    .remember-checkbox:checked + .remember-custom {
+        background: var(--black);
+        border-color: var(--black);
+    }
+
+    .remember-checkbox:checked + .remember-custom::after {
+        content: '';
+        width: 9px;
+        height: 5px;
+        border-left: 2px solid var(--white);
+        border-bottom: 2px solid var(--white);
+        transform: rotate(-45deg) translateY(-1px);
+        display: block;
+    }
+
+    .forgot-link {
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: var(--black);
+        border-bottom: 1px solid transparent;
+        transition: border-color 0.15s ease;
+    }
+
+    .forgot-link:hover { border-bottom-color: var(--black); }
+
+    /* Submit button */
+    .btn-submit {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.65rem;
+        padding: 1rem 1.5rem;
+        background: var(--black);
+        color: var(--white);
+        border: none;
+        border-radius: var(--radius-sm);
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.95rem;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        cursor: pointer;
+        transition: all 0.22s ease;
+        margin-bottom: 1.5rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn-submit::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+        transform: translateX(-100%);
+        transition: transform 0.5s ease;
+    }
+
+    .btn-submit:hover::before { transform: translateX(100%); }
+    .btn-submit:hover { background: #222; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(0,0,0,0.18); }
+    .btn-submit:active { transform: translateY(0); box-shadow: none; }
+
+    /* OR divider */
+    .or-divider {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.25rem;
+        color: var(--gray-400);
+        font-size: 0.78rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+    }
+
+    .or-divider::before,
+    .or-divider::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: var(--gray-200);
+    }
+
+    /* Google button */
+    .btn-google {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        padding: 0.9rem 1.5rem;
+        background: var(--white);
+        color: var(--black);
+        border: 1.5px solid var(--gray-200);
+        border-radius: var(--radius-sm);
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.9rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        margin-bottom: 2rem;
+    }
+
+    .btn-google:hover {
+        border-color: var(--black);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        transform: translateY(-1px);
+    }
+
+    .google-icon { width: 18px; height: 18px; }
+
+    /* Form footer */
+    .form-footer-text {
+        text-align: center;
+        font-size: 0.85rem;
+        color: var(--gray-600);
+    }
+
+    .form-footer-link {
+        color: var(--black);
+        font-weight: 600;
+        border-bottom: 1px solid var(--black);
+        transition: opacity 0.15s ease;
+    }
+
+    .form-footer-link:hover { opacity: 0.6; }
+
+    /* Toast */
+    .toast-container {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        z-index: 9999;
+    }
+
+    /* ── RESPONSIVE ── */
+    @@media (max-width: 900px) {
+        .auth-page { grid-template-columns: 1fr; }
+
+        .auth-left {
+            min-height: 40vh;
+            max-height: 44vh;
+        }
+
+        .left-inner {
+            padding: 2rem;
+        }
+
+        .hero-image-wrap {
+            margin: 3rem -2rem 0;
+        }
+
+        .left-bottom {
+            padding: 1.5rem 2rem;
+            margin: 0 -2rem -2rem;
+        }
+
+        .auth-right {
+            min-height: auto;
+        }
+
+        .auth-right-inner {
+            padding: 2rem 1.5rem 3rem;
+        }
+
+        .form-topbar { margin-bottom: 2rem; }
+    }
+
+    @@media (max-width: 480px) {
+        .auth-right-inner { padding: 1.5rem 1.25rem 2.5rem; }
+        .form-title { font-size: 3rem; }
+    }
+</style>
+
+<partial name="_ValidationScriptsPartial" />
+</body>
+</html>

@@ -1,0 +1,1189 @@
+@model List<NextHorizon.Models.Order>
+@{
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+@{
+    ViewData["Title"] = "Order Management";
+    ViewData["DashboardHeading"] = "Order Management";
+    ViewData["SellerName"] = "NextHorizon Seller";
+
+    var sellerCategories = Model
+        .SelectMany(order => order.OrderItems ?? Enumerable.Empty<NextHorizon.Models.OrderItem>())
+        .Select(item => item.Product?.Category?.Trim())
+        .Where(category => !string.IsNullOrWhiteSpace(category))
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .OrderBy(category => category)
+        .ToList();
+    var startDateValue = ViewBag.StartDate as string ?? string.Empty;
+    var endDateValue = ViewBag.EndDate as string ?? string.Empty;
+    var hasDateFilter = !string.IsNullOrWhiteSpace(startDateValue) || !string.IsNullOrWhiteSpace(endDateValue);
+    var emptyStateMessage = hasDateFilter
+        ? "No orders found within the selected date range."
+        : "No orders match the current filters.";
+    var returnRequests = ViewBag.ReturnRequests as List<NextHorizon.Models.ReturnRequest> ?? new List<NextHorizon.Models.ReturnRequest>();
+    var returnStatuses = returnRequests
+        .Select(request => request.Status?.Trim())
+        .Where(status => !string.IsNullOrWhiteSpace(status))
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .OrderBy(status => status)
+        .ToList();
+    var totalOrdersCount = Model.Count;
+    var pendingOrdersCount = Model.Count(order => string.Equals(order.Status, "Pending", StringComparison.OrdinalIgnoreCase));
+    var inTransitOrdersCount = Model.Count(order => string.Equals(order.Status, "Shipped", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(order.Status, "To Ship", StringComparison.OrdinalIgnoreCase));
+    var liveReturnCount = returnRequests.Count(request =>
+        string.Equals(request.Status?.Trim(), "Return Requested", StringComparison.OrdinalIgnoreCase));
+}
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="~/css/ordermanagement.css" asp-append-version="true" />
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="order-page-alert">@TempData["ErrorMessage"]</div>
+}
+
+<div class="order-page-shell">
+    <section class="order-page-hero">
+        <div class="order-page-hero-copy">
+            <span class="order-page-kicker">Seller Operations</span>
+            <h2>Order Management</h2>
+            <p>Manage fulfillment, failed deliveries, and returns in one operations workspace.</p>
+        </div>
+        <div class="order-page-stats">
+            <div class="order-page-stat-card">
+                <span class="order-page-stat-label">All Orders</span>
+                <strong>@totalOrdersCount</strong>
+            </div>
+            <div class="order-page-stat-card">
+                <span class="order-page-stat-label">Pending</span>
+                <strong>@pendingOrdersCount</strong>
+            </div>
+            <div class="order-page-stat-card">
+                <span class="order-page-stat-label">In Transit</span>
+                <strong>@inTransitOrdersCount</strong>
+            </div>
+            <div class="order-page-stat-card">
+                <span class="order-page-stat-label">Return Requests</span>
+                <strong>@liveReturnCount</strong>
+            </div>
+        </div>
+    </section>
+
+    <div class="order-filters">
+        <button type="button" class="order-filter-btn active" data-filter="all">All Orders</button>
+        <button type="button" class="order-filter-btn" data-filter="Pending">Pending</button>
+        <button type="button" class="order-filter-btn" data-filter="To Ship">To Ship</button>
+        <button type="button" class="order-filter-btn" data-filter="Shipped">Shipped</button>
+        <button type="button" class="order-filter-btn" data-filter="Delivered">Delivered</button>
+        <button type="button" class="order-filter-btn" data-filter="Cancelled">Cancelled</button>
+        <button type="button" class="order-filter-btn" data-filter="Failed Delivery">Failed Delivery</button>
+        <button type="button" class="order-filter-btn" data-filter="Return">Return</button>
+    </div>
+
+<div id="ordersPanel" class="order-panel-card">
+<div class="order-toolbar">
+
+    <!-- SEARCH -->
+    
+   <div class="search-box">
+    <input type="search" id="orderSearch" placeholder="Search orders..." onkeyup="applyOrderFilters()" />
+    <button type="button" id="searchBtn" onclick="applyOrderFilters()">Search</button>
+</div>
+
+    <!-- CATEGORY -->
+    <select id="categoryFilter" class="order-select">
+        <option value="all">All Categories</option>
+        @foreach (var category in sellerCategories)
+        {
+            <option value="@category">@category</option>
+        }
+    </select>
+
+    <!-- DATE FILTER -->
+    <div class="date-filter">
+        <input type="date" id="startDate" value="@startDateValue">
+        <span>to</span>
+        <input type="date" id="endDate" value="@endDateValue">
+        <button id="clearDate">Clear</button>
+    </div>
+
+</div>
+
+
+<table class="order-table premium-order-table orders-premium-table">
+    <thead>
+        <tr>
+            <th>Order ID</th>
+            <th>Customer</th>
+            <th>Date</th>
+            <th>Product</th>
+            <th>Qty</th>
+            <th>Total</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var order in Model)
+        {
+            var matchingReturnRequest = returnRequests.FirstOrDefault(request => request.OrderId == order.OrderID);
+            var orderDisplayStatus = string.IsNullOrWhiteSpace(order.EffectiveStatus)
+                ? order.Status ?? string.Empty
+                : order.EffectiveStatus;
+            var orderCategories = order.OrderItems?
+                .Select(item => item.Product?.Category?.Trim())
+                .Where(category => !string.IsNullOrWhiteSpace(category))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList() ?? new List<string>();
+            var resolvedCourierName = !string.IsNullOrWhiteSpace(order.Courier)
+                ? order.Courier
+                : !string.IsNullOrWhiteSpace(order.DeliveryOption)
+                    ? order.DeliveryOption
+                    : "NextHorizon Partner";
+
+            if (ViewBag.Couriers != null && order.logistics_id != null)
+            {
+                foreach (dynamic courier in ViewBag.Couriers)
+                {
+                    if (Convert.ToInt32(courier.logistics_id) == Convert.ToInt32(order.logistics_id))
+                    {
+                        resolvedCourierName = courier.courier_name;
+                        break;
+                    }
+                }
+            }
+
+            <tr class="order-row"
+                data-order-id="@order.OrderID"
+                data-consumer-id="@order.ConsumerID"
+                data-status="@order.Status"
+                data-display-status="@orderDisplayStatus"
+                data-return-status="@(matchingReturnRequest?.Status ?? order.EffectiveStatus ?? string.Empty)"
+                data-categories="@string.Join("|", orderCategories)"
+                data-courier="@resolvedCourierName"
+                data-tracking="@order.TrackingNumber"
+                data-return-proof="@order.ReturnProofImage"
+                data-return-note="@order.ReturnNote"
+                data-return-reason="@order.ReturnReason"
+                data-return-id="@(matchingReturnRequest?.ReturnId ?? 0)"
+                data-buyer="@(matchingReturnRequest?.BuyerName ?? order.FullName ?? string.Empty)"
+                data-reason="@(matchingReturnRequest?.Reason ?? order.ReturnReason ?? string.Empty)"
+                data-message="@(matchingReturnRequest?.Message ?? string.Empty)"
+                data-image-url="@(matchingReturnRequest?.ImageUrl ?? string.Empty)"
+                data-seller-decision-reason="@(matchingReturnRequest?.SellerDecisionReason ?? string.Empty)"
+                data-seller-decision-note="@(matchingReturnRequest?.SellerDecisionNote ?? string.Empty)"
+                data-reviewed-at="@(matchingReturnRequest?.ReviewedAt?.ToLocalTime().ToString("MMM dd, yyyy h:mm tt") ?? string.Empty)"
+                data-order-date="@order.OrderDate.ToString("yyyy-MM-dd")">
+
+                <td>@order.OrderID</td>
+                <td>@order.FullName
+                    @if (!string.IsNullOrWhiteSpace(order.SellerNote))
+    {
+        <span title="This order has internal notes" style="color: #f59e0b; margin-left: 8px;">
+            <i class="fa-solid fa-note-sticky"></i>
+        </span>
+    }</td>
+                <td>@order.OrderDate.ToString("MMM dd, yyyy")</td>
+
+                <!-- PRODUCT WITH IMAGE -->
+                <td class="product-cell">
+                    <img src="@(string.IsNullOrWhiteSpace(order.ProductImage) ? "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='50' height='50'%3E%3Crect width='50' height='50' rx='6' fill='%23e5e7eb'/%3E%3C/svg%3E" : order.ProductImage)" class="product-img" alt="@order.ProductName" />
+                    <span>@order.ProductName</span>
+                </td>
+
+                <td>@order.Quantity</td>
+                <td class="order-total-cell">&#8369;@order.CalculatedTotal.ToString("N2")</td>
+                <td>
+                    <span class="status-badge @(orderDisplayStatus.ToLower().Replace(" ", "-"))">
+                        @orderDisplayStatus
+                    </span>
+                </td>
+
+                <td class="order-action-cell">
+                    <div class="action-menu-wrap">
+                        <button class="action-icon-btn" type="button" aria-label="Open order actions">&#8942;</button>
+
+                            <div class="action-menu">
+                            @* VIEW DETAILS - always visible *@
+                            @if (matchingReturnRequest != null)
+                            {
+                                <button type="button" class="action-menu-item return-view-details-btn" onclick="openReturnDetailsModalFromRow(this.closest('.order-row'))">
+                                    View Request
+                                </button>
+                            }
+                            else
+                            {
+                                <a class="action-menu-item"
+                                asp-controller="Dashboard"
+                                asp-action="OrderDetails"
+                                asp-route-id="@order.OrderID">
+                                    View Details
+                                </a>
+                            }
+
+                            @* CONTACT CUSTOMER - always visible *@
+                            <button class="action-menu-item"
+                                    onclick="window.location.href='@Url.Action("SellerMessenger","Seller", new { orderId = order.OrderID, consumerId = order.ConsumerID })'">
+                                Contact Customer
+                            </button>
+
+                            @* VIEW ORDER - only for Pending *@
+                            @if(order.Status == "Pending")
+                            {
+                               <button class="action-menu-item view-order-btn" 
+                               onclick="openViewOrderModal(@order.OrderID)">
+                                View Order
+                                 </button>
+                            }
+                            @if(order.Status == "Shipped")
+                            {
+                                <button class="action-menu-item mark-returned-btn"
+                                        data-order-id="@order.OrderID">
+                                    Failed Delivery
+                                </button>
+                            }
+                            else if (order.Status == "Failed Delivery")
+                            {
+                                <button class="action-menu-item view-returned-btn"
+                                        data-order-id="@order.OrderID">
+                                    View FD Details
+                                </button>
+                            }
+
+                            @* ADD NOTE - for Pending, To Ship, Shipped, Completed/Delivered *@
+                            @if(order.Status == "Pending" 
+                            || order.Status == "To Ship"
+                            || order.Status == "Shipped"
+                            || order.Status == "Delivered")
+                            {
+                             <button class="action-menu-item add-note-btn"
+                                 data-order-id="@order.OrderID" 
+                                     data-customer="@order.FullName">
+                                    Add Note
+                                    </button>
+                            }
+
+                            @* DOWNLOAD RECEIPT - only for Completed/Delivered *@
+                            @if(order.Status == "Delivered")
+                            {
+                                <button class="action-menu-item download-receipt-btn"
+                                        onclick='openDownloadReceiptModal(@Html.Raw(Json.Serialize(order)))'>
+                                    Download Receipt
+                                </button>
+                            }
+
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        }
+        <tr id="noOrdersRow" class="order-empty-row" style="@(Model.Any() ? "display:none;" : string.Empty)">
+            <td colspan="8">
+                <div class="order-empty-state">@emptyStateMessage</div>
+            </td>
+        </tr>
+    </tbody>
+</table>
+</div>
+
+<div id="returnsPanel" class="returns-panel order-panel-card" style="display:none;">
+    <div class="order-toolbar">
+        <div class="search-box">
+            <input type="search" id="returnSearch" placeholder="Search returns..." onkeyup="applyOrderFilters()" />
+            <button type="button" id="returnSearchBtn" onclick="applyOrderFilters()">Search</button>
+        </div>
+
+        <select id="returnStatusFilter" class="order-select">
+            <option value="all">All Statuses</option>
+            @foreach (var status in returnStatuses)
+            {
+                <option value="@status">@status</option>
+            }
+        </select>
+
+        <div class="date-filter">
+            <input type="date" id="returnStartDate">
+            <span>to</span>
+            <input type="date" id="returnEndDate">
+            <button type="button" id="clearReturnDate">Clear</button>
+        </div>
+    </div>
+
+    <table class="order-table premium-order-table returns-premium-table">
+        <thead>
+            <tr>
+                <th>Order ID</th>
+                <th>Buyer</th>
+                <th>Reason</th>
+                <th>Status</th>
+                <th>Date</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (returnRequests.Count == 0)
+            {
+                <tr id="noReturnsRow" class="order-empty-row">
+                    <td colspan="6">
+                        <div class="order-empty-state">No return requests match the current filters.</div>
+                    </td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var returnRequest in returnRequests)
+                {
+                    var matchingOrder = Model.FirstOrDefault(order => order.OrderID == returnRequest.OrderId);
+                    var returnProductName = matchingOrder?.ProductName ?? "Product unavailable";
+                    var returnQuantity = matchingOrder?.Quantity ?? 0;
+                    var returnTotal = matchingOrder?.CalculatedTotal ?? 0m;
+                    var returnCourier = !string.IsNullOrWhiteSpace(matchingOrder?.Courier)
+                        ? matchingOrder.Courier
+                        : !string.IsNullOrWhiteSpace(matchingOrder?.DeliveryOption)
+                            ? matchingOrder.DeliveryOption
+                            : "NextHorizon Partner";
+                    var returnTracking = matchingOrder?.TrackingNumber ?? string.Empty;
+                    var returnProductImage = string.IsNullOrWhiteSpace(matchingOrder?.ProductImage)
+                        ? "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='84' height='84'%3E%3Crect width='84' height='84' rx='18' fill='%23e2e8f0'/%3E%3C/svg%3E"
+                        : matchingOrder.ProductImage;
+
+                    <tr class="return-row"
+                        data-return-id="@returnRequest.ReturnId"
+                        data-order-id="@returnRequest.OrderId"
+                        data-consumer-id="@(matchingOrder?.ConsumerID ?? 0)"
+                        data-buyer="@returnRequest.BuyerName"
+                        data-reason="@returnRequest.Reason"
+                        data-message="@(returnRequest.Message ?? string.Empty)"
+                        data-image-url="@returnRequest.ImageUrl"
+                        data-status="@returnRequest.Status"
+                        data-seller-decision-reason="@(returnRequest.SellerDecisionReason ?? string.Empty)"
+                        data-seller-decision-note="@(returnRequest.SellerDecisionNote ?? string.Empty)"
+                        data-reviewed-at="@(returnRequest.ReviewedAt?.ToLocalTime().ToString("MMM dd, yyyy h:mm tt") ?? string.Empty)"
+                        data-product="@returnProductName"
+                        data-quantity="@returnQuantity"
+                        data-total="@returnTotal.ToString("N2")"
+                        data-courier="@returnCourier"
+                        data-tracking="@returnTracking"
+                        data-product-image="@returnProductImage"
+                        data-date="@returnRequest.CreatedAt.ToString("yyyy-MM-dd")">
+                        <td>@returnRequest.OrderId</td>
+                        <td>@returnRequest.BuyerName</td>
+                        <td>@returnRequest.Reason</td>
+                        <td>
+                            <span class="status-badge @((returnRequest.Status ?? string.Empty).ToLower().Replace(" ", "-"))">
+                                @returnRequest.Status
+                            </span>
+                        </td>
+                        <td>@returnRequest.CreatedAt.ToString("MMM dd, yyyy")</td>
+                        <td class="order-action-cell">
+                            <div class="action-menu-wrap">
+                                <button class="action-icon-btn" type="button" aria-label="Open return actions">&#8942;</button>
+                                <div class="action-menu">
+                                    <button type="button" class="action-menu-item return-view-details-btn">View Request</button>
+                                    @if (matchingOrder?.ConsumerID > 0)
+                                    {
+                                        <button type="button"
+                                                class="action-menu-item"
+                                                onclick="window.location.href='@Url.Action("SellerMessenger","Seller", new { orderId = returnRequest.OrderId, consumerId = matchingOrder.ConsumerID })'">
+                                            Contact Customer
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                }
+
+                <tr id="noReturnsRow" class="order-empty-row" style="display:none;">
+                    <td colspan="6">
+                        <div class="order-empty-state">No return requests match the current filters.</div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+</div>
+<div id="returnDetailsModal" class="return-modal-overlay">
+    <div class="return-modal-card return-premium-modal shadow-sm rounded-xl">
+        <button type="button" class="return-modal-close return-premium-close" onclick="closeReturnDetailsModal()">&times;</button>
+        <div class="return-modal-header">
+            <div class="return-modal-hero-copy">
+                <p class="return-eyebrow">Return Request</p>
+                <h3>Order #<span id="returnDetailsOrderId">00000</span></h3>
+                <p class="return-buyer-line">Buyer: <span id="returnDetailsBuyer">Buyer</span></p>
+                <p class="return-premium-subtitle">Review the buyer request, shipment details, and supporting evidence before deciding the next return action.</p>
+            </div>
+            <div class="return-modal-header-right return-premium-header-right">
+                <span id="returnDetailsStatus" class="status-badge return-requested">Return Requested</span>
+                <span class="return-request-chip">Operations Review</span>
+            </div>
+        </div>
+
+        <div class="return-modal-body">
+            <div class="return-detail-card return-request-summary">
+                <div class="return-request-topline">
+                    <span class="return-request-pill">Customer Return Intake</span>
+                    <span class="return-request-date">Requested on <span id="returnDetailsDate">---</span></span>
+                </div>
+                <div class="return-request-main">
+                    <div class="return-request-product">
+                        <div class="return-request-product-art">
+                            <img id="returnDetailsProductImage" src="" alt="Returned product" />
+                        </div>
+                        <div class="return-request-product-copy">
+                            <span class="return-label">Product</span>
+                            <strong id="returnDetailsProduct">---</strong>
+                            <p class="return-request-product-meta">Item requested for return</p>
+                        </div>
+                    </div>
+                    <div class="return-request-total-pill">
+                        <span class="return-label">Order Total</span>
+                        <strong id="returnDetailsTotal">₱0.00</strong>
+                    </div>
+                </div>
+                <div class="return-request-metrics">
+                    <div class="return-request-metric-card">
+                        <span class="return-request-metric-icon"><i class="fa-solid fa-layer-group"></i></span>
+                        <span class="return-label">Quantity</span>
+                        <strong id="returnDetailsQuantity">0</strong>
+                    </div>
+                    <div class="return-request-metric-card">
+                        <span class="return-request-metric-icon"><i class="fa-solid fa-truck-fast"></i></span>
+                        <span class="return-label">Courier</span>
+                        <strong id="returnDetailsCourier">---</strong>
+                    </div>
+                    <div class="return-request-metric-card">
+                        <span class="return-request-metric-icon"><i class="fa-solid fa-fingerprint"></i></span>
+                        <span class="return-label">Tracking #</span>
+                        <strong id="returnDetailsTracking">---</strong>
+                    </div>
+                </div>
+            </div>
+
+            <div class="return-request-content-grid">
+                <div class="return-detail-card">
+                    <div class="return-section-heading">
+                        <span class="return-section-kicker">Buyer Input</span>
+                        <h4>Request details</h4>
+                        <p>Review the buyer’s stated reason and message before taking action.</p>
+                    </div>
+                    <div class="return-copy-grid">
+                        <div>
+                            <p class="return-label">Reason</p>
+                            <p id="returnDetailsReason" class="return-value strong">Reason</p>
+                        </div>
+                        <div>
+                            <p class="return-label">Message</p>
+                            <p id="returnDetailsMessage" class="return-value muted">Message</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="return-detail-card">
+                    <div class="return-section-heading">
+                        <span class="return-section-kicker">Proof</span>
+                        <h4>Evidence preview</h4>
+                        <p>Open the uploaded image to inspect condition, packaging, or courier proof.</p>
+                    </div>
+                    <div class="return-evidence-frame">
+                        <img id="returnDetailsImage" src="" alt="Return evidence" />
+                    </div>
+                </div>
+            </div>
+
+            <div id="refundStockWrap" class="refund-stock-wrap" style="display:none;">
+                <label class="refund-stock-toggle">
+                    <input type="checkbox" id="restoreStockCheckbox" />
+                    <span>Restore stock after refund if the item is still in good condition</span>
+                </label>
+            </div>
+
+            <div id="sellerReviewCard" class="return-detail-card" style="display:none;">
+                <div class="return-section-heading">
+                    <span class="return-section-kicker">Seller Review</span>
+                    <h4>Recorded decision</h4>
+                    <p>Prior review details appear here when the request has already been rejected.</p>
+                </div>
+                <div class="return-copy-grid">
+                    <div>
+                        <p class="return-label">Decision Reason</p>
+                        <p id="returnDecisionReason" class="return-value strong">Reason</p>
+                    </div>
+                    <div>
+                        <p class="return-label">Additional Note</p>
+                        <p id="returnDecisionNote" class="return-value muted">No additional note provided.</p>
+                        <p class="return-label">Reviewed At</p>
+                        <p id="returnReviewedAt" class="return-value muted">Not recorded.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="returnDetailsActions" class="return-modal-actions"></div>
+    </div>
+</div>
+
+
+<div id="rejectReturnModal" class="notes-modal-overlay">
+    <div class="return-review-modal">
+        <div class="return-review-header">
+            <div>
+                <p class="return-eyebrow">Seller Decision</p>
+                <h3>Reject Return Request</h3>
+                <p class="return-review-subtitle">Select a rejection reason before submitting. You can also include an optional note for additional context.</p>
+            </div>
+            <button type="button" class="return-modal-close" onclick="closeRejectReturnModal()">&times;</button>
+        </div>
+
+        <div class="return-review-body">
+            <input type="hidden" id="rejectReturnId" value="" />
+
+            <div class="return-review-field">
+                <label for="rejectReturnReason">Rejection Reason <span class="required">*</span></label>
+                <select id="rejectReturnReason" class="order-select">
+                    <option value="">Select a reason</option>
+                    <option value="Item not eligible for return">Item not eligible for return</option>
+                    <option value="Return period expired">Return period expired</option>
+                    <option value="Insufficient or unclear proof">Insufficient or unclear proof</option>
+                    <option value="Damage not valid / not seller&#39;s fault">Damage not valid / not seller&#39;s fault</option>
+                    <option value="Item already used or altered">Item already used or altered</option>
+                    <option value="Missing parts or incomplete item">Missing parts or incomplete item</option>
+                    <option value="Change of mind not allowed">Change of mind not allowed</option>
+                </select>
+                <p id="rejectReturnReasonError" class="return-review-error" style="display:none;">Please select a rejection reason.</p>
+            </div>
+
+            <div class="return-review-field">
+                <label for="rejectReturnNote">Additional Explanation</label>
+                <textarea id="rejectReturnNote" rows="4" placeholder="Add an optional explanation for the buyer."></textarea>
+            </div>
+        </div>
+
+        <div class="return-review-actions">
+            <button type="button" class="return-btn return-btn-secondary" onclick="closeRejectReturnModal()">Cancel</button>
+            <button type="button" class="return-btn return-btn-primary" onclick="submitRejectReturnRequest()">Submit Rejection</button>
+        </div>
+    </div>
+</div>
+
+<div id="orderSummaryModal" class="bw-modal-overlay">
+    <div class="premium-modal-container">
+        
+        <div class="premium-header">
+            <h3>Order #<span id="summaryOrderId">Loading...</span></h3>
+            <span class="premium-close-btn" onclick="closeOrderSummaryModal()">&times;</span>
+        </div>
+
+        <div class="premium-body">
+            
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-label">Date Placed</div>
+                    <div class="metric-value" id="modalOrderDate">...</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Payment Method</div>
+                    <div class="metric-value" id="modalPayment">...</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Order Total</div>
+                    <div class="metric-value" id="modalTotal" style="color: #059669;">...</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Status</div>
+                    <div class="metric-value"><span class="status-badge pending">Pending</span></div>
+                </div>
+            </div>
+
+            <div class="info-section">
+                <h4>Order Items</h4>
+                <table class="premium-table">
+                    <thead>
+                        <tr>
+                            <th>Item Details</th>
+                            <th style="text-align: center;">Qty</th>
+                            <th style="text-align: right;">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="modalItemsBody">
+                        <tr>
+                            <td>
+                                <strong style="display: block; color: #111827;">Comfort Sculpt Seamless Bra</strong>
+                            </td>
+                            <td style="text-align: center; font-weight: 500;">x4</td>
+                            <td style="text-align: right; font-weight: 500;">&#8369;2,600.00</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+         <div class="details-grid">
+                
+                <div class="info-section" style="margin-bottom: 0;">
+                    <h4>Customer Details</h4>
+                    <div class="premium-box" style="height: 100%;">
+                        <p style="margin: 0 0 4px 0; color: #111827;"><strong><span id="modalCustomerName">...</span></strong></p>
+                        <p style="margin: 0 0 12px 0; color: #6b7280; font-size: 0.85rem;" id="modalCustomerEmail">...</p>
+                        
+                        <p style="margin: 0 0 6px 0; font-size: 0.9rem;"><i class="fa-solid fa-phone" style="margin-right: 6px;"></i><span id="modalCustomerPhone">...</span></p>
+                       <div style="margin-bottom: 15px;">
+    <p style="font-size: 0.85rem; color: #6b7280; margin-bottom: 4px;">Shipping Address</p>
+    
+    <div style="display: flex; align-items: flex-start; gap: 10px;">
+        <span id="modalCustomerAddress" style="font-weight: 500; color: #111827; flex: 1;">
+            Loading address...
+        </span>
+        
+        <button onclick="copyCustomerAddress()" title="Copy Address" style="background: none; border: 1px solid #d1d5db; border-radius: 4px; padding: 4px 8px; cursor: pointer; color: #4b5563; transition: all 0.2s;">
+            <i class="fa-regular fa-copy"></i> Copy
+        </button>
+    </div>
+                        
+                        <p style="margin: 0; font-size: 0.85rem; color: #059669; font-weight: 500;">
+                            🚚 Delivery: <span id="modalDeliveryOption">...</span>
+                        </p>
+                    </div>
+                </div>
+   </div>
+                <div class="info-section" style="margin-bottom: 0;">
+                    <h4>Order Summary</h4>
+                    <div class="premium-box" style="height: 100%; display: flex; flex-direction: column; justify-content: center;">
+                        
+                        <div class="summary-line">
+                            <span>Subtotal (<span id="modalTotalItems">0</span> items)</span>
+                            <span id="modalSubtotal">&#8369;0.00</span>
+                        </div>
+                        
+                        <div class="summary-line">
+                            <span>Shipping Fee</span>
+                            <span id="modalShippingFee">&#8369;0.00</span>
+                        </div>
+                        
+                        <hr style="border: 0; border-top: 1px dashed #e5e7eb; margin: 12px 0;" />
+                        
+                        <div class="summary-line total-line">
+                            <span>Grand Total</span>
+                            <span id="modalGrandTotal" style="color: #059669;">&#8369;0.00</span>
+                        </div>
+                        
+                    </div>
+                </div>
+
+         </div>
+
+            <div class="info-section" style="margin-top: 24px;">
+                <h4>Logistics Preference</h4>
+                <select id="courierSelect" class="form-select" style="width: 100%; padding: 12px; border-radius: 6px; border: 1px solid #d1d5db; background: #f9fafb;">
+                    <option value="">Select a Courier...</option>
+                    @if (ViewBag.Couriers != null)
+                    {
+                        foreach (var courier in ViewBag.Couriers)
+                        {
+                            <option value="@courier.logistics_id">@courier.courier_name</option>
+                        }
+                    }
+                </select>
+                <div id="courierWarning" class="validation-warning">
+        <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg>
+        <span>Please select a courier before accepting this order.</span>
+            </div>
+        </div> 
+       <div class="premium-footer" style="display: flex; flex-direction: row; flex-wrap: nowrap; gap: 10px; width: 100%; padding: 16px 24px; background: #fff; border-top: 1px solid #e5e7eb;">
+    
+    <button type="button" 
+            onclick="openDeclineModal(document.getElementById('summaryOrderId').innerText)" 
+            style="flex: 1; padding: 10px 16px; font-size: 13px; font-weight: 500; display: flex; justify-content: center; gap: 8px; align-items: center; border: none; color: #000; background: #e5e5e5; border-radius: 6px; cursor: pointer; white-space: nowrap; transition: background 0.2s ease;"> 
+        <i class="fa-solid fa-xmark"></i> Decline
+    </button>
+
+    <button type="button" 
+            onclick="confirmAndAcceptOrder()" 
+            style="flex: 1; padding: 10px 16px; font-size: 13px; font-weight: 500; display: flex; justify-content: center; gap: 8px; align-items: center; border: none; border-radius: 6px; background-color: #000; color: #fff; cursor: pointer; white-space: nowrap; transition: background 0.2s ease;"> 
+        <i class="fa-solid fa-check"></i> Accept
+    </button>
+    
+</div>
+    </div>
+    </div>
+</div>
+<!-- ===== PROCESSING MODAL ===== -->
+<div id="processingModal" class="modal-overlay">
+    <div class="processing-box">
+        <div class="loader"></div>
+        <h3>Processing Order...</h3>
+        <p>Step 5: System Execution (Automated)</p>
+
+        <ul>
+            <li>✔ Updating Status to TO SHIP</li>
+            <li>✔ Deducting Live Inventory</li>
+            <li>✔ Sending Buyer Notification</li>
+        </ul>
+    </div>
+</div>
+
+<!-- ORDER MOVED TO TO SHIP MODAL -->
+<div id="orderToShipModal" class="notes-modal-overlay">
+    <div class="notes-modal-container">
+        <h3>📦 Order Updated!</h3>
+        <p id="toShipMessage">Order #12345 has been moved to TO SHIP.</p>
+        <div style="text-align: center; margin-top: 20px;">
+            <button id="toShipOkBtn" 
+                    style="background: #3b82f6; color: white; padding: 12px 24px; border-radius: 8px; border: none; font-size: 14px; cursor: pointer;">
+                OK
+            </button>
+        </div>
+    </div>
+</div>
+
+
+<!-- ===== REVIEW REQUEST MODAL ===== -->
+<div id="reviewRequestModal" class="notes-modal-overlay">
+    <div class="notes-modal-container">
+
+        <!-- HEADER -->
+        <div class="notes-header">
+            <h3>📝 Review Request</h3>
+            <span class="notes-close" onclick="closeReviewRequestModal()">✕</span>
+        </div>
+
+        <!-- ORDER & CUSTOMER INFO -->
+        <div class="review-info">
+            <p><strong>Order #:</strong> <span id="reviewOrderId">12345</span></p>
+            <p><strong>Customer:</strong> <span id="reviewCustomer">Harvy</span></p>
+            <p><strong>Product:</strong> <span id="reviewProduct">Comfort Sculpt Bra</span></p>
+            <p><strong>Return Reason:</strong> <span id="reviewReason">Wrong Size</span></p>
+        </div>
+
+        <!-- ATTACHED PHOTOS -->
+        <div class="review-attachments">
+            <p><strong>Customer Proof:</strong></p>
+            <div id="reviewPhotos" class="photo-grid">
+                <!-- Customer photos will be inserted dynamically -->
+            </div>
+        </div>
+
+        <!-- COMMENT -->
+        <div class="review-comment">
+            <div class="review-comment-header">
+                <p class="review-comment-title">Seller Comment</p>
+                <span class="review-comment-hint">Optional, but useful for explaining your decision.</span>
+            </div>
+            <textarea id="reviewComment" placeholder="Add comment (optional)..."></textarea>
+        </div>
+
+        <!-- DECISION -->
+        <div class="review-decision">
+            <label>
+                <input type="radio" name="reviewDecision" value="approve"> Approve
+            </label>
+            <label>
+                <input type="radio" name="reviewDecision" value="reject"> Reject
+            </label>
+        </div>
+
+        <!-- ACTIONS -->
+        <div class="notes-actions" style="justify-content: center;">
+            <button onclick="closeReviewRequestModal()" 
+                    style="background:#e5e7eb; color:#111; padding:12px 24px; border-radius:8px; border:none; font-size:14px; cursor:pointer;">
+                Cancel
+            </button>
+            <button onclick="submitReviewRequest()" 
+                    style="background:#000; color:#fff; padding:12px 24px; border-radius:8px; border:none; font-size:14px; cursor:pointer;">
+                Submit
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<!-- NOTE SAVED MODAL (RESTORED) -->
+<div id="noteSavedModal" class="notes-modal-overlay">
+    <div class="notes-modal-container">
+        <h3>✅ Note Saved!</h3>
+        <p class="saved-note-order">Note saved for order #<span id="noteSavedOrderId"></span></p>
+        <div class="saved-note-box">
+            <p id="noteSavedMessage"></p>
+        </div>
+        <div style="text-align: center; margin-top: 20px;">
+            <button id="noteSavedOkBtn" style="background: black; color: white; padding: 12px 24px; border-radius: 8px; border: none; font-size: 14px; cursor: pointer;">Okay</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== DOWNLOAD RECEIPT MODAL ===== -->
+<div id="downloadReceiptModal" class="notes-modal-overlay">
+    <div class="notes-modal-container receipt-premium-modal">
+
+        <!-- HEADER -->
+        <div class="notes-header">
+            <h3>🧾 Download Receipt</h3>
+            <span class="notes-close" onclick="closeDownloadReceiptModal()">✕</span>
+        </div>
+
+        <div class="receipt-hero-card">
+            <div class="receipt-hero-main">
+                <div>
+                    <span class="premium-data-label">Order #</span>
+                    <strong id="receiptOrderId">12345</strong>
+                </div>
+                <div class="receipt-total-pill">
+                    <span class="premium-data-label">Total</span>
+                    <strong>&#8369;<span id="receiptTotal">2,600.00</span></strong>
+                </div>
+            </div>
+            <div class="receipt-meta-grid">
+                <div class="receipt-meta-card">
+                    <span class="premium-data-label">Customer</span>
+                    <strong id="receiptCustomer">Harvy</strong>
+                </div>
+                <div class="receipt-meta-card">
+                    <span class="premium-data-label">Date</span>
+                    <strong id="receiptDate">Mar 02, 2026</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- ITEMS TABLE -->
+        <div class="summary-items receipt-items-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Qty</th>
+                        <th>Price</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody id="receiptItemsBody">
+                </tbody>
+            </table>
+        </div>
+
+        <!-- ACTIONS -->
+        <div class="notes-actions premium-modal-actions">
+            <button type="button" class="premium-btn premium-btn-secondary" onclick="closeDownloadReceiptModal()">Close</button>
+            <button type="button" class="premium-btn premium-btn-primary" onclick="downloadReceipt()">Download PDF</button>
+        </div>
+
+    </div>
+</div>
+
+<div id="confirmShipmentModal" class="bw-modal-overlay">
+    <div class="bw-modal-container bw-confirm-container">
+        <div class="bw-modal-header">
+            <h3>Confirm Shipment</h3>
+            <span class="bw-close" onclick="closeConfirmShipmentModal()">&times;</span>
+        </div>
+        <div class="bw-info-box">
+            <p>Are you sure you want to mark order #<span id="confirmShipOrderId">00000</span> as shipped?</p>
+        </div>
+        <div class="bw-actions">
+            <button class="bw-btn cancel" onclick="closeConfirmShipmentModal()">Cancel</button>
+            <button class="bw-btn confirm" onclick="completeShipment()">Confirm</button>
+        </div>
+    </div>
+</div>
+
+<div id="trackingRequiredModal" class="bw-modal-overlay">
+    <div class="bw-modal-container bw-confirm-container">
+        <div class="bw-modal-header">
+            <h3 class="bw-error-icon">X</h3>
+            <span class="bw-close" onclick="closeTrackingRequiredModal()">&times;</span>
+        </div>
+        <div class="bw-info-box">
+            <p>Tracking number is required.</p>
+        </div>
+        <div class="bw-actions">
+            <button class="bw-btn confirm" onclick="closeTrackingRequiredModal()">Okay</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== MARK AS RETURNED MODAL ===== -->
+<div id="markReturnedModal" class="bw-modal-overlay">
+    <div class="bw-modal-container bw-return-modal">
+        <span class="bw-close bw-return-close" onclick="closeReturnModal()">&times;</span>
+        <div class="bw-modal-header bw-return-header">
+            <div class="bw-return-header-copy">
+                <span class="bw-return-eyebrow">Returns Processing</span>
+                <h3>Mark Order #<span id="returnOrderId">00000</span> as Failed Delivery</h3>
+                <p class="bw-return-subtitle">Review shipment details, capture the return reason, and attach proof before updating the order.</p>
+            </div>
+        </div>
+
+        <div class="bw-info-box bw-fulfillment-box bw-return-summary">
+            <div class="bw-return-summary-topline">
+                <span class="bw-return-status-pill">Failed Delivery Review</span>
+                <span class="bw-return-supporting-copy">Confirm the shipment trail before this order moves into returns handling.</span>
+            </div>
+            <div class="bw-return-summary-main">
+                <div class="bw-return-customer-block">
+                    <span class="bw-return-label">Customer</span>
+                    <strong id="returnCustomer">---</strong>
+                    <p class="bw-return-customer-meta">Recipient on the shipment</p>
+                </div>
+                <div class="bw-return-total-pill">
+                    <span class="bw-return-label">Order Total</span>
+                    <strong id="returnTotal">&#8369;0.00</strong>
+                </div>
+            </div>
+            <div class="bw-return-detail-grid">
+                <div class="bw-return-detail-card bw-return-detail-feature">
+                    <span class="bw-return-detail-icon"><i class="fa-solid fa-box-open"></i></span>
+                    <span class="bw-return-label">Product</span>
+                    <strong id="returnProduct">---</strong>
+                </div>
+                <div class="bw-return-detail-card">
+                    <span class="bw-return-detail-icon"><i class="fa-solid fa-layer-group"></i></span>
+                    <span class="bw-return-label">Quantity</span>
+                    <strong id="returnItems">0</strong>
+                </div>
+                <div class="bw-return-detail-card">
+                    <span class="bw-return-detail-icon"><i class="fa-solid fa-truck-fast"></i></span>
+                    <span class="bw-return-label">Courier</span>
+                    <strong id="returnCourier">---</strong>
+                </div>
+                <div class="bw-return-detail-card">
+                    <span class="bw-return-detail-icon"><i class="fa-solid fa-fingerprint"></i></span>
+                    <span class="bw-return-label">Tracking #</span>
+                    <strong id="returnTracking">---</strong>
+                </div>
+            </div>
+        </div>
+
+        <div class="bw-return-form-shell">
+            <div class="bw-return-form-section">
+                <div class="bw-return-section-heading">
+                    <span class="bw-return-section-kicker">Step 1</span>
+                    <h4>Document the delivery failure</h4>
+                    <p>Select the strongest reason and leave an operational note if the courier gave additional context.</p>
+                </div>
+                <div class="bw-field">
+                    <label for="returnReason">Reason <span class="required">*</span></label>
+                    <select id="returnReason">
+                        <option value="">-- Select Reason --</option>
+                        <option value="Buyer Unreachable">Buyer Unreachable</option>
+                        <option value="Invalid Address">Invalid Address</option>
+                        <option value="Refused to Accept">Refused to Accept</option>
+                        <option value="Other Courier Failure">Other Courier Failure</option>
+                    </select>
+                </div>
+
+                <div class="bw-field">
+                    <label for="returnNote">Notes</label>
+                    <textarea id="returnNote" rows="4" placeholder="Add optional notes about the failed delivery and returned package."></textarea>
+                </div>
+            </div>
+
+            <div class="bw-return-form-section bw-return-proof-section">
+                <div class="bw-return-section-heading">
+                    <span class="bw-return-section-kicker">Step 2</span>
+                    <h4>Attach proof</h4>
+                    <p>Upload a courier photo, receipt, or handoff evidence for audit and support follow-up.</p>
+                </div>
+                <div class="bw-field">
+                    <label>Proof Image</label>
+                    <div class="bw-upload-box" id="returnUploadBox">
+                        <input type="file" id="returnProof" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" hidden />
+                        <div class="bw-return-upload-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+                        <p>Drag or click to upload proof</p>
+                        <span class="bw-return-upload-hint">JPG, PNG, WEBP up to 5MB</span>
+                    </div>
+                    <div id="returnPreviewContainer" style="display:none;">
+                        <img id="returnPreviewImage" alt="Return proof preview" />
+                        <button type="button" class="remove-preview-btn" onclick="removeReturnPreview()">Remove</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bw-actions bw-return-actions">
+            <div class="bw-return-actions-copy">
+                <strong>Final action</strong>
+                <span>This updates the order status and stores your return evidence.</span>
+            </div>
+            <button class="bw-btn cancel" type="button" onclick="closeReturnModal()">Cancel</button>
+            <button class="bw-btn confirm" type="button" id="confirmReturnBtn" onclick="submitReturnedOrder()">Confirm</button>
+        </div>
+    </div>
+</div>
+
+<div id="returnedInfoModal" class="bw-modal-overlay">
+    <div class="bw-modal-container bw-confirm-container fd-premium-modal">
+        <button type="button" class="bw-close fd-close" onclick="closeReturnedInfoModal()">&times;</button>
+        <div class="bw-modal-header fd-premium-header">
+            <div>
+                <span class="premium-modal-kicker">Failed Delivery</span>
+                <h3>Order #<span id="returnInfoOrderId">00000</span></h3>
+                <p class="premium-modal-subtitle">Review shipment details, evidence, and notes recorded for this failed delivery.</p>
+            </div>
+        </div>
+        <div class="bw-info-box bw-fulfillment-box fd-summary-card">
+            <div class="fd-summary-main">
+                <div>
+                    <span class="premium-data-label">Customer</span>
+                    <strong id="returnInfoCustomer">---</strong>
+                </div>
+                <div class="fd-total-pill">
+                    <span class="premium-data-label">Total</span>
+                    <strong id="returnInfoTotal">&#8369;0.00</strong>
+                </div>
+            </div>
+            <div class="fd-detail-grid">
+                <div class="fd-detail-card">
+                    <span class="premium-data-label">Product</span>
+                    <strong id="returnInfoProduct">---</strong>
+                </div>
+                <div class="fd-detail-card">
+                    <span class="premium-data-label">Quantity</span>
+                    <strong id="returnInfoQuantity">0</strong>
+                </div>
+                <div class="fd-detail-card">
+                    <span class="premium-data-label">Courier</span>
+                    <strong id="returnInfoCourier">---</strong>
+                </div>
+                <div class="fd-detail-card">
+                    <span class="premium-data-label">Tracking #</span>
+                    <strong id="returnInfoTracking">---</strong>
+                </div>
+                <div class="fd-detail-card fd-detail-wide">
+                    <span class="premium-data-label">Reason</span>
+                    <strong id="returnInfoReason">---</strong>
+                </div>
+            </div>
+        </div>
+        <div class="fd-content-grid">
+            <div class="bw-proof-block fd-evidence-card" id="returnInfoProofBlock" style="display:none;">
+                <div class="fd-section-heading">
+                    <span class="premium-modal-kicker">Proof</span>
+                    <h4>Evidence preview</h4>
+                </div>
+                <img id="returnInfoProofImage" class="bw-proof-image" src="" alt="Return proof" />
+            </div>
+            <div class="bw-note-block fd-note-card">
+                <div class="fd-section-heading">
+                    <span class="premium-modal-kicker">Internal Note</span>
+                    <h4>Recorded seller note</h4>
+                </div>
+                <p id="returnInfoNote">---</p>
+            </div>
+        </div>
+        <div class="bw-actions fd-actions">
+            <button class="premium-btn premium-btn-primary" type="button" onclick="closeReturnedInfoModal()">Close</button>
+        </div>
+    </div>
+</div>
+</div>
+
+<!-- add note -->
+<div id="addNotesModal" class="notes-modal-overlay">
+    <div class="notes-modal-container add-note-premium-modal">
+        
+        <input type="hidden" id="addNotesOrderId" value="" />
+
+        <div class="notes-header" style="display: flex; justify-content: space-between;">
+            <h3 id="customerHeaderText">Customer: </h3>
+            <span class="notes-close" onclick="closeAddNotesModal()" style="cursor: pointer;">✕</span>
+        </div>
+
+        <div class="notes-header add-note-header">
+            <div>
+                <span class="premium-modal-kicker">Internal Notes</span>
+                <h3 id="customerHeaderText">Customer: </h3>
+                <p class="premium-modal-subtitle">Save a private seller note for follow-up, fulfillment handling, or customer context.</p>
+            </div>
+        </div>
+
+        <div class="customer-card add-note-customer-card">
+            <div class="customer-avatar">
+                <img src="~/images/profile-icon.png" alt="Profile" /> 
+            </div>
+            <div class="customer-info">
+                <span class="premium-data-label">Customer</span>
+                <p id="addNotesCustomerText"></p>
+            </div>
+        </div>
+
+
+        <div class="notes-body add-note-body">
+            <label>Add Note</label>
+            <textarea id="addNotesTextarea" maxlength="500" placeholder="Type your message..."></textarea>
+            <div class="notes-footer">
+                <span id="charCount">0/500</span>
+            </div>
+        </div>
+
+        <div class="notes-actions premium-modal-actions">
+            <button id="addNotesCancelBtn" type="button" class="premium-btn premium-btn-secondary" onclick="closeAddNotesModal()">Cancel</button>
+            <button id="addNotesSaveBtn" type="button" onclick="saveOrderNote()" class="premium-btn premium-btn-primary">Save Note</button>
+        </div>
+    </div>
+</div>
+<div id="declineOrderModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 9999; background: rgba(0,0,0,0.5); justify-content: center; align-items: center;">
+    <div style="background: white; padding: 24px; border-radius: 12px; width: 450px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        
+        <input type="hidden" id="declineOrderId" value="" />
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="margin: 0; color: #111827;">Decline Order #<span id="declineOrderNumberDisplay"></span></h3>
+            <span onclick="closeDeclineModal()" style="cursor: pointer; font-size: 1.2rem; color: #6b7280;">✕</span>
+        </div>
+
+        <p style="color: #4b5563; font-size: 0.9rem; margin-bottom: 16px;">Please select a reason for declining this order. This action cannot be undone and the customer will be notified.</p>
+
+        <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px;">
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <input type="radio" name="declineReason" value="Out of Stock" onchange="toggleDeclineTextarea()" checked>
+                Out of Stock
+            </label>
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <input type="radio" name="declineReason" value="Invalid Delivery Address" onchange="toggleDeclineTextarea()">
+                Invalid Delivery Address
+            </label>
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <input type="radio" name="declineReason" value="Customer Requested Cancellation" onchange="toggleDeclineTextarea()">
+                Customer Requested Cancellation
+            </label>
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <input type="radio" name="declineReason" value="Other" onchange="toggleDeclineTextarea()">
+                Other
+            </label>
+        </div>
+
+        <div id="customReasonContainer" style="display: none; margin-bottom: 20px;">
+            <textarea id="customDeclineReason" placeholder="Please specify the reason..." style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; height: 80px;"></textarea>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 12px;">
+            <button onclick="closeDeclineModal()" style="padding: 10px 16px; border: 1px solid #d1d5db; background: white; border-radius: 6px; cursor: pointer;">Cancel</button>
+            <button onclick="submitDeclineOrder()" style="padding: 10px 16px; border: none; background: #ef4444; color: white; border-radius: 6px; cursor: pointer; font-weight: bold;">Confirm Decline</button>
+        </div>
+    </div>
+</div>
+@section Scripts {
+    <script src="~/js/ordermanagement.js" asp-append-version="true"></script>
+    
+    <div id="toastContainer" style="position: fixed; bottom: 24px; right: 24px; z-index: 10000; display: flex; flex-direction: column; gap: 12px;"></div>
+}
+
+<script>
+    setTimeout(() => {
+        if (typeof window.applyOrderFilters === 'undefined') {
+            console.error("🚨 CRITICAL: ordermanagement.js failed to load. Check for syntax errors or 404 paths.");
+            alert("Warning: JavaScript failed to load. Check developer console.");
+        } else {
+            console.log("✅ JS LOADED AND CONNECTED!");
+        }
+    }, 500);
+</script>
+
+
+
+
+
+
+
+
+

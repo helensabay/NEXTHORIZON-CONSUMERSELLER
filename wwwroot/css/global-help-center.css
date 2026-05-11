@@ -1,0 +1,231 @@
+.global-help-center {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    z-index: 1400;
+}
+
+.global-help-center__trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    border: 0;
+    border-radius: 999px;
+    padding: 14px 18px;
+    background: linear-gradient(135deg, #111111 0%, #2f2f2f 100%);
+    color: #ffffff;
+    box-shadow: 0 16px 30px rgba(17, 17, 17, 0.28);
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.global-help-center__trigger:hover {
+    transform: translateY(-2px) scale(1.01);
+    box-shadow: 0 20px 36px rgba(17, 17, 17, 0.34);
+}
+
+.global-help-center__trigger:focus-visible,
+.global-help-center__close:focus-visible,
+.global-help-center__link:focus-visible {
+    outline: 3px solid rgba(249, 115, 22, 0.35);
+    outline-offset: 2px;
+}
+
+.global-help-center__icon {
+    width: 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+}
+
+.global-help-center__label {
+    font: 600 14px/1 'Poppins', sans-serif;
+    white-space: nowrap;
+}
+
+.global-help-center__overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.26);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.24s ease;
+}
+
+.global-help-center__panel {
+    position: fixed;
+    right: 24px;
+    bottom: 94px;
+    width: min(1080px, calc(100vw - 48px));
+    height: min(82vh, 860px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid rgba(17, 17, 17, 0.08);
+    border-radius: 28px;
+    background: #ffffff;
+    box-shadow: 0 32px 80px rgba(15, 23, 42, 0.24);
+    opacity: 0;
+    transform: translateY(18px) scale(0.98);
+    transform-origin: bottom right;
+    pointer-events: none;
+    transition: opacity 0.26s ease, transform 0.26s ease;
+}
+
+.global-help-center__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 18px 22px;
+    border-bottom: 1px solid #ececec;
+    background: rgba(255, 255, 255, 0.96);
+}
+
+.global-help-center__eyebrow {
+    margin: 0 0 4px;
+    color: #6b7280;
+    font: 600 11px/1 'Poppins', sans-serif;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.global-help-center__header h2 {
+    margin: 0;
+    color: #111111;
+    font: 700 20px/1.2 'Poppins', sans-serif;
+}
+
+.global-help-center__actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.global-help-center__link,
+.global-help-center__close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    font: 600 13px/1 'Poppins', sans-serif;
+}
+
+.global-help-center__link {
+    padding: 10px 14px;
+    border: 1px solid #dddddd;
+    color: #111111;
+    text-decoration: none;
+}
+
+.global-help-center__close {
+    width: 40px;
+    height: 40px;
+    border: 0;
+    background: #111111;
+    color: #ffffff;
+    cursor: pointer;
+}
+
+.global-help-center__body {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    background: #f8fafc;
+}
+
+.global-help-center__loading {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: #374151;
+    font: 500 14px/1.4 'Poppins', sans-serif;
+    background: linear-gradient(180deg, rgba(248, 250, 252, 0.98) 0%, rgba(241, 245, 249, 0.98) 100%);
+}
+
+.global-help-center__spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(17, 17, 17, 0.15);
+    border-top-color: #f97316;
+    border-radius: 50%;
+    animation: global-help-center-spin 0.9s linear infinite;
+}
+
+.global-help-center__frame {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    background: #ffffff;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.global-help-center.is-open .global-help-center__overlay {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.global-help-center.is-open .global-help-center__panel {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+
+.global-help-center.is-loaded .global-help-center__loading {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.global-help-center.is-loaded .global-help-center__frame {
+    opacity: 1;
+}
+
+body.global-help-center-open {
+    overflow: hidden;
+}
+
+@keyframes global-help-center-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (max-width: 768px) {
+    .global-help-center {
+        right: 16px;
+        bottom: 16px;
+    }
+
+    .global-help-center__trigger {
+        padding: 14px;
+        border-radius: 50%;
+    }
+
+    .global-help-center__label {
+        display: none;
+    }
+
+    .global-help-center__panel {
+        right: 0;
+        bottom: 0;
+        width: 100vw;
+        height: 100vh;
+        max-width: none;
+        border-radius: 24px 24px 0 0;
+        transform: translateY(100%);
+    }
+
+    .global-help-center.is-open .global-help-center__panel {
+        transform: translateY(0);
+    }
+
+    .global-help-center__header {
+        padding: 16px 18px;
+    }
+}

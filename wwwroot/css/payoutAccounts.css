@@ -1,0 +1,163 @@
+    /* Hide sidebar for this page 
+.sidebar {
+    display: none !important;
+}*/
+
+/* Remove space left by sidebar 
+.main-content {
+    margin-left: 0 !important;
+}*/
+
+/* General Styling */
+body {
+    font-family: 'Poppins', sans-serif;
+    background: #f5f5f7;
+}
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+h2 {
+    font-weight: 700;
+    font-size: 24px;
+    margin-bottom: 25px;
+}
+
+/* Cards */
+.card {
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    border: none;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+}
+
+.card-header {
+    background: #fff;
+    font-size: 16px;
+    padding: 16px 20px;
+    border-bottom: 1px solid #e0e0e0;
+    font-weight: 700;
+}
+
+/* Table */
+table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+thead {
+    background: #f1f1f1;
+}
+
+th {
+    font-weight: 600;
+    padding: 14px 16px;
+    font-size: 14px;
+    text-align: left;
+}
+
+td {
+    padding: 14px 16px;
+    vertical-align: middle;
+    font-size: 14px;
+}
+
+/* Badges & Links */
+.badge {
+    background: #1a1a1a;
+    color: #fff;
+    padding: 6px 14px;
+    border-radius: 50px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.text-danger {
+    color: #dc3545;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.text-danger:hover {
+    text-decoration: underline;
+}
+
+.set-default {
+    color: #1a1a1a;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.set-default:hover {
+    text-decoration: underline;
+}
+
+/* Add Account Button */
+.add-btn {
+    border: 1px solid #1a1a1a;
+    background: #fff;
+    padding: 10px 18px;
+    border-radius: 50px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.add-btn:hover {
+    background: #1a1a1a;
+    color: #fff;
+}
+
+/* Accounts Count */
+.accounts-count {
+    color: #777;
+    font-size: 13px;
+    margin-top: 8px;
+}
+
+/* Page Actions */
+.page-actions {
+    margin-bottom: 20px;
+    display: flex;
+    gap: 12px;
+}
+
+/* Minimalist Back Button */
+.link-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #1a1a1a;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    background: transparent;
+    border: none;
+    padding: 0;
+    transition: color 0.2s ease;
+}
+
+.link-btn i {
+    font-size: 14px;
+}
+
+.link-btn:hover {
+    color: white; /* subtle accent on hover */
+}
+
+/* Table Row Hover */
+tbody tr:hover {
+    background: #fafafa;
+}

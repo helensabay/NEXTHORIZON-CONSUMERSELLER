@@ -1,0 +1,928 @@
+@model WebApplication1.ViewModels.BecomeSellerViewModel
+@{
+    ViewData["Title"] = "Become a Seller - Next Horizon";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"]</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/styles.css">
+    <link rel="stylesheet" href="~/css/loading.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+<div class="seller-signup-container">
+
+    <!-- Sidebar -->
+    <div class="seller-signup-sidebar">
+        <div class="seller-signup-brand">
+            <a asp-controller="Home" asp-action="Index" class="logo">
+                <img src="~/images/logo.png" alt="Next Horizon" class="logo-image">
+                <span class="logo-text">Next Horizon</span>
+            </a>
+        </div>
+
+        <div class="seller-signup-info">
+            <h2>Start Selling Today</h2>
+            <p>Join our marketplace and reach thousands of passionate runners worldwide.</p>
+
+            <div class="seller-signup-steps">
+                <div id="step1" class="seller-signup-step active">
+                    <div class="seller-signup-step-number">1</div>
+                    <div>Choose Business Type</div>
+                </div>
+                <div id="step2" class="seller-signup-step">
+                    <div class="seller-signup-step-number">2</div>
+                    <div>Upload Logo</div>
+                </div>
+                <div id="step3" class="seller-signup-step">
+                    <div class="seller-signup-step-number">3</div>
+                    <div>Upload Documents</div>
+                </div>
+                <div id="step4" class="seller-signup-step">
+                    <div class="seller-signup-step-number">4</div>
+                    <div>Create Login</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="seller-signup-footer">
+            <p style="color: var(--color-light-gray); font-size: 0.875rem;">
+                <i class="fas fa-shield-alt"></i> Your documents are secure and encrypted
+            </p>
+        </div>
+    </div>
+
+    <!-- FORM -->
+    <div class="seller-signup-main">
+        <div class="seller-signup-header">
+            <h1>Become a Seller</h1>
+            <p>Complete the form below to start your seller journey</p>
+        </div>
+
+        <form id="sellerForm"
+              asp-controller="Account"
+              asp-action="BecomeSeller"
+              method="post"
+              enctype="multipart/form-data"
+              class="seller-signup-form">
+
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <!-- BUSINESS TYPE -->
+            <div id="businessTypeSection" class="business-type-selection">
+                <label class="business-type-card">
+                    <input asp-for="BusinessType" type="radio" value="Sole Proprietor" hidden>
+                    <div class="business-type-icon"><i class="fas fa-user"></i></div>
+                    <h3>Sole Proprietor</h3>
+                    <p>Individual business owner with DTI registration</p>
+                </label>
+
+                <label class="business-type-card">
+                    <input asp-for="BusinessType" type="radio" value="Corporation" hidden>
+                    <div class="business-type-icon"><i class="fas fa-building"></i></div>
+                    <h3>Corporation / Partnership</h3>
+                    <p>Registered corporation with SEC registration</p>
+                </label>
+
+                <span asp-validation-for="BusinessType" class="text-danger"></span>
+            </div>
+
+            <!-- BRAND LOGO -->
+            <div id="uploadLogoSection" class="form-section" style="margin-top:1rem;">
+                <h3 class="form-section-title">Upload Brand Logo</h3>
+                <div class="document-upload-grid">
+                    <div class="document-upload-item">
+                        <input asp-for="BrandLogo" type="file" class="document-upload-input" accept=".png,.jpg,.jpeg,.svg" id="BrandLogoInput">
+                        <label class="document-upload-label" for="BrandLogoInput">
+                            <div class="document-upload-icon"><i class="fas fa-image"></i></div>
+                            <div class="document-upload-text">Brand Logo</div>
+                            <div class="document-upload-hint">PNG, JPG, SVG</div>
+                        </label>
+                        <span asp-validation-for="BrandLogo" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DOCUMENTS -->
+            <div id="document-upload-section" class="document-upload-section">
+                <h3>Upload Business Documents</h3>
+                <div class="document-upload-grid">
+                    <div class="document-upload-item">
+                        <input asp-for="DtiCertificate" type="file" class="document-upload-input" accept=".pdf,.jpg,.jpeg,.png" id="DtiCertificateInput">
+                        <label class="document-upload-label" for="DtiCertificateInput">
+                            <div class="document-upload-icon"><i class="fas fa-file-alt"></i></div>
+                            <div class="document-upload-text">DTI Certificate</div>
+                        </label>
+                        <span asp-validation-for="DtiCertificate" class="text-danger"></span>
+                    </div>
+
+                    <div class="document-upload-item">
+                        <input asp-for="BirCertificate" type="file" class="document-upload-input" accept=".pdf,.jpg,.jpeg,.png" id="BirCertificateInput">
+                        <label class="document-upload-label" for="BirCertificateInput">
+                            <div class="document-upload-icon"><i class="fas fa-file-invoice-dollar"></i></div>
+                            <div class="document-upload-text">BIR Certificate</div>
+                        </label>
+                        <span asp-validation-for="BirCertificate" class="text-danger"></span>
+                    </div>
+
+                    <div class="document-upload-item">
+                        <input asp-for="BusinessPermit" type="file" class="document-upload-input" accept=".pdf,.jpg,.jpeg,.png" id="BusinessPermitInput">
+                        <label class="document-upload-label" for="BusinessPermitInput">
+                            <div class="document-upload-icon"><i class="fas fa-file-contract"></i></div>
+                            <div class="document-upload-text">Business Permit</div>
+                        </label>
+                        <span asp-validation-for="BusinessPermit" class="text-danger"></span>
+                    </div>
+
+                    <div class="document-upload-item">
+                        <input asp-for="AdditionalDocument" type="file" class="document-upload-input" accept=".pdf,.jpg,.jpeg,.png" id="AdditionalDocumentInput">
+                        <label class="document-upload-label" for="AdditionalDocumentInput">
+                            <div class="document-upload-icon"><i class="fas fa-file-plus"></i></div>
+                            <div class="document-upload-text">Additional Document</div>
+                        </label>
+                        <span asp-validation-for="AdditionalDocument" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BUSINESS INFO -->
+            <div class="form-section">
+                <h3 class="form-section-title">Business Information</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label asp-for="BusinessName"></label>
+                        <input asp-for="BusinessName" class="form-input" placeholder="Next Horizon Store" />
+                        <span asp-validation-for="BusinessName" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="BusinessEmail"></label>
+                        <input asp-for="BusinessEmail" id="BusinessEmail" class="form-input"
+                               placeholder="business@email.com"
+                               oninput="checkBusinessEmail(this.value)" />
+                        <span id="business-email-feedback" class="rule" style="margin-top:6px; display:block;"></span>
+                        <span asp-validation-for="BusinessEmail" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label asp-for="BusinessPhone"></label>
+                        <input asp-for="BusinessPhone" id="BusinessPhone" class="form-input"
+                               placeholder="09XXXXXXXXX or +639XXXXXXXXX"
+                               oninput="checkBusinessPhone(this.value)" />
+                        <span id="business-phone-feedback" class="rule" style="margin-top:6px; display:block;"></span>
+                        <span asp-validation-for="BusinessPhone" class="text-danger"></span>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="TaxId"></label>
+                        <input asp-for="TaxId" class="form-input" placeholder="123-456-789-000" />
+                        <span asp-validation-for="TaxId" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label asp-for="BusinessAddress"></label>
+                    <input asp-for="BusinessAddress" class="form-input" placeholder="123 Main Street, City" />
+                    <span asp-validation-for="BusinessAddress" class="text-danger"></span>
+                </div>
+            </div>
+
+            <!-- LOGIN CREDENTIALS -->
+            <div id="credentialsSection" class="form-section">
+                <h3 class="form-section-title">Login Credentials</h3>
+
+                <div class="form-group">
+                    <label asp-for="FirstName"></label>
+                    <input asp-for="FirstName" class="form-input" placeholder="John" />
+                    <span asp-validation-for="FirstName" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="MiddleName"></label>
+                    <input asp-for="MiddleName" class="form-input" placeholder="Optional" />
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="LastName"></label>
+                    <input asp-for="LastName" class="form-input" placeholder="Doe" />
+                    <span asp-validation-for="LastName" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Username"></label>
+                    <input asp-for="Username" id="SellerUsername" class="form-input"
+                           placeholder="Choose a username"
+                           oninput="checkSellerUsername(this.value)" />
+                    <span id="seller-username-feedback" class="rule" style="margin-top:6px; display:block;"></span>
+                    <span asp-validation-for="Username" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="PhoneNumber"></label>
+                    <input asp-for="PhoneNumber" id="SellerPhone" class="form-input"
+                           placeholder="09XXXXXXXXX or +639XXXXXXXXX"
+                           oninput="checkSellerPhone(this.value)" />
+                    <span id="seller-phone-feedback" class="rule" style="margin-top:6px; display:block;"></span>
+                    <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                </div>
+
+                <!-- PASSWORD -->
+                <div class="form-group password-group">
+                    <label asp-for="Password"></label>
+                    <div class="password-input-wrapper">
+                        <input asp-for="Password" type="password" class="form-input" id="Password"
+                               placeholder="Create a password"
+                               oninput="checkPassword(this.value)" />
+                        <button type="button" class="password-toggle" onclick="togglePassword('Password')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <div class="password-rules" id="passwordRules">
+                        <span id="rule-lower"  class="rule fail"><i class="fas fa-times-circle"></i> At least one lowercase character</span>
+                        <span id="rule-upper"  class="rule fail"><i class="fas fa-times-circle"></i> At least one uppercase character</span>
+                        <span id="rule-length" class="rule fail"><i class="fas fa-times-circle"></i> 8-16 characters</span>
+                        <span id="rule-valid"  class="rule pass"><i class="fas fa-check-circle"></i> Only letters, numbers and common punctuation can be used</span>
+                    </div>
+                    <span asp-validation-for="Password" class="text-danger"></span>
+                </div>
+
+                <!-- CONFIRM PASSWORD -->
+                <div class="form-group password-group">
+                    <label asp-for="ConfirmPassword"></label>
+                    <div class="password-input-wrapper">
+                        <input asp-for="ConfirmPassword" type="password" class="form-input" id="ConfirmPassword"
+                               placeholder="Confirm your password"
+                               oninput="checkConfirmPassword(this.value)" />
+                        <button type="button" class="password-toggle" onclick="togglePassword('ConfirmPassword')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                </div>
+            </div>
+
+            <!-- TERMS -->
+            <div class="terms-checkbox">
+                <input asp-for="AgreeTerms" id="agreeTerms" />
+                <label for="agreeTerms">
+                    I agree to the Terms of Service
+                </label>
+                <span asp-validation-for="AgreeTerms" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary auth-submit" style="width:100%">
+                <i class="fas fa-store"></i> Submit Application
+            </button>
+
+        </form>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+
+    let passwordValid = false;
+
+    function nhAlert(icon, title, text, confirmText = 'OK') {
+        return Swal.fire({
+            icon,
+            title,
+            text,
+            confirmButtonText: confirmText,
+            customClass: {
+                popup:         'nh-alert',
+                title:         'nh-alert-title',
+                htmlContainer: 'nh-alert-text',
+                confirmButton: 'nh-alert-btn'
+            }
+        });
+    }
+
+    // ── SUCCESS MODAL ──
+    @if (TempData["SellerSuccess"] != null)
+    {
+        <text>
+        document.addEventListener('DOMContentLoaded', function () {
+            Swal.fire({
+                icon: 'success',
+                title: 'Application Submitted!',
+                text: 'Your seller application has been received. We will review your documents within 3-5 business days.',
+                confirmButtonText: 'Back to Home',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                customClass: {
+                    popup:         'nh-alert',
+                    title:         'nh-alert-title',
+                    htmlContainer: 'nh-alert-text',
+                    confirmButton: 'nh-alert-btn'
+                }
+            }).then(() => {
+                window.location.href = '@Url.Action("Index", "Home")';
+            });
+        });
+        </text>
+    }
+
+    // ── DOCUMENT UPLOAD PREVIEW ──
+    document.querySelectorAll('.document-upload-input').forEach(input => {
+        input.addEventListener('change', function () {
+            const file   = this.files[0];
+            if (!file) return;
+            const parent = this.closest('.document-upload-item');
+            const label  = parent.querySelector('.document-upload-label');
+            const reader = new FileReader();
+            reader.onload = function (e) {
+             label.innerHTML = "";
+                label.classList.add('upload-success');
+                if (file.type.startsWith("image/")) {
+                    const img              = document.createElement("img");
+                    img.src                = e.target.result;
+                    img.style.width        = "100%";
+                    img.style.height       = "120px";
+                    img.style.objectFit    = "cover";
+                    img.style.borderRadius = "6px";
+                    label.appendChild(img);
+                } else {
+                    label.innerHTML = `<i class="fas fa-file-pdf" style="font-size:40px;color:red"></i>`;
+                }
+               const text = document.createElement("div");
+                text.className = "upload-filename-tag"; // Add a class for styling
+                text.innerText = file.name;
+                label.appendChild(text);
+                
+                // Add a checkmark icon to show it's done
+                const check = document.createElement("div");
+                check.innerHTML = '<i class="fas fa-check-circle text-success"></i> Ready';
+                check.style.fontSize = "12px";
+                label.appendChild(check);
+            };
+            reader.readAsDataURL(file);
+        });
+    });
+
+    // ── STEP HIGHLIGHT ──
+    var steps = [
+        { id: 'businessTypeSection',     stepId: 'step1' },
+        { id: 'uploadLogoSection',       stepId: 'step2' },
+        { id: 'document-upload-section', stepId: 'step3' },
+        { id: 'credentialsSection',      stepId: 'step4' }
+    ];
+    function clearActive() { document.querySelectorAll('.seller-signup-step').forEach(s => s.classList.remove('active')); }
+    function setActive(stepId) { clearActive(); var el = document.getElementById(stepId); if (el) el.classList.add('active'); }
+    document.addEventListener('focusin', function (e) {
+        for (var i = 0; i < steps.length; i++) {
+            var sec = document.getElementById(steps[i].id);
+            if (sec && sec.contains(e.target)) { setActive(steps[i].stepId); break; }
+        }
+    });
+    window.addEventListener('scroll', function () {
+        var scrollY = window.scrollY + 150;
+        for (var i = steps.length - 1; i >= 0; i--) {
+            var sec = document.getElementById(steps[i].id);
+            if (sec) {
+                var top = window.scrollY + sec.getBoundingClientRect().top;
+                if (scrollY >= top) { setActive(steps[i].stepId); break; }
+            }
+        }
+    });
+    window.dispatchEvent(new Event('scroll'));
+
+    // ── PASSWORD TOGGLE ──
+    function togglePassword(fieldId) {
+        var input = document.getElementById(fieldId);
+        var icon  = input.parentElement.querySelector('.password-toggle i');
+        if (input.type === "password") {
+            input.type = "text";
+            icon.classList.replace('fa-eye', 'fa-eye-slash');
+        } else {
+            input.type = "password";
+            icon.classList.replace('fa-eye-slash', 'fa-eye');
+        }
+    }
+
+    // ── PASSWORD RULES ──
+    function checkPassword(val) {
+        const input  = document.getElementById('Password');
+        const lower  = document.getElementById('rule-lower');
+        const upper  = document.getElementById('rule-upper');
+        const length = document.getElementById('rule-length');
+        const valid  = document.getElementById('rule-valid');
+
+        const hasLower  = /[a-z]/.test(val);
+        const hasUpper  = /[A-Z]/.test(val);
+        const hasLength = val.length >= 8 && val.length <= 16;
+        const hasValid  = /^[a-zA-Z0-9 !@@#$%^&*()_+\-=\[\]{}|;':",.<>?\/`~]*$/.test(val);
+
+        setRule(lower,  hasLower);
+        setRule(upper,  hasUpper);
+        setRule(length, hasLength);
+        setRule(valid,  hasValid);
+
+        passwordValid = hasLower && hasUpper && hasLength && hasValid;
+        input.classList.toggle('input-valid',   passwordValid);
+        input.classList.toggle('input-invalid', !passwordValid && val.length > 0);
+    }
+
+    function setRule(el, pass) {
+        el.className   = 'rule ' + (pass ? 'pass' : 'fail');
+        const icon     = el.querySelector('i');
+        icon.className = pass ? 'fas fa-check-circle' : 'fas fa-times-circle';
+    }
+
+    // ── LIVE CONFIRM PASSWORD ──
+    function checkConfirmPassword(val) {
+        const confirmInput = document.getElementById('ConfirmPassword');
+        const passwordVal  = document.getElementById('Password').value;
+        if (val.length === 0) {
+            confirmInput.classList.remove('input-valid', 'input-invalid');
+            return;
+        }
+        if (val === passwordVal) {
+            confirmInput.classList.add('input-valid');
+            confirmInput.classList.remove('input-invalid');
+        } else {
+            confirmInput.classList.add('input-invalid');
+            confirmInput.classList.remove('input-valid');
+        }
+    }
+
+    // ── LIVE SELLER USERNAME CHECK ──
+    let sellerUsernameTimer;
+    function checkSellerUsername(val) {
+        const feedback = document.getElementById('seller-username-feedback');
+        const input    = document.getElementById('SellerUsername');
+        if (val.length === 0) {
+            feedback.textContent = '';
+            input.classList.remove('input-valid', 'input-invalid');
+            return;
+        }
+        clearTimeout(sellerUsernameTimer);
+        sellerUsernameTimer = setTimeout(() => {
+            fetch(`/Account/CheckUsername?username=${encodeURIComponent(val)}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.taken) {
+                        feedback.textContent = '✗ Username is already taken';
+                        feedback.className   = 'rule fail';
+                        input.classList.add('input-invalid');
+                        input.classList.remove('input-valid');
+                    } else {
+                        feedback.textContent = '✓ Username is available';
+                        feedback.className   = 'rule pass';
+                        input.classList.add('input-valid');
+                        input.classList.remove('input-invalid');
+                    }
+                });
+        }, 500);
+    }
+
+    // ── LIVE SELLER PHONE CHECK ──
+    let sellerPhoneTimer;
+    function checkSellerPhone(val) {
+        const feedback = document.getElementById('seller-phone-feedback');
+        const input    = document.getElementById('SellerPhone');
+        if (val.length === 0) {
+            feedback.textContent = '';
+            input.classList.remove('input-valid', 'input-invalid');
+            return;
+        }
+        const validFormat = /^(09\d{9}|\+639\d{9})$/.test(val.trim());
+        if (!validFormat) {
+            feedback.textContent = '✗ Must start with 09 or +639 followed by 9 digits';
+            feedback.className   = 'rule fail';
+            input.classList.add('input-invalid');
+            input.classList.remove('input-valid');
+            return;
+        }
+        clearTimeout(sellerPhoneTimer);
+        sellerPhoneTimer = setTimeout(() => {
+            fetch(`/Account/CheckPhone?phone=${encodeURIComponent(val)}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.taken) {
+                        feedback.textContent = '✗ Phone number is already in use';
+                        feedback.className   = 'rule fail';
+                        input.classList.add('input-invalid');
+                        input.classList.remove('input-valid');
+                    } else {
+                        feedback.textContent = '✓ Phone number is available';
+                        feedback.className   = 'rule pass';
+                        input.classList.add('input-valid');
+                        input.classList.remove('input-invalid');
+                    }
+                });
+        }, 500);
+    }
+
+    // ── LIVE BUSINESS EMAIL CHECK ──
+    let businessEmailTimer;
+    function checkBusinessEmail(val) {
+        const feedback = document.getElementById('business-email-feedback');
+        const input    = document.getElementById('BusinessEmail');
+        if (val.length === 0) {
+            feedback.textContent = '';
+            input.classList.remove('input-valid', 'input-invalid');
+            return;
+        }
+        const validFormat = /^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/.test(val);
+        if (!validFormat) {
+            feedback.textContent = '✗ Invalid email format';
+            feedback.className   = 'rule fail';
+            input.classList.add('input-invalid');
+            input.classList.remove('input-valid');
+            return;
+        }
+        clearTimeout(businessEmailTimer);
+        businessEmailTimer = setTimeout(() => {
+            fetch(`/Account/CheckEmail?email=${encodeURIComponent(val)}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.taken) {
+                        feedback.textContent = '✗ Email is already in use';
+                        feedback.className   = 'rule fail';
+                        input.classList.add('input-invalid');
+                        input.classList.remove('input-valid');
+                    } else {
+                        feedback.textContent = '✓ Email is available';
+                        feedback.className   = 'rule pass';
+                        input.classList.add('input-valid');
+                        input.classList.remove('input-invalid');
+                    }
+                });
+        }, 500);
+    }
+
+    // ── LIVE BUSINESS PHONE CHECK ──
+    let businessPhoneTimer;
+    function checkBusinessPhone(val) {
+        const feedback = document.getElementById('business-phone-feedback');
+        const input    = document.getElementById('BusinessPhone');
+        if (val.length === 0) {
+            feedback.textContent = '';
+            input.classList.remove('input-valid', 'input-invalid');
+            return;
+        }
+        const validFormat = /^(09\d{9}|\+639\d{9})$/.test(val.trim());
+        if (!validFormat) {
+            feedback.textContent = '✗ Must start with 09 or +639 followed by 9 digits';
+            feedback.className   = 'rule fail';
+            input.classList.add('input-invalid');
+            input.classList.remove('input-valid');
+            return;
+        }
+        clearTimeout(businessPhoneTimer);
+        businessPhoneTimer = setTimeout(() => {
+            fetch(`/Account/CheckPhone?phone=${encodeURIComponent(val)}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.taken) {
+                        feedback.textContent = '✗ Phone number is already in use';
+                        feedback.className   = 'rule fail';
+                        input.classList.add('input-invalid');
+                        input.classList.remove('input-valid');
+                    } else {
+                        feedback.textContent = '✓ Phone number is available';
+                        feedback.className   = 'rule pass';
+                        input.classList.add('input-valid');
+                        input.classList.remove('input-invalid');
+                    }
+                });
+        }, 500);
+    }
+
+    // ── FORM SUBMIT ──
+document.getElementById("sellerForm").addEventListener("submit", function (e) {
+
+    // 1. BLOCK IF ANY LIVE FEEDBACK IS FAILING — check this FIRST
+    const sellerUsernameFeedback = document.getElementById('seller-username-feedback');
+    const sellerPhoneFeedback    = document.getElementById('seller-phone-feedback');
+    const businessEmailFeedback  = document.getElementById('business-email-feedback');
+    const businessPhoneFeedback  = document.getElementById('business-phone-feedback');
+
+    const failedLiveField =
+        (sellerUsernameFeedback.classList.contains('fail') && sellerUsernameFeedback.textContent.trim() !== '')
+            ? document.getElementById('SellerUsername') :
+        (sellerPhoneFeedback.classList.contains('fail') && sellerPhoneFeedback.textContent.trim() !== '')
+            ? document.getElementById('SellerPhone') :
+        (businessEmailFeedback.classList.contains('fail') && businessEmailFeedback.textContent.trim() !== '')
+            ? document.getElementById('BusinessEmail') :
+        (businessPhoneFeedback.classList.contains('fail') && businessPhoneFeedback.textContent.trim() !== '')
+            ? document.getElementById('BusinessPhone') : null;
+
+    if (failedLiveField) {
+        e.preventDefault();
+        failedLiveField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        failedLiveField.focus();
+        nhAlert('error', 'Invalid Field', 'Please fix the highlighted fields before submitting.');
+        return;
+    }
+
+// 2. CHECK EMPTY FIELDS & DOCUMENTS
+const required = document.querySelectorAll("#sellerForm input[type='text'], #sellerForm input[type='password'], #sellerForm input[type='email']");
+const requiredDocs = [
+    { id: 'DtiCertificateInput', name: 'DTI Certificate' },
+    { id: 'BirCertificateInput', name: 'BIR Certificate' },
+    { id: 'BusinessPermitInput', name: 'Business Permit' }
+];
+
+let firstEmpty = null;
+
+// Check text fields
+required.forEach(field => {
+    if (field.id === "MiddleName") return;
+    if (field.value.trim() === "" && !firstEmpty) firstEmpty = field;
+});
+
+// Check mandatory documents
+if (!firstEmpty) {
+    for (const doc of requiredDocs) {
+        const input = document.getElementById(doc.id);
+        if (input && input.files.length === 0) {
+            firstEmpty = input;
+            nhAlert('error', 'Missing Document', `Please upload your ${doc.name}.`);
+            break;
+        }
+    }
+}
+
+if (firstEmpty) {
+    e.preventDefault();
+    firstEmpty.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    firstEmpty.focus();
+    // Only show general alert if it wasn't a document error (which has its own alert above)
+    if (!firstEmpty.classList.contains('document-upload-input')) {
+        nhAlert('error', 'Missing Fields', 'Please complete all required fields.');
+    }
+    return;
+}
+    // 3. CHECK PASSWORD RULES
+    if (!passwordValid) {
+        e.preventDefault();
+        const passwordInput = document.getElementById('Password');
+        passwordInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        passwordInput.focus();
+        nhAlert('error', 'Weak Password', 'Your password does not meet all the requirements.');
+        return;
+    }
+
+    // 4. CHECK PASSWORDS MATCH
+    const password        = document.getElementById('Password').value;
+    const confirmPassword = document.getElementById('ConfirmPassword').value;
+    if (password !== confirmPassword) {
+        e.preventDefault();
+        const confirmInput = document.getElementById('ConfirmPassword');
+        confirmInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        confirmInput.focus();
+        confirmInput.classList.add('input-invalid');
+        confirmInput.classList.remove('input-valid');
+        nhAlert('error', 'Passwords Do Not Match', 'Please make sure both passwords are the same.');
+        return;
+    }
+
+    // 5. CHECK TERMS
+    const terms = document.getElementById('agreeTerms');
+    if (!terms.checked) {
+        e.preventDefault();
+        terms.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        nhAlert('warning', 'Terms Required', 'You must agree to the Terms of Service.');
+        return;
+    }
+
+    // ── ALL GOOD ──
+});
+
+</script>
+
+@{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+
+<style>
+    .seller-signup-container {
+        display: grid;
+        grid-template-columns: 350px 1fr;
+        min-height: 100vh;
+        margin-top: 70px;
+    }
+
+    .seller-signup-sidebar {
+        background: var(--color-black);
+        color: var(--color-white);
+        padding: 2rem;
+        display: flex;
+        flex-direction: column;
+        position: sticky;
+        top: 70px;
+        height: calc(100vh - 70px);
+        overflow-y: auto;
+    }
+
+    .seller-signup-brand { margin-bottom: 2rem; }
+    .seller-signup-brand .logo { color: var(--color-white); }
+    .seller-signup-brand .logo-image {
+    width: 52px;
+    height: 52px;
+    object-fit: contain;
+}
+    .seller-signup-info h2 { color: var(--color-white); font-size: 1.5rem; margin-bottom: 1rem; }
+    .seller-signup-info p  { color: var(--color-light-gray); margin-bottom: 2rem; }
+
+    .seller-signup-steps { display: flex; flex-direction: column; gap: 1.5rem; }
+
+    .seller-signup-step {
+        display: flex; align-items: center; gap: 1rem;
+        opacity: 0.6; transition: var(--transition-normal);
+    }
+    .seller-signup-step.active { opacity: 1; }
+
+    .seller-signup-step-number {
+        width: 32px; height: 32px;
+        background: var(--neon-red);
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-weight: 700; flex-shrink: 0;
+    }
+
+    .seller-signup-footer { margin-top: auto; padding-top: 2rem; }
+
+    .seller-signup-main {
+        padding: 3rem;
+        background: var(--color-off-white);
+        overflow-y: auto;
+    }
+
+    .seller-signup-header { margin-bottom: 2rem; }
+    .seller-signup-header h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+    .seller-signup-header p  { color: var(--color-gray); }
+
+    .form-section {
+        background: var(--color-white);
+        padding: 2rem;
+        border-radius: var(--border-radius-lg);
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .form-section-title { font-size: 1.25rem; margin-bottom: 1.5rem; }
+
+    .business-type-selection {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .business-type-card {
+        border: 2px solid var(--color-lighter-gray);
+        border-radius: var(--border-radius-md);
+        padding: 1.5rem;
+        cursor: pointer;
+        transition: var(--transition-normal);
+        text-align: center;
+    }
+    .business-type-card:hover { border-color: var(--color-black); }
+    .business-type-card input { display: none; }
+    .business-type-card input:checked + .business-type-icon { background: var(--neon-red); }
+
+    .business-type-icon {
+        width: 60px; height: 60px;
+        background: var(--color-black);
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        margin: 0 auto 1rem;
+        font-size: 1.5rem; color: var(--color-white);
+        transition: var(--transition-normal);
+    }
+
+    .business-type-card h3 { font-size: 1rem; margin-bottom: 0.5rem; }
+    .business-type-card p  { font-size: 0.8rem; color: var(--color-gray); }
+
+    .document-upload-section {
+        background: var(--color-white);
+        padding: 2rem;
+        border-radius: var(--border-radius-lg);
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow-sm);
+    }
+    .document-upload-section h3 { margin-bottom: 1.5rem; }
+
+    .document-upload-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+
+    .document-upload-item  { position: relative; }
+    .document-upload-input { display: none; }
+
+    .document-upload-label {
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        padding: 2rem;
+        border: 2px dashed var(--color-lighter-gray);
+        border-radius: var(--border-radius-md);
+        cursor: pointer;
+        transition: var(--transition-normal);
+    }
+    .document-upload-label:hover { border-color: var(--color-black); background: var(--color-off-white); }
+
+    .document-upload-icon { font-size: 2rem; color: var(--color-gray); margin-bottom: 0.5rem; }
+    .document-upload-text { font-weight: 600; margin-bottom: 0.25rem; }
+    .document-upload-hint { font-size: 0.8rem; color: var(--color-gray); }
+
+    .form-row   { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .form-group { margin-bottom: 1.5rem; }
+
+    .form-label {
+        display: block; font-weight: 600;
+        font-size: 0.875rem; margin-bottom: 0.5rem;
+        color: var(--color-black);
+    }
+
+    .form-input {
+        width: 100%; padding: 0.875rem 1rem;
+        border: 2px solid var(--color-lighter-gray);
+        border-radius: var(--border-radius-md);
+        font-size: 1rem; transition: var(--transition-fast);
+        box-sizing: border-box;
+    }
+    .form-input:focus         { outline: none; border-color: var(--color-black); }
+    .form-input.input-invalid { border-color: #e74c3c !important; }
+    .form-input.input-valid   { border-color: #28a745 !important; }
+
+    .password-input-wrapper {
+        position: relative; display: flex; align-items: center;
+    }
+    .password-input-wrapper .form-input { padding-right: 3rem; }
+
+    .password-toggle {
+        position: absolute; right: 10px;
+        background: none; border: none;
+        cursor: pointer; padding: 0;
+        display: flex; align-items: center;
+        color: var(--color-gray);
+    }
+    .password-toggle:hover { color: var(--color-black); }
+
+    .password-rules { margin-top: 8px; display: flex; flex-direction: column; gap: 4px; }
+    .rule { font-size: 0.75rem; display: flex; align-items: center; gap: 6px; }
+    .rule.pass { color: #28a745; }
+    .rule.fail { color: #e74c3c; }
+    .rule i    { font-size: 0.75rem; }
+
+    .terms-checkbox {
+        display: flex; align-items: flex-start;
+        gap: 0.5rem; margin-bottom: 1.5rem;
+    }
+    .terms-checkbox input  { margin-top: 0.25rem; }
+    .terms-checkbox label  { font-size: 0.9rem; color: var(--color-medium-gray); }
+    .terms-checkbox a      { color: var(--color-black); font-weight: 500; }
+
+    .auth-submit { padding: 1rem; font-size: 1rem; }
+
+    .btn {
+        display: inline-flex; align-items: center; justify-content: center;
+        gap: 0.5rem; padding: 0.875rem 1.75rem; font-size: 0.95rem;
+        font-weight: 600; border-radius: var(--border-radius-md);
+        cursor: pointer; transition: var(--transition-normal); border: none;
+    }
+    .btn-primary       { background: var(--color-black); color: white; }
+    .btn-primary:hover { background: var(--color-dark-gray); transform: translateY(-2px); }
+
+    /* ── SWEETALERT ── */
+    .nh-alert       { background: #fff !important; color: #000 !important; border-radius: 12px; padding: 30px; width: 420px; }
+    .nh-alert-title { color: #000 !important; font-size: 22px; font-weight: 600; }
+    .nh-alert-text  { color: #000 !important; font-size: 15px; }
+    .nh-alert-btn   { background: #000 !important; color: #fff !important; padding: 10px 28px; border-radius: 6px; }
+    .nh-alert-btn:focus, .nh-alert-btn:active, .nh-alert-btn:focus-visible { box-shadow: none !important; outline: none !important; }
+    .swal2-confirm        { box-shadow: none !important; outline: none !important; }
+    .swal2-icon.swal2-error   { border-color: #000 !important; }
+    .swal2-icon.swal2-success { border-color: #000 !important; }
+    .swal2-icon.swal2-warning { border-color: #000 !important; }
+    .swal2-success-ring       { border-color: #000 !important; }
+    .swal2-success-line-tip, .swal2-success-line-long { background: #000 !important; }
+    .swal2-x-mark-line-left,  .swal2-x-mark-line-right { background: #000 !important; }
+    .swal2-warning-body, .swal2-warning-dot { background: #000 !important; }
+
+    @@media (max-width: 1024px) {
+        .seller-signup-container { grid-template-columns: 1fr; }
+        .seller-signup-sidebar   { display: none; }
+        .business-type-selection { grid-template-columns: 1fr; }
+        .document-upload-grid    { grid-template-columns: 1fr; }
+    }
+
+    @@media (max-width: 768px) {
+        .seller-signup-main { padding: 1.5rem; }
+        .form-row           { grid-template-columns: 1fr; }
+        .form-section       { padding: 1.5rem; }
+    }
+</style>
+
+</body>
+</html>

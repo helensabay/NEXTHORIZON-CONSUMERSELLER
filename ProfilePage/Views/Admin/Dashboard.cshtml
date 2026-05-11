@@ -1,0 +1,183 @@
+﻿@model NextHorizon.Models.Admin_Models.SuperAdminDashboardViewModel
+
+@{
+    ViewData["Title"] = "Admin Portal - Platform Overview";
+    Layout = "_AdminLayout"; 
+}
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card d-flex align-items-center justify-content-between p-3">
+            <div>
+                <p class="stat-label mb-1">Platform GMV (Total)</p>
+                <div class="d-flex align-items-center">
+                    <h2 class="stat-value mb-0">345.8K</h2>
+                    <span class="ms-2 badge bg-light text-success" style="font-size: 0.65rem;">+12.5%</span>
+                </div>
+            </div>
+            <div class="stat-icon-wrapper">
+                <span class="fw-bold fs-4" style="color: #333;">₱</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="stat-card d-flex align-items-center justify-content-between p-3">
+            <div>
+                <p class="stat-label mb-1">Active Users</p>
+                <h2 class="stat-value mb-0">@Model.Stats.TotalConsumers.ToString("N0")</h2>
+            </div>
+            <div class="stat-icon-wrapper">
+                <i class="bi bi-people fs-3"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="stat-card d-flex align-items-center justify-content-between p-3">
+            <div>
+                <p class="stat-label mb-1">Total Sellers</p>
+                <h2 class="stat-value mb-0">@Model.Stats.TotalSellers.ToString("N0")</h2>
+            </div>
+            <div class="stat-icon-wrapper">
+                <i class="bi bi-shop fs-3"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="stat-card d-flex align-items-center justify-content-between p-3">
+            <div>
+                <p class="stat-label mb-1">Active Challenges</p>
+                <h2 class="stat-value mb-0">@Model.Stats.ActiveChallenges</h2>
+            </div>
+            <div class="stat-icon-wrapper">
+                <i class="bi bi-trophy fs-3"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="leaderboard-container">
+            <div class="leaderboard-header">
+                <h6 class="m-0 fw-bold small text-uppercase">Live Global Leaderboard Moderation (Consumers)</h6>
+            </div>
+            <table class="table-dark-custom">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>User</th>
+                        <th>KM</th>
+                        <th>Pace</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var runner in Model.ConsumerLeaderboard)
+                    {
+                        <tr>
+                            <td class="text-center">@runner.Rank</td>
+                            <td>@runner.UserName</td>
+                            <td class="fw-bold text-white">@runner.StravaKM KM</td>
+                            <td>@runner.Pace</td>
+                            <td><span class="badge badge-verified">VERIFIED</span></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="side-card">
+            <h6 class="fw-bold small text-uppercase mb-3 text-muted">Platform Challenge Engagement</h6>
+            <div class="recent-challenges mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="fw-bold m-0" style="font-size: 11px;">RECENT CHALLENGES</h6>
+                    <a href="#" class="text-dark fw-bold" style="font-size: 10px; text-decoration: none; border-bottom: 1px solid #000;">SEE ALL</a>
+                </div>
+                <div class="challenge-items">
+                    @{
+                        var recentChallenges = new[] {
+                                        new { Name = "Midnight 10K Sprint", Joined = "1.2k", Status = "Active" },
+                                        new { Name = "Weekend Warrior 5K", Joined = "850", Status = "Active" },
+                                        new { Name = "Marathon Prep Phase 1", Joined = "2.4k", Status = "Active" },
+                                        new { Name = "Trail Blaze 15K", Joined = "400", Status = "Ending Soon" },
+                                        new { Name = "Morning Cardio Streak", Joined = "3.1k", Status = "Active" }
+                                        };
+                    }
+                    @foreach (var challenge in recentChallenges)
+                    {
+                        <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+                            <div style="line-height: 1.2;">
+                                <span class="d-block fw-bold" style="font-size: 12px;">@challenge.Name</span>
+                                <span class="text-muted" style="font-size: 10px;">@challenge.Joined participants</span>
+                            </div>
+                            <span class="badge @(challenge.Status == "Ending Soon" ? "bg-dark text-white" : "bg-light text-dark border")" style="font-size: 9px; padding: 4px 8px;">@challenge.Status.ToUpper()</span>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+   
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="stat-card p-0 overflow-hidden">
+            <div class="p-3 border-bottom"><h6 class="m-0 fw-bold small">TOP 5 SELLERS (MOST PURCHASED)</h6></div>
+            <table class="table table-hover align-middle m-0" style="font-size: 13px;">
+                <thead class="table-light">
+                    <tr>
+                        <th>Rank</th>
+                        <th>Shop Name</th>
+                        <th>Total Purchases</th>
+                        <th>Products Sold</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        int rank = 1;
+                    }
+                    @foreach (var seller in Model.TopSellers)
+                    {
+                        <tr>
+                            <td>@(rank++)</td>
+                            <td class="fw-bold">@seller.ShopName</td>
+                            <td>@seller.MostPurchasedCount.ToString("N0")</td>
+                            <td>@seller.TotalProductsSold.ToString("N0")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="side-card">
+            <h6 class="fw-bold small text-uppercase mb-3 text-muted">Segment Performance</h6>
+            <label class="small fw-bold mb-1 d-flex justify-content-between">SHOES <span>136 Kudos</span></label>
+            <div class="progress mb-3"><div class="progress-bar" style="width: 85%"></div></div>
+
+            <label class="small fw-bold mb-1 d-flex justify-content-between">TECH <span>202 Kudos</span></label>
+            <div class="progress mb-3"><div class="progress-bar" style="width: 95%"></div></div>
+
+            <label class="small fw-bold mb-1 d-flex justify-content-between">APPAREL <span>280 Kudos</span></label>
+            <div class="progress mb-3"><div class="progress-bar" style="width: 70%"></div></div>
+
+            <label class="small fw-bold mb-1 d-flex justify-content-between">TOTEBAGS <span>220 Kudos</span></label>
+            <div class="progress mb-3"><div class="progress-bar" style="width: 60%"></div></div>
+
+            <label class="small fw-bold mb-1 d-flex justify-content-between">SPORTS BRA <span>200 Kudos</span></label>
+            <div class="progress mb-3"><div class="progress-bar" style="width: 55%"></div></div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin_css/dashboard.css" asp-append-version="true" />
+}

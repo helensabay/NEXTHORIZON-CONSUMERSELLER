@@ -1,0 +1,11 @@
+C:\Users\helen\BOOSTING SITE\NEXTHORIZON\Products-and-Services-Rhea-Team\artifacts_verify_sendproduct_obj\Debug\net10.0\MyAspNetApp.csproj.AssemblyReference.cache
+C:\Users\helen\BOOSTING SITE\NEXTHORIZON\Products-and-Services-Rhea-Team\artifacts_verify_sendproduct_obj\Debug\net10.0\rpswa.dswa.cache.json
+C:\Users\helen\BOOSTING SITE\NEXTHORIZON\Products-and-Services-Rhea-Team\artifacts_verify_sendproduct_obj\Debug\net10.0\MyAspNetApp.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\helen\BOOSTING SITE\NEXTHORIZON\Products-and-Services-Rhea-Team\artifacts_verify_sendproduct_obj\Debug\net10.0\MyAspNetApp.AssemblyInfoInputs.cache
+C:\Users\helen\BOOSTING SITE\NEXTHORIZON\Products-and-Services-Rhea-Team\artifacts_verify_sendproduct_obj\Debug\net10.0\MyAspNetApp.AssemblyInfo.cs
+C:\Users\helen\BOOSTING SITE\NEXTHORIZON\Products-and-Services-Rhea-Team\artifacts_verify_sendproduct_obj\Debug\net10.0\MyAspNetApp.csproj.CoreCompileInputs.cache
+C:\Users\helen\BOOSTING SITE\NEXTHORIZON\Products-and-Services-Rhea-Team\artifacts_verify_sendproduct_obj\Debug\net10.0\MyAspNetApp.MvcApplicationPartsAssemblyInfo.cs
+C:\Users\helen\BOOSTING SITE\NEXTHORIZON\Products-and-Services-Rhea-Team\artifacts_verify_sendproduct_obj\Debug\net10.0\MyAspNetApp.MvcApplicationPartsAssemblyInfo.cache
+C:\Users\helen\BOOSTING SITE\NEXTHORIZON\Products-and-Services-Rhea-Team\artifacts_verify_sendproduct_obj\Debug\net10.0\MyAspNetApp.RazorAssemblyInfo.cache
+C:\Users\helen\BOOSTING SITE\NEXTHORIZON\Products-and-Services-Rhea-Team\artifacts_verify_sendproduct_obj\Debug\net10.0\MyAspNetApp.RazorAssemblyInfo.cs
+C:\Users\helen\BOOSTING SITE\NEXTHORIZON\Products-and-Services-Rhea-Team\artifacts_verify_sendproduct_obj\Debug\net10.0\MyAspNetApp.sourcelink.json

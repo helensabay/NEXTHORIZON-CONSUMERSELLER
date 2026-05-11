@@ -1,0 +1,121 @@
+﻿/* --- Layout & Expansion --- */
+.max-container,
+.notification-feed {
+    width: 100%; /* Expands to full available width */
+    max-width: none; /* Removes the 850px restriction */
+    margin: 0; /* Removes auto-centering to allow side-to-side stretch */
+}
+
+/* Base Card Style */
+.notif-card {
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
+    display: flex;
+    gap: 1.25rem;
+    border: 1.5px solid #d1d1d1;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    /* Ensure cards don't clip the dropdown menus */
+    overflow: visible;
+}
+
+    .notif-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.08);
+        border-color: #000;
+        /* Hovered card stays on top of others to prevent shadow clipping */
+        z-index: 5;
+    }
+
+    /* Unread State: Distinct Border and Accent */
+    .notif-card.unread {
+        background-color: #ffffff;
+        border-color: #000000;
+        border-left-width: 6px;
+    }
+
+        .notif-card.unread .notif-title {
+            font-weight: 800;
+            color: #000;
+        }
+
+    /* Read State: Faded but still bordered */
+    .notif-card.read {
+        opacity: 0.8;
+        background-color: #f8f9fa;
+        border: 1px solid #e0e0e0;
+    }
+
+/* Icon Container */
+.notif-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 1.3rem;
+}
+
+/* Text Elements */
+.notif-body {
+    flex-grow: 1;
+}
+
+.notif-title {
+    font-size: 1rem;
+    color: #222;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.notif-text {
+    font-size: 0.9rem;
+    color: #555;
+    line-height: 1.5;
+}
+
+.notif-time {
+    font-size: 0.72rem;
+    color: #999;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    margin-top: 8px;
+    display: block;
+}
+
+/* Action Dropdown */
+.notif-card .btn-link {
+    text-decoration: none;
+    font-size: 1.2rem;
+    color: #999 !important;
+}
+
+.notif-card:hover .btn-link {
+    color: #000 !important;
+}
+
+/* Fixed Dropdown Stacking */
+.dropdown-menu {
+    border: 1px solid #ddd !important;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important;
+    /* Forces the menu above all other notification cards */
+    z-index: 1050 !important;
+}
+
+.dropdown-item {
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+}
+
+    .dropdown-item:hover {
+        background-color: #f1f1f1;
+    }
+
+    .dropdown-item:active {
+        background-color: #000;
+        color: #fff;
+    }

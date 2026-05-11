@@ -1,0 +1,450 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Join the ultimate runners community. Track your progress, compete on leaderboards, and connect with fellow runners.">
+    <title>@ViewData["Title"] - Next Horizon</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="//localhost">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN"
+      crossorigin="anonymous">
+    <link rel="stylesheet" href="~/css/styles.css">
+    <link rel="stylesheet" href="~/css/header-login.css">
+    <link rel="stylesheet" href="~/css/site-login.css">
+    <link rel="stylesheet" href="~/css/loading-login.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        (() => {
+            const warmedOrigins = new Set();
+            const warmNavigation = href => {
+                if (!href) {
+                    return;
+                }
+
+                try {
+                    const url = new URL(href, window.location.origin);
+                    if (url.origin === window.location.origin || warmedOrigins.has(url.origin)) {
+                        return;
+                    }
+
+                    warmedOrigins.add(url.origin);
+
+                    const preconnect = document.createElement('link');
+                    preconnect.rel = 'preconnect';
+                    preconnect.href = url.origin;
+                    document.head.appendChild(preconnect);
+
+                    const prefetch = document.createElement('link');
+                    prefetch.rel = 'prefetch';
+                    prefetch.as = 'document';
+                    prefetch.href = url.href;
+                    document.head.appendChild(prefetch);
+                } catch {
+                }
+            };
+
+            const handleWarmEvent = event => {
+                const anchor = event.target.closest?.('a[href]');
+                if (anchor) {
+                    warmNavigation(anchor.href);
+                }
+            };
+
+            document.addEventListener('pointerenter', handleWarmEvent, true);
+            document.addEventListener('focusin', handleWarmEvent, true);
+            document.addEventListener('touchstart', handleWarmEvent, true);
+        })();
+    </script>
+</head>
+<body>
+@{
+    var isLoggedIn = Context.Session.GetInt32("UserId") != null;
+    var firstName  = Context.Session.GetString("FirstName");
+    var userType   = Context.Session.GetString("UserType");
+    var messengerHref = "/consumer/messenger/";
+    var controllerName = ViewContext.RouteData.Values["controller"]?.ToString();
+    var actionName = ViewContext.RouteData.Values["action"]?.ToString();
+    var hideNavbar = string.Equals(controllerName, "Account", StringComparison.OrdinalIgnoreCase)
+        && string.Equals(actionName, "Register", StringComparison.OrdinalIgnoreCase);
+    isLoggedIn = isLoggedIn || !string.IsNullOrWhiteSpace(Context.Request.Cookies["NextHorizon.SharedUserId"]);
+}
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-logo">
+        <div class="loading-circle"></div>
+        <i class="fas fa-running loading-icon" aria-hidden="true"></i>
+    </div>
+    <div class="loading-text">Next Horizon</div>
+    <div class="loading-bar-container">
+        <div class="loading-bar"></div>
+    </div>
+    <div class="loading-tagline">Sprint into the future</div>
+</div>
+
+@if (!hideNavbar)
+{
+<nav class="navbar" id="navbar">
+
+    <!-- Logo only -->
+    <a asp-controller="Home" asp-action="Index" class="logo-edge">
+        <img src="~/images/logo.png" alt="Next Horizon" class="logo-image">
+    </a>
+
+    <!-- Center nav links -->
+    <div class="navbar-container">
+        <ul class="nav-links" id="navLinks"></ul>
+    </div>
+
+    <!-- Right actions -->
+    <div class="nav-actions-edge">
+
+        <!-- Search -->
+        <div class="search-wrapper" id="searchWrapper">
+            <button class="search-icon-btn" id="searchToggleBtn" onclick="toggleSearch()">
+                <i class="fas fa-search"></i>
+            </button>
+            <div class="search-expand" id="searchExpand">
+                <form id="searchForm" autocomplete="off" onsubmit="submitSearch(event)">
+                    <input class="search-input" type="search" id="searchInput"
+                           oninput="handleOverlaySearch(this.value)"
+                           placeholder="Search products..." aria-label="Search">
+                    <button type="submit" class="search-submit-btn">
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div class="nav-divider"></div>
+
+@if (isLoggedIn)
+{
+    <a href="@messengerHref" class="hdr-icon-btn" aria-label="Messages" title="Messages">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+    </a>
+    <span class="nav-greeting">Hi, @firstName</span>
+    <form asp-controller="Account" asp-action="Logout" method="post" style="margin:0;">
+        @Html.AntiForgeryToken()
+        <button type="submit" class="btn-login">Log Out</button>
+    </form>
+}
+else
+{
+    <a asp-controller="Account" asp-action="Login" class="btn-login">Log In</a>
+    <a asp-controller="Account" asp-action="register" class="btn-signup">Sign Up</a>
+}
+
+        <button class="mobile-menu-btn" id="mobileMenuBtn">
+            <i class="fas fa-bars"></i>
+        </button>
+    </div>
+
+</nav>
+}
+
+    <main class="main-content" style="position: relative; min-height: 80vh;">
+
+        @RenderBody()
+
+    </main>
+
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-top">
+                <div class="footer-brand">
+                    <a asp-controller="Home" asp-action="Index" class="logo">
+                        <img src="~/images/logo.png" alt="Next Horizon" class="logo-image">
+                        <span class="logo-text">Next Horizon</span>
+                    </a>
+                    <p>Connecting runners worldwide. Track, compete, and achieve your fitness goals together.</p>
+                </div>
+                <div class="footer-column">
+                    <h4>Quick Links</h4>
+                    <ul class="footer-links">
+                        <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+                        <li><a asp-controller="Home" asp-action="SearchPage">Products</a></li>
+                        <li><a asp-controller="Home" asp-action="Index">Leaderboard</a></li>
+                        <li><a asp-controller="Account" asp-action="BecomeSeller">Become a Seller</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>Account</h4>
+                    <ul class="footer-links">
+                        <li><a asp-controller="Account" asp-action="Login">Log in</a></li>
+                        <li><a asp-controller="Account" asp-action="register">Sign Up</a></li>
+                        <li><a asp-controller="Account" asp-action="ForgotPassword">Forgot Password</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h4>Legal</h4>
+                    <ul class="footer-links">
+                        <li><a href="#">Privacy Policy</a></li>
+                        <li><a asp-controller="Home" asp-action="Terms">Terms of Service</a></li>
+                        <li><a href="#">Cookie Policy</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column footer-support-section">
+                    <h4 style="color:#fff;">Payment</h4>
+                    <div class="footer-payment-methods">
+                        <img src="~/images/payment/gcash.svg" alt="GCash" class="payment-logo" title="GCash">
+                        <img src="~/images/payment/shopee.svg" alt="ShopeePay" class="payment-logo" title="ShopeePay">
+                        <img src="~/images/payment/dragonpay.svg" alt="Dragonpay" class="payment-logo" title="Dragonpay">
+                        <img src="~/images/payment/mastercard.svg" alt="Mastercard" class="payment-logo" title="Mastercard">
+                        <img src="~/images/payment/jcb.svg" alt="JCB" class="payment-logo" title="JCB">
+                        <img src="~/images/payment/bpi.svg" alt="BPI" class="payment-logo" title="BPI">
+                        <img src="~/images/payment/visa.svg" alt="Visa" class="payment-logo" title="Visa">
+                        <img src="~/images/payment/maya.svg" alt="Maya" class="payment-logo" title="Maya">
+                    </div>
+                </div>
+                <div class="footer-column footer-support-section">
+                    <h4 style="color:#fff;">Follow Us</h4>
+                    <div class="footer-social">
+                        <a href="https://www.facebook.com/NextHorizon25" class="social-link" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="social-link" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="social-link" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="social-link" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+                <div class="footer-column footer-support-section">
+                    <h4 style="color:#fff;">Logistics</h4>
+                    <div class="footer-logistics">
+                        <img src="~/images/logistics/spx.svg" alt="SPX" class="logistics-logo" title="SPX">
+                        <img src="~/images/logistics/flash.svg" alt="Flash" class="logistics-logo" title="Flash">
+                        <img src="~/images/logistics/jet.svg" alt="JET" class="logistics-logo" title="JET">
+                        <img src="~/images/logistics/2go.svg" alt="2Go" class="logistics-logo" title="2Go">
+                        <img src="~/images/logistics/xde.svg" alt="XDE" class="logistics-logo" title="XDE">
+                        <img src="~/images/logistics/yto.svg" alt="YTO" class="logistics-logo" title="YTO">
+                        <img src="~/images/logistics/workunion.svg" alt="Workunion" class="logistics-logo" title="Workunion">
+                    </div>
+                </div>
+                <div class="footer-column footer-support-section">
+                    <h4 style="color:#fff;">Shopee App Download</h4>
+                    <div class="footer-app-download">
+                        <div class="app-badge-row">
+                            <img src="~/images/qrcode.svg" alt="QR Code" class="qr-code" title="Scan to Download App">
+                            <div class="app-badges">
+                                <a href="https://apps.apple.com" target="_blank" rel="noopener noreferrer" class="app-badge" aria-label="App Store">
+                                    <i class="fab fa-apple"></i>
+                                    <span>App Store</span>
+                                </a>
+                                <a href="https://play.google.com" target="_blank" rel="noopener noreferrer" class="app-badge" aria-label="Google Play">
+                                    <i class="fab fa-google-play"></i>
+                                    <span>Google Play</span>
+                                </a>
+                                <a href="#" class="app-badge" aria-label="AppGallery">
+                                    <i class="fas fa-cube"></i>
+                                    <span>AppGallery</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 Next Horizon. All rights reserved.</p>
+                <div class="social-links">
+                    <a href="https://www.facebook.com/NextHorizon25"><i class="fab fa-facebook-f"></i></a>
+                </div>
+            </div>
+        </div>
+    </footer>
+<!-- Quick View Modal (global) -->
+<div id="quickViewModal" class="qv-modal" onclick="closeQuickView(event)">
+    <div class="qv-modal-content">
+        <button class="qv-close" onclick="closeModal()">✕</button>
+        <div class="qv-flex">
+            <div class="qv-image-side">
+                <img id="qv-img" src="" alt="Product Image">
+            </div>
+            <div class="qv-details-side">
+                <p id="qv-brand" class="qv-brand"></p>
+                <h2 id="qv-name" class="qv-name"></h2>
+                <p id="qv-price" class="qv-price"></p>
+                <div class="qv-size-section">
+                    <p class="qv-size-label">Size: <span id="qv-selected-size"></span></p>
+                    <div id="qv-sizes" class="qv-sizes"></div>
+                </div>
+                <div class="qv-meta">
+                    <div class="qv-meta-row"><span class="qv-meta-label">Sku:</span><span id="qv-sku"></span></div>
+                    <div class="qv-meta-row"><span class="qv-meta-label">Available:</span><span id="qv-stock"></span></div>
+                    <div class="qv-meta-row"><span class="qv-meta-label">Category:</span><span id="qv-category"></span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL"
+        crossorigin="anonymous"></script>
+  
+  <script src="~/js/loading-login.js"></script>
+<script>
+let searchDebounceTimer = null;
+
+function handleOverlaySearch(value) {
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(() => {
+        const query = value.trim();
+        if (query.length === 0) { closeSuggestionsDropdown(); return; }
+        fetchSuggestions(query);
+    }, 250);
+}
+
+async function fetchSuggestions(query) {
+    try {
+        const res = await fetch(`/Home/SearchSuggestions?query=${encodeURIComponent(query)}`);
+        const data = await res.json();
+        renderSuggestionsDropdown(data, query);
+    } catch (e) { console.error('Suggestion fetch failed', e); }
+}
+
+function renderSuggestionsDropdown(suggestions, query) {
+    closeSuggestionsDropdown();
+    if (!suggestions || suggestions.length === 0) return;
+
+    const input = document.getElementById('searchInput');
+    const dropdown = document.createElement('div');
+    dropdown.id = 'searchDropdown';
+    dropdown.style.cssText = `
+        position:fixed;
+        top:${input.getBoundingClientRect().bottom + 4}px;
+        left:${input.getBoundingClientRect().left}px;
+        width:${input.offsetWidth + 40}px;
+        background:white;
+        border:1px solid #ddd;
+        border-radius:8px;
+        box-shadow:0 8px 24px rgba(0,0,0,0.15);
+        z-index:99999;
+        overflow:hidden;
+    `;
+
+    suggestions.forEach(item => {
+        const div = document.createElement('div');
+        div.style.cssText = `padding:10px 16px; cursor:pointer; display:flex;
+            align-items:center; gap:10px; font-size:14px; color:#111;`;
+
+        const text = item.suggestion;
+        const idx = text.toLowerCase().indexOf(query.toLowerCase());
+        let highlighted = text;
+        if (idx >= 0) {
+            highlighted = text.slice(0, idx) +
+                `<strong>${text.slice(idx, idx + query.length)}</strong>` +
+                text.slice(idx + query.length);
+        }
+
+        div.innerHTML = `<i class="fas fa-search" style="color:#aaa;font-size:12px;flex-shrink:0;"></i><span>${highlighted}</span>`;
+        div.onmouseenter = () => div.style.background = '#f5f5f5';
+        div.onmouseleave = () => div.style.background = 'white';
+        div.onclick = () => {
+            closeSuggestionsDropdown();
+            window.location.href = `/Home/SearchPage?query=${encodeURIComponent(item.suggestion)}`;
+        };
+        dropdown.appendChild(div);
+    });
+
+    document.body.appendChild(dropdown);
+}
+
+function closeSuggestionsDropdown() {
+    const existing = document.getElementById('searchDropdown');
+    if (existing) existing.remove();
+}
+
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('#searchForm')) closeSuggestionsDropdown();
+});
+
+async function submitSearch(event) {
+    if (event) event.preventDefault();
+    const query = document.getElementById('searchInput').value.trim();
+    if (!query) return;
+    closeSuggestionsDropdown();
+    window.location.href = `/Home/SearchPage?query=${encodeURIComponent(query)}`;
+}
+
+function toggleSearch() {
+    const expand = document.getElementById('searchExpand');
+    const input  = document.getElementById('searchInput');
+    const isOpen = expand.classList.contains('open');
+    expand.classList.toggle('open');
+    if (!isOpen) {
+        setTimeout(() => input.focus(), 350);
+    } else {
+        input.value = '';
+        closeSuggestionsDropdown();
+    }
+}
+
+document.addEventListener('click', (e) => {
+    const wrapper = document.getElementById('searchWrapper');
+    if (wrapper && !wrapper.contains(e.target)) {
+        document.getElementById('searchExpand').classList.remove('open');
+    }
+    if (!e.target.closest('#searchForm')) closeSuggestionsDropdown();
+});
+
+function openQuickView(image, name, brand, price, category, sku, sizes, stock) {
+    const imgPath = image && image.trim() !== ''
+        ? '/uploads/products/' + image
+        : '';
+    document.getElementById('qv-img').src = imgPath;
+    document.getElementById('qv-name').textContent = name;
+    document.getElementById('qv-brand').textContent = brand;
+    document.getElementById('qv-price').textContent = '₱' + parseFloat(price).toFixed(2);
+    document.getElementById('qv-category').textContent = category || 'N/A';
+    document.getElementById('qv-sku').textContent = sku || 'N/A';
+    document.getElementById('qv-stock').textContent = stock > 0 ? stock + ' left in stock' : 'Out of Stock';
+    document.getElementById('qv-selected-size').textContent = '';
+
+    const sizesContainer = document.getElementById('qv-sizes');
+    sizesContainer.innerHTML = '';
+    if (sizes) {
+        sizes.split(',').forEach(size => {
+            if (size.trim()) {
+                const btn = document.createElement('button');
+                btn.className = 'qv-size-btn';
+                btn.textContent = size.trim();
+                btn.onclick = function() {
+                    document.querySelectorAll('.qv-size-btn').forEach(b => b.classList.remove('selected'));
+                    this.classList.add('selected');
+                    document.getElementById('qv-selected-size').textContent = this.textContent;
+                };
+                sizesContainer.appendChild(btn);
+            }
+        });
+    } else {
+        sizesContainer.innerHTML = '<span style="color:#999;font-size:0.8rem;">No sizes available</span>';
+    }
+
+    document.getElementById('quickViewModal').style.display = 'block';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+    document.getElementById('quickViewModal').style.display = 'none';
+    document.body.style.overflow = '';
+}
+
+function closeQuickView(event) {
+    if (event.target === document.getElementById('quickViewModal')) {
+        closeModal();
+    }
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+    @await RenderSectionAsync("Scripts", required: false)
+
+</body>
+</html>

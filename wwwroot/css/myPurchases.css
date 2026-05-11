@@ -1,0 +1,766 @@
+﻿/* Import Poppins */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+
+/* --- CORE LAYOUT --- */
+.profile-layout-container {
+    display: flex;
+    width: 100%;
+    min-height: 100vh;
+    background-color: #fff;
+    font-family: 'Poppins', sans-serif;
+}
+/* --- PAGE TITLE ALIGNMENT --- */
+.main-title-left {
+    text-align: left;
+    width: 100%;
+    margin-bottom: 10px;
+    font-weight: 900; /* Matching bold brand identity */
+    text-transform: uppercase;
+    letter-spacing: -0.5px;
+}
+
+.section-divider {
+    border: 0;
+    border-top: 1px solid #eeeeee; /* Light gray divider from image_adb3a4.png */
+    margin-bottom: 25px;
+    width: 100%;
+}
+
+/* Optional: Styling the History Link to sit below/right of the title */
+.purchase-history-link-wrapper {
+    display: flex;
+    justify-content: flex-end; /* Keeps the link on the right while title stays left */
+    margin-top: -45px; /* Pulls it up to align with title row if desired */
+    margin-bottom: 20px;
+}
+
+.history-link {
+    color: #666;
+    font-size: 0.85rem;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+    .history-link:hover {
+        color: #000;
+    }
+
+.sidebar-wrapper {
+    width: 280px;
+    flex-shrink: 0;
+    border-right: 1px solid #eee;
+}
+
+.main-content-wrapper {
+    flex: 1;
+    padding: 40px 60px;
+    display: flex;
+    justify-content: center;
+}
+
+.account-details-full-width {
+    width: 100%;
+    max-width: 1400px;
+}
+
+/* --- NAVIGATION & LINKS --- */
+.purchase-history-link {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 20px;
+}
+
+.purchase-history-link a {
+    text-decoration: none;
+    color: #666;
+    font-size: 0.9rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.2s ease;
+}
+
+.purchase-history-link a:hover {
+    color: #000;
+}
+
+.purchase-history-link a:hover i {
+    transform: translateX(3px);
+}
+
+.order-status-navbar {
+    background-color: #000;
+    color: #fff;
+    border-radius: 15px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 40px 20px;
+    margin-bottom: 60px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.status-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    text-decoration: none;
+    color: #fff;
+    transition: all 0.2s ease;
+    flex: 1;
+}
+
+.status-item i {
+    font-size: 1.8rem;
+}
+
+.status-item:hover {
+    color: #ccc;
+    transform: translateY(-3px);
+}
+
+.status-item span {
+    font-size: 0.85rem;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+}
+
+/* --- ORDER CARD --- */
+.orders-list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+    width: 100%;
+}
+
+.order-card-monochrome {
+    border: 2px solid #000;
+    padding: 30px;
+    background: #fff;
+    border-radius: 15px;
+    transition: box-shadow 0.3s ease;
+    position: relative;
+}
+
+.order-card-monochrome:hover {
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+
+.order-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 15px;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+/* --- TAGS & IDS --- */
+.status-tag {
+    padding: 6px 14px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+.to-pay {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeeba;
+}
+
+.to-ship {
+    background: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+
+.to-receive {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.order-id-link {
+    text-decoration: none;
+    color: #000;
+    font-weight: 700;
+    font-size: 0.95rem;
+    transition: opacity 0.2s;
+}
+
+.order-id-link:hover {
+    opacity: 0.6;
+    text-decoration: underline;
+}
+
+.payment-tag {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #666;
+    background: #f0f0f0;
+    padding: 4px 10px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    text-transform: uppercase;
+}
+
+/* --- CARD BODY & CONTENT --- */
+.order-card-body {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.product-info-wrapper {
+    display: flex;
+    gap: 25px;
+}
+
+.order-img-large {
+    width: 100px;
+    height: 130px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid #eee;
+}
+
+.product-details-main {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.product-name-text {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin: 0;
+    color: #000;
+}
+
+.product-meta-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.order-pricing-section {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 5px;
+}
+
+.price-label {
+    font-size: 0.8rem;
+    color: #999;
+    font-weight: 600;
+}
+
+.price-value {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #000;
+    margin: 0;
+}
+
+/* --- BUTTONS --- */
+.order-card-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+}
+
+.btn-action {
+    padding: 10px 25px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    border-radius: 50px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.btn-black {
+    background: #000;
+    color: #fff;
+    border: 1px solid #000;
+}
+
+.btn-black:hover {
+    background: #333;
+}
+
+.btn-outline {
+    background: #fff;
+    color: #000;
+    border: 1px solid #000;
+}
+
+.btn-outline:hover {
+    background: #f5f5f5;
+}
+
+.btn-sm {
+    padding: 6px 15px;
+    font-size: 0.7rem;
+}
+
+/* --- CUSTOM MONOCHROME OVERLAY SYSTEM --- */
+.custom-overlay {
+    display: none; /* Hidden by default */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+}
+
+    .custom-overlay.active {
+        display: flex; /* Show when active class is added */
+        align-items: center;
+        justify-content: center;
+    }
+
+.overlay-backdrop {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(5px);
+}
+
+.custom-modal-content {
+    position: relative;
+    background: #fff;
+    width: 95%;
+    max-width: 600px; /* Adjusted for App feel */
+    border: 1px solid #000;
+    padding: 0; /* Changed to 0 to allow full-bleed monochrome banner */
+    max-height: 90vh;
+    overflow: hidden; /* Use internal scrolling instead */
+    display: flex;
+    flex-direction: column;
+    transform: translateY(30px);
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.custom-overlay.active .custom-modal-content {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+/* --- MONOCHROME APP OVERLAY ENHANCEMENTS --- */
+
+/* 1. DYNAMIC STATUS BANNER (STRICT MONOCHROME) */
+.mono-status-banner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 25px 30px;
+    background-color: #000; /* Pure Black per monochrome requirement */
+    color: #fff;
+}
+
+.mono-status-banner h4 {
+    font-weight: 800;
+    margin: 0;
+    font-size: 1.4rem;
+    text-transform: uppercase;
+}
+
+.mono-status-banner p {
+    margin: 5px 0 0;
+    font-size: 0.8rem;
+    opacity: 0.8;
+}
+
+.mono-status-banner i {
+    font-size: 2.5rem;
+}
+
+/* 2. SCROLLABLE CONTENT AREA */
+.app-modal-scrollable {
+    padding: 25px 30px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+/* 3. APP SECTIONS */
+.app-section {
+    padding: 20px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.app-section:last-child {
+    border-bottom: none;
+}
+
+.section-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #000;
+    margin-bottom: 15px;
+    letter-spacing: 1px;
+}
+
+.app-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.app-row .label {
+    color: #666;
+    font-size: 0.85rem;
+}
+
+.app-row .value {
+    color: #000;
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+
+/* 4. PRICING & TOTALS */
+.total-row {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px dashed #000;
+}
+
+.total-price-mono {
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: #000;
+}
+
+/* 5. FORM CONTROLS (Hidden by default) */
+.d-none {
+    display: none !important;
+}
+
+.mono-input {
+    width: 100%;
+    border: 1px solid #000;
+    padding: 12px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.85rem;
+    outline: none;
+    background: #fff;
+    margin-bottom: 10px;
+}
+
+.mono-edit-link {
+    background: none;
+    border: none;
+    color: #000;
+    font-weight: 800;
+    font-size: 0.75rem;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 0;
+}
+
+.mono-lock-note {
+    background: #f8f8f8;
+    border-left: 4px solid #000;
+    padding: 12px;
+    font-size: 0.75rem;
+    margin-top: 15px;
+}
+
+/* 6. MODAL FOOTER (FIXED CLOSE BUTTON) */
+.app-modal-footer {
+    padding: 20px 30px;
+    background: #fff;
+    border-top: 1px solid #000;
+}
+
+.btn-mono-close {
+    width: 100%;
+    background: #000;
+    color: #fff;
+    border: 1px solid #000;
+    padding: 14px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-mono-close:hover {
+    background: #333;
+}
+
+/* Small helper buttons for Edit Address */
+.btn-mono-save {
+    background: #000;
+    color: #fff;
+    border: 2px solid #000;
+    border-radius: 50px; /* Pill shape */
+    padding: 10px 20px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+    .btn-mono-save:hover {
+        background: #333;
+    }
+
+.btn-mono-cancel {
+    background: #fff;
+    color: #000;
+    border: 2px solid #000;
+    border-radius: 50px;
+    padding: 10px 20px;
+    font-weight: 700;
+}
+
+.payment-display-box {
+    background: #f9f9f9;
+    padding: 8px 12px;
+    border-left: 3px solid #000;
+    margin-top: 10px;
+}
+
+/* Edit Form Labels */
+.mono-label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+}
+
+/* --- RESPONSIVENESS --- */
+@media (max-width: 992px) {
+    .profile-layout-container { flex-direction: column; }
+    .sidebar-wrapper { width: 100%; border-right: none; border-bottom: 1px solid #eee; }
+    .main-content-wrapper { padding: 20px; }
+    .order-card-body { flex-direction: column; gap: 20px; }
+    .order-pricing-section { width: 100%; align-items: flex-start; }
+    .order-card-footer { flex-direction: column; }
+    .btn-action { width: 100%; }
+}
+
+    
+
+/* --- TOAST STYLING CONTINUED --- */
+.toast-container {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 11000;
+    pointer-events: none;
+}
+
+.mono-toast {
+    background: #333;
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    opacity: 1;
+}
+
+    /* This is the class your JS adds after 3 seconds */
+    .mono-toast.hide {
+        opacity: 0;
+        transform: translateX(100px); /* Slides out to the right */
+    }
+
+    .mono-toast i {
+        font-size: 1.2rem;
+    }
+
+    .mono-toast.success i {
+        color: #44ffaa;
+    }
+
+    .mono-toast.error i {
+        color: #ff4d4d;
+    }
+    .mono-toast span {
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+
+/* --- EMPTY STATE --- */
+.empty-orders-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 100px 20px;
+    text-align: center;
+    background: #fafafa;
+    border-radius: 20px;
+    border: 2px dashed #ddd;
+}
+
+.empty-icon-wrapper {
+    font-size: 4rem;
+    color: #ccc;
+    margin-bottom: 20px;
+}
+
+.empty-orders-container p {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #999;
+}
+
+/* --- UTILITY & ANIMATIONS --- */
+.mono-copy-btn {
+    background: #f0f0f0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+    .mono-copy-btn:hover {
+        background: #000;
+        color: #fff;
+        border-color: #000;
+    }
+
+@keyframes toastSlideIn {
+    from {
+        transform: translateY(100px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes toastSlideOut {
+    from {
+        transform: translateY(0);
+        opacity: 1;
+    }
+
+    to {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+}
+
+/* Custom Scrollbar for Modal */
+.app-modal-scrollable::-webkit-scrollbar {
+    width: 6px;
+}
+
+.app-modal-scrollable::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.app-modal-scrollable::-webkit-scrollbar-thumb {
+    background: #000;
+    border-radius: 10px;
+}
+
+/* --- ETA TAG --- */
+.eta-tag {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #000;
+    background: #e9ecef;
+    padding: 4px 12px;
+    border-radius: 50px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+/* Tooltip or Hover effects for Order ID */
+.order-id-link {
+    position: relative;
+    cursor: pointer;
+}
+
+/* Ensure images don't distort */
+.order-img-large {
+    flex-shrink: 0;
+    background-color: #f8f8f8;
+}
+
+/* Styled Select Dropdowns */
+.mono-select {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #e0e0e0;
+    background-color: #fff;
+    font-size: 13px;
+    outline: none;
+    cursor: pointer;
+    appearance: none; /* Remove default arrow */
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 1em;
+}
+
+    .mono-select:hover {
+        border-color: #000;
+    }
+
+    /* Black Hover Effect for Dropdown Options (System level) */
+    .mono-select:focus {
+        border-color: #000;
+        background-color: #f8f8f8;
+    }
+
+/* Modal Pricing Spacing */
+.total-price-mono {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #000;
+    display: block;
+}
+
+/* Payment Display Box styling from your screenshot */
+.payment-display-box {
+    background-color: #f9f9f9;
+    padding: 10px;
+    border-left: 3px solid #000;
+    margin-top: 10px;
+}

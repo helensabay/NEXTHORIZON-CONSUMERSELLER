@@ -1,0 +1,17 @@
+## .NET gitignore
+bin/
+obj/
+
+## User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+
+## OS
+.DS_Store
+Thumbs.db
+
+## Logs
+*.log

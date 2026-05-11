@@ -1,0 +1,2179 @@
+@{
+    ViewData["Title"] = "Seller Shop";
+    var sellerId = ViewData["SellerId"];
+}
+
+<div class="seller-shop-page" id="seller-shop-page">
+
+    <!-- Loading State -->
+    <div class="seller-shop-loading" id="seller-shop-loading">
+        <div class="loading-spinner"></div>
+        <p>Loading shop…</p>
+    </div>
+
+    <!-- Shop Content -->
+    <div id="seller-shop-content" style="display:none;">
+
+        <!-- Unified Profile Bar (avatar + info + stats + actions in one row) -->
+        <div class="seller-profile-bar">
+            <div class="container">
+                <div class="seller-profile-bar-inner">
+                    <!-- Left: Avatar + Identity -->
+                    <div class="seller-profile-left">
+                        <img class="seller-profile-avatar" id="seller-shop-avatar" src="" alt="" />
+                        <div class="seller-profile-identity">
+                            <h1 class="seller-profile-name" id="seller-shop-name"></h1>
+                            <div class="seller-profile-meta">
+                                <span class="seller-profile-meta-item">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                    <span id="seller-shop-loc-text"></span>
+                                </span>
+                                <span class="seller-profile-meta-dot">·</span>
+                                <span class="seller-profile-meta-item">Joined <span id="seller-shop-joined-text"></span></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Center: Inline Stats -->
+                    <div class="seller-profile-stats">
+                        <div class="seller-profile-stat">
+                            <span class="seller-profile-stat-num" id="ss-products-count"></span>
+                            <span class="seller-profile-stat-lbl">Products</span>
+                        </div>
+                        <div class="seller-profile-stat seller-profile-stat-followers" id="seller-followers-trigger" role="button" tabindex="0" aria-label="View followers">
+                            <span class="seller-profile-stat-num" id="ss-followers-count"></span>
+                            <span class="seller-profile-stat-lbl">Followers</span>
+                        </div>
+                        <div class="seller-profile-stat">
+                            <span class="seller-profile-stat-num" id="ss-rating-value"></span>
+                            <span class="seller-profile-stat-lbl">Rating</span>
+                        </div>
+                        <div class="seller-profile-stat">
+                            <span class="seller-profile-stat-num" id="ss-ratings-count"></span>
+                            <span class="seller-profile-stat-lbl">Ratings</span>
+                        </div>
+                        <div class="seller-profile-stat">
+                            <span class="seller-profile-stat-num" id="ss-response-rate"></span>
+                            <span class="seller-profile-stat-lbl">Response</span>
+                        </div>
+                    </div>
+
+                    <!-- Right: Actions -->
+                    <div class="seller-profile-actions">
+                        <button class="seller-profile-btn seller-profile-btn-chat" onclick="sellerShopChat()">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                            Chat Now
+                        </button>
+                        <button class="seller-profile-btn seller-profile-btn-follow" id="seller-shop-follow-btn" onclick="toggleFollow()">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                            Follow
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Description -->
+        <div class="seller-shop-about container">
+            <div class="seller-shop-about-card">
+                <h3>About This Shop</h3>
+                <p id="seller-shop-description"></p>
+            </div>
+        </div>
+
+        <!-- Promotions Banner -->
+        <div class="seller-promo-section container">
+            <a href="#" class="seller-promo-banner" id="seller-promo-banner">
+                <img id="seller-promo-img" src="" alt="Shop Promotion" />
+            </a>
+        </div>
+
+        <!-- Products -->
+        <div class="seller-shop-products container">
+            <div class="seller-shop-products-header">
+                <h2>All Products</h2>
+                <span class="seller-shop-products-count" id="ss-products-total"></span>
+            </div>
+            <div class="seller-shop-products-grid" id="seller-shop-products-grid">
+                <!-- Filled by JS -->
+            </div>
+            <div class="seller-shop-empty" id="seller-shop-empty" style="display:none;">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+                <p>This shop doesn't have any products yet.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Full Messenger View -->
+    <div class="seller-messenger-view" id="seller-messenger-view" style="display:none;">
+        <div class="messenger-page" data-seller-id="@sellerId">
+            <section class="messenger-shell">
+                <header class="messenger-topbar">
+                    <div class="messenger-topbar-content">
+                        <button type="button" class="messenger-back-btn" onclick="closeSellerMessenger()">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                            Back to Shop
+                        </button>
+                        <div class="messenger-topbar-text">
+                            <p class="messenger-eyebrow">Chat with Seller</p>
+                            <h1 class="messenger-title" id="seller-messenger-name"></h1>
+                        </div>
+                    </div>
+                    <p class="messenger-subtle">Quick replies send common FAQs into the chat.</p>
+                </header>
+
+                <!-- Seller Action Options -->
+                <section class="seller-action-options" id="seller-action-options">
+                    <div class="seller-action-card">
+                        <div class="seller-action-icon">💬</div>
+                        <div class="seller-action-content">
+                            <h3>Talk with the Seller</h3>
+                            <p>Send quick FAQs or custom messages</p>
+                        </div>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+                    </div>
+                    <div class="seller-action-card">
+                        <div class="seller-action-icon">📦</div>
+                        <div class="seller-action-content">
+                            <h3>Send Product</h3>
+                            <p>Recommend a product to seller</p>
+                        </div>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+                    </div>
+                </section>
+
+                <section class="quick-actions-card" id="quick-actions-card">
+                    <div class="quick-actions-head">
+                        <span class="quick-actions-label">QUICK ACTIONS</span>
+                        <button type="button" class="quick-actions-toggle" id="quick-actions-toggle" aria-expanded="true">Hide</button>
+                    </div>
+                    <div class="quick-actions-body" id="quick-actions-body">
+                        <div class="quick-actions-scroller" id="quick-actions-scroller" aria-live="polite"></div>
+                    </div>
+                </section>
+
+                <section class="messenger-thread-card">
+                    <div class="messenger-thread-header">
+                        <div>
+                            <h2 class="messenger-thread-title">Conversation</h2>
+                            <p class="messenger-thread-copy">Tap a quick action to send it as a message.</p>
+                        </div>
+                        <span class="messenger-pill" id="messenger-status-pill">Ready</span>
+                    </div>
+
+                    <div class="messenger-thread" id="messenger-thread">
+                        <div class="messenger-empty">
+                            <strong>No messages yet.</strong>
+                            <span>Select a quick action above to start the conversation.</span>
+                        </div>
+                    </div>
+
+                    <div class="messenger-composer">
+                        <label class="messenger-composer-label" for="messenger-input">Message preview</label>
+                        <div class="messenger-composer-box">
+                            <textarea id="messenger-input" class="messenger-input" rows="2" placeholder="Choose a quick action above" readonly></textarea>
+                            <button type="button" class="messenger-send-btn" id="messenger-send-btn" disabled>Auto Send</button>
+                        </div>
+                    </div>
+                </section>
+            </section>
+        </div>
+    </div>
+</div>
+
+<div class="followers-modal" id="followers-modal" hidden>
+    <div class="followers-modal-backdrop" onclick="closeFollowersModal()"></div>
+    <div class="followers-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="followers-modal-title">
+        <div class="followers-modal-header">
+            <div>
+                <p class="followers-modal-eyebrow">Seller Community</p>
+                <h3 id="followers-modal-title">Followers</h3>
+            </div>
+            <button type="button" class="followers-modal-close" onclick="closeFollowersModal()" aria-label="Close followers list">×</button>
+        </div>
+        <div class="followers-modal-summary" id="followers-modal-summary">Loading followers...</div>
+        <div class="followers-modal-list" id="followers-modal-list"></div>
+    </div>
+</div>
+
+<style>
+    .seller-shop-page {
+        min-height: 100vh;
+        padding: 28px 0 64px;
+        background:
+            radial-gradient(circle at top left, rgba(0, 0, 0, 0.04), transparent 28%),
+            linear-gradient(180deg, #ffffff 0%, #f5f5f5 100%);
+    }
+
+    .seller-shop-loading {
+        min-height: 55vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        font-size: .82rem;
+    }
+
+    .seller-profile-bar {
+        margin-bottom: 24px;
+    }
+
+    .seller-profile-bar-inner {
+        display: grid;
+        grid-template-columns: minmax(260px, 1.15fr) minmax(340px, 1fr) auto;
+        align-items: center;
+        gap: 24px;
+        padding: 28px 30px;
+        background: rgba(255, 255, 255, .98);
+        border: 1px solid rgba(0, 0, 0, .12);
+        border-radius: 30px;
+        box-shadow: 0 22px 44px rgba(0, 0, 0, .08);
+        backdrop-filter: blur(12px);
+    }
+
+    .seller-profile-left {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        min-width: 0;
+    }
+
+    .seller-profile-avatar {
+        width: 88px;
+        height: 88px;
+        border-radius: 999px;
+        object-fit: cover;
+        background: #e5e5e5;
+        border: 4px solid #fff;
+        box-shadow: 0 14px 26px rgba(0, 0, 0, .14);
+        flex-shrink: 0;
+    }
+
+    .seller-profile-identity {
+        min-width: 0;
+    }
+
+    .seller-profile-name {
+        margin: 0 0 8px;
+        font-family: "Space Grotesk", "Inter", sans-serif;
+        font-size: clamp(1.9rem, 2.8vw, 2.6rem);
+        line-height: 1.02;
+        letter-spacing: -.04em;
+        color: #111;
+    }
+
+    .seller-profile-meta {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+        color: #555;
+        font-size: .92rem;
+    }
+
+    .seller-profile-meta-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        min-width: 0;
+    }
+
+    .seller-profile-meta-item svg {
+        color: #111;
+        flex-shrink: 0;
+    }
+
+    .seller-profile-meta-dot {
+        color: #999;
+        font-weight: 700;
+    }
+
+    .seller-profile-stats {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 12px;
+        min-width: 0;
+    }
+
+    .seller-profile-stat {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        min-height: 84px;
+        padding: 14px 10px;
+        text-align: center;
+        border-radius: 22px;
+        background: linear-gradient(180deg, #ffffff 0%, #f6f6f6 100%);
+        border: 1px solid rgba(0, 0, 0, .08);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.75);
+    }
+
+    .seller-profile-stat-num {
+        font-family: "Space Grotesk", "Inter", sans-serif;
+        font-size: 1.28rem;
+        font-weight: 700;
+        color: #111;
+        letter-spacing: -.03em;
+    }
+
+    .seller-profile-stat-lbl {
+        font-size: .74rem;
+        font-weight: 700;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+        color: #666;
+    }
+
+    .seller-profile-actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    .seller-profile-btn {
+        min-height: 46px;
+        padding: 0 18px;
+        border-radius: 999px;
+        border: 1px solid #0f172a;
+        background: #fff;
+        color: #111;
+        font-size: .82rem;
+        font-weight: 700;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
+        cursor: pointer;
+        transition: transform .2s ease, box-shadow .2s ease, background-color .2s ease, color .2s ease, border-color .2s ease;
+        white-space: nowrap;
+    }
+
+    .seller-profile-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, .12);
+    }
+
+    .seller-profile-btn-chat {
+        background: #111;
+        border-color: #111;
+        color: #fff;
+    }
+
+    .seller-profile-btn-chat:hover {
+        background: #2b2b2b;
+        color: #fff;
+    }
+
+    .seller-profile-btn-follow.following {
+        background: #111;
+        border-color: #111;
+        color: #fff;
+    }
+
+    .seller-profile-btn:disabled {
+        opacity: .7;
+        cursor: wait;
+        transform: none;
+    }
+
+    .seller-shop-about,
+    .seller-promo-section,
+    .seller-shop-products {
+        margin-top: 22px;
+    }
+
+    .seller-shop-about-card {
+        padding: 28px 30px;
+        border-radius: 28px;
+        background: rgba(255,255,255,.96);
+        border: 1px solid rgba(0, 0, 0, .12);
+        box-shadow: 0 18px 36px rgba(0, 0, 0, .06);
+    }
+
+    .seller-shop-about-card h3 {
+        margin: 0 0 12px;
+        font-family: "Space Grotesk", "Inter", sans-serif;
+        font-size: 1.2rem;
+        color: #111;
+    }
+
+    .seller-shop-about-card p {
+        margin: 0;
+        max-width: 78ch;
+        color: #444;
+        line-height: 1.7;
+        font-size: .98rem;
+    }
+
+    .seller-promo-banner {
+        display: block;
+        overflow: hidden;
+        border-radius: 30px;
+        border: 1px solid rgba(0, 0, 0, .12);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, .08);
+        background: #e5e5e5;
+    }
+
+    .seller-promo-banner img {
+        display: block;
+        width: 100%;
+        aspect-ratio: 16 / 5;
+        object-fit: cover;
+        filter: grayscale(1);
+    }
+
+    .seller-shop-products-header {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 18px;
+        margin-bottom: 20px;
+    }
+
+    .seller-shop-products-header h2 {
+        margin: 0;
+        font-family: "Space Grotesk", "Inter", sans-serif;
+        font-size: clamp(1.5rem, 2.3vw, 2rem);
+        letter-spacing: -.03em;
+        color: #111;
+    }
+
+    .seller-shop-products-count {
+        color: #666;
+        font-size: .92rem;
+        font-weight: 600;
+    }
+
+    .seller-shop-products-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 24px;
+    }
+
+    .ss-product-card {
+        overflow: hidden;
+        border-radius: 24px;
+        background: #fff;
+        border: 1px solid rgba(0, 0, 0, .12);
+        box-shadow: 0 16px 34px rgba(0, 0, 0, .06);
+        cursor: pointer;
+        transition: transform .28s ease, box-shadow .28s ease, border-color .28s ease;
+    }
+
+    .ss-product-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 24px 46px rgba(0, 0, 0, .12);
+        border-color: rgba(0, 0, 0, .28);
+    }
+
+    .ss-product-card-img {
+        position: relative;
+        overflow: hidden;
+        background: #f4f4f4;
+        aspect-ratio: 4 / 5;
+    }
+
+    .ss-product-card-img img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        transition: transform .45s ease;
+        filter: grayscale(1);
+    }
+
+    .ss-product-card:hover .ss-product-card-img img {
+        transform: scale(1.05);
+    }
+
+    .ss-product-card-overlay {
+        position: absolute;
+        inset: auto 0 0 0;
+        padding: 14px 18px;
+        background: rgba(255,255,255,.94);
+        border-top: 1px solid rgba(0, 0, 0, .1);
+        color: #111;
+        font-size: .74rem;
+        font-weight: 800;
+        letter-spacing: .16em;
+        text-transform: uppercase;
+        text-align: center;
+        transform: translateY(100%);
+        transition: transform .24s ease;
+    }
+
+    .ss-product-card:hover .ss-product-card-overlay {
+        transform: translateY(0);
+    }
+
+    .ss-product-badge-sale,
+    .ss-product-badge-soldout,
+    .ss-product-badge-preorder {
+        position: absolute;
+        left: 14px;
+        z-index: 2;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 28px;
+        padding: 0 10px;
+        border-radius: 999px;
+        font-size: .7rem;
+        font-weight: 800;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+    }
+
+    .ss-product-badge-sale {
+        top: 14px;
+        background: #111;
+        color: #fff;
+    }
+
+    .ss-product-badge-soldout {
+        top: 50px;
+        background: rgba(0, 0, 0, .82);
+        color: #fff;
+    }
+
+    .ss-product-badge-preorder {
+        top: 50px;
+        background: #444;
+        color: #fff;
+    }
+
+    .ss-product-card-body {
+        padding: 18px 18px 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .ss-product-brand {
+        margin: 0;
+        font-size: .72rem;
+        font-weight: 800;
+        letter-spacing: .14em;
+        text-transform: uppercase;
+        color: #666;
+    }
+
+    .ss-product-name {
+        margin: 0;
+        font-size: 1rem;
+        line-height: 1.45;
+        color: #111;
+    }
+
+    .ss-product-price-row {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .ss-product-price,
+    .ss-product-price-sale {
+        font-family: "Space Grotesk", "Inter", sans-serif;
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #111;
+    }
+
+    .ss-product-price-original {
+        color: #8a8a8a;
+        font-size: .88rem;
+        text-decoration: line-through;
+    }
+
+    .ss-product-rating {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #666;
+        font-size: .84rem;
+    }
+
+    .stars {
+        display: inline-flex;
+        gap: 2px;
+        color: #cfcfcf;
+        font-size: .95rem;
+        line-height: 1;
+    }
+
+    .star.filled,
+    .star.half {
+        color: #111;
+    }
+
+    .seller-shop-empty {
+        margin-top: 8px;
+        min-height: 260px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        text-align: center;
+        border-radius: 28px;
+        background: rgba(255,255,255,.95);
+        border: 1px solid rgba(0, 0, 0, .12);
+        color: #555;
+        padding: 32px 20px;
+    }
+
+    .seller-shop-empty p {
+        margin: 0;
+        font-size: 1rem;
+    }
+
+    .seller-messenger-view {
+        position: fixed;
+        inset: 0;
+        background: radial-gradient(circle at top right, rgba(15,118,110,.10), transparent 28%), radial-gradient(circle at top left, rgba(15,23,42,.06), transparent 25%), linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+        z-index: 1100;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        animation: fadeIn .3s ease;
+    }
+    .seller-messenger-view.active {
+        display: flex;
+    }
+    @@keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    .messenger-page {
+        min-height: calc(100vh - 220px);
+        padding: 32px 18px 56px;
+    }
+    .messenger-shell {
+        width: min(100%, 1040px);
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+    .messenger-topbar, .quick-actions-card, .messenger-thread-card {
+        background: rgba(255,255,255,.92);
+        border: 1px solid rgba(148,163,184,.22);
+        border-radius: 28px;
+        box-shadow: 0 24px 54px rgba(15,23,42,.08);
+        backdrop-filter: blur(14px);
+    }
+    .messenger-topbar {
+        padding: 26px 28px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: flex-start;
+        gap: 12px;
+    }
+    .messenger-topbar-content {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        width: 100%;
+    }
+    .messenger-topbar-text {
+        flex: 1;
+    }
+    .messenger-back-btn {
+        border: 0;
+        background: transparent;
+        color: #0f172a;
+        font-size: .95rem;
+        font-weight: 600;
+        cursor: pointer;
+        padding: 8px 12px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: background-color .2s ease, color .2s ease;
+        white-space: nowrap;
+    }
+    .messenger-back-btn:hover {
+        background-color: #f1f5f9;
+        color: #0f172a;
+    }
+
+    .seller-profile-stat-followers {
+        cursor: pointer;
+    }
+    .seller-profile-stat-followers:focus-visible {
+        outline: 2px solid #0f766e;
+        outline-offset: 4px;
+        border-radius: 18px;
+    }
+    .followers-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 1400;
+    }
+    .followers-modal[hidden] {
+        display: none;
+    }
+    .followers-modal-backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(15, 23, 42, .45);
+        backdrop-filter: blur(4px);
+    }
+    .followers-modal-dialog {
+        position: relative;
+        width: min(520px, calc(100vw - 32px));
+        max-height: min(680px, calc(100vh - 32px));
+        margin: 16px auto;
+        background: #fff;
+        border-radius: 28px;
+        box-shadow: 0 24px 64px rgba(15, 23, 42, .22);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+    .followers-modal-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 22px 24px 12px;
+        border-bottom: 1px solid rgba(148, 163, 184, .22);
+    }
+    .followers-modal-eyebrow {
+        margin: 0 0 6px;
+        font-size: .78rem;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: #0f766e;
+        font-weight: 700;
+    }
+    .followers-modal-header h3 {
+        margin: 0;
+        font-size: 1.35rem;
+        color: #0f172a;
+    }
+    .followers-modal-close {
+        border: 0;
+        background: #f1f5f9;
+        color: #0f172a;
+        width: 40px;
+        height: 40px;
+        border-radius: 999px;
+        font-size: 1.6rem;
+        line-height: 1;
+        cursor: pointer;
+    }
+    .followers-modal-summary {
+        padding: 14px 24px;
+        color: #475569;
+        font-size: .95rem;
+        border-bottom: 1px solid rgba(148, 163, 184, .16);
+    }
+    .followers-modal-list {
+        padding: 10px 16px 18px;
+        overflow-y: auto;
+    }
+    .followers-modal-empty {
+        padding: 28px 12px;
+        text-align: center;
+        color: #64748b;
+    }
+    .follower-row {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 12px 10px;
+        border-radius: 18px;
+    }
+    .follower-row + .follower-row {
+        margin-top: 4px;
+    }
+    .follower-row:hover {
+        background: #f8fafc;
+    }
+    .follower-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 999px;
+        object-fit: cover;
+        background: #e2e8f0;
+        flex-shrink: 0;
+    }
+    .follower-body {
+        min-width: 0;
+        flex: 1;
+    }
+    .follower-name {
+        font-weight: 700;
+        color: #0f172a;
+    }
+    .follower-meta {
+        margin-top: 3px;
+        color: #64748b;
+        font-size: .88rem;
+    }
+
+    /* Keep shop actions under the floating messenger overlay */
+    .seller-profile-actions { position: relative; z-index: 1; }
+    .seller-profile-btn { pointer-events: auto; }
+    .messenger-eyebrow {
+        margin: 0 0 6px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: .18em;
+        text-transform: uppercase;
+        color: #64748b;
+    }
+    .messenger-title {
+        margin: 0;
+        font-family: "Space Grotesk", "Inter", sans-serif;
+        font-size: clamp(1.8rem, 3vw, 2.4rem);
+        line-height: 1;
+        color: #0f172a;
+    }
+    .messenger-subtle {
+        margin: 0;
+        color: #64748b;
+        font-size: .95rem;
+    }
+    .seller-action-options {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 16px;
+        padding: 0;
+        animation: slideInUp .4s ease;
+    }
+    .seller-action-options.is-hidden {
+        display: none;
+    }
+    @@keyframes slideInUp {
+        from {
+            opacity: 0;
+            transform: translateY(16px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    .seller-action-card {
+        background: rgba(255,255,255,.92);
+        border: 1px solid rgba(148,163,184,.22);
+        border-radius: 28px;
+        box-shadow: 0 24px 54px rgba(15,23,42,.08);
+        backdrop-filter: blur(14px);
+        padding: 24px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        cursor: pointer;
+        transition: all .3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .seller-action-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 32px 64px rgba(15,23,42,.12);
+        border-color: rgba(15,172,110,.3);
+    }
+    .seller-action-icon {
+        font-size: 32px;
+        flex: 0 0 auto;
+    }
+    .seller-action-content {
+        flex: 1;
+    }
+    .seller-action-content h3 {
+        margin: 0 0 4px;
+        font-size: 1.05rem;
+        font-weight: 700;
+        color: #0f172a;
+    }
+    .seller-action-content p {
+        margin: 0;
+        font-size: .88rem;
+        color: #64748b;
+    }
+    .seller-action-card svg {
+        flex: 0 0 auto;
+        color: #cbd5e1;
+        transition: color .3s ease, transform .3s ease;
+    }
+    .seller-action-card:hover svg {
+        color: #0f172a;
+        transform: translateX(4px);
+    }
+    .quick-actions-card {
+        padding: 22px 24px 18px;
+    }
+    .quick-actions-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 14px;
+    }
+    .quick-actions-label {
+        font-size: .82rem;
+        font-weight: 800;
+        letter-spacing: .14em;
+        color: #0f172a;
+    }
+    .quick-actions-toggle {
+        border: 0;
+        background: transparent;
+        color: #64748b;
+        font-size: .92rem;
+        font-weight: 600;
+        cursor: pointer;
+        padding: 0;
+        transition: color .2s ease;
+    }
+    .quick-actions-toggle:hover {
+        color: #0f172a;
+    }
+    .quick-actions-body.is-hidden {
+        display: none;
+    }
+    .quick-actions-scroller {
+        display: flex;
+        gap: 12px;
+        overflow-x: auto;
+        padding-bottom: 6px;
+        scrollbar-width: thin;
+        scroll-behavior: smooth;
+    }
+    .quick-actions-scroller::-webkit-scrollbar {
+        height: 8px;
+    }
+    .quick-actions-scroller::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 999px;
+        transition: background .2s ease;
+    }
+    .quick-actions-scroller::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+    .quick-action-chip {
+        flex: 0 0 auto;
+        max-width: 320px;
+        border: 1px solid #d7dee7;
+        background: #fff;
+        color: #0f172a;
+        border-radius: 999px;
+        padding: 12px 16px;
+        font: 600 .94rem/1.25 "Inter", sans-serif;
+        cursor: pointer;
+        transition: border-color .18s ease, background-color .18s ease, color .18s ease, transform .18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow .18s ease;
+        box-shadow: 0 8px 20px rgba(15,23,42,.06);
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
+    }
+    .quick-action-chip:hover {
+        border-color: #0f172a;
+        transform: translateY(-2px);
+        box-shadow: 0 12px 28px rgba(15,23,42,.12);
+    }
+    .quick-action-chip:active {
+        transform: translateY(0);
+    }
+    .quick-action-chip.is-active {
+        background: #0f172a;
+        color: #fff;
+        border-color: #0f172a;
+        box-shadow: 0 14px 28px rgba(15,23,42,.16);
+        transform: scale(1.02);
+    }
+    .quick-actions-placeholder {
+        color: #64748b;
+        font-size: .94rem;
+        padding: 4px 2px 8px;
+    }
+    .messenger-thread-card {
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+    }
+    .messenger-thread-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+    }
+    .messenger-thread-title {
+        margin: 0 0 4px;
+        font-size: 1.15rem;
+        color: #0f172a;
+    }
+    .messenger-thread-copy {
+        margin: 0;
+        color: #64748b;
+        font-size: .92rem;
+    }
+    .messenger-pill {
+        flex: 0 0 auto;
+        border-radius: 999px;
+        background: #ecfeff;
+        color: #0f766e;
+        padding: 8px 12px;
+        font-size: .8rem;
+        font-weight: 700;
+        transition: background .3s ease, color .3s ease;
+    }
+    .messenger-thread {
+        min-height: 360px;
+        max-height: 62vh;
+        overflow: auto;
+        border-radius: 24px;
+        background: radial-gradient(circle at top, rgba(255,255,255,.88), rgba(241,245,249,.92)), #f8fafc;
+        border: 1px solid #e2e8f0;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        transition: opacity .3s ease;
+    }
+    .messenger-thread.is-loading {
+        opacity: .6;
+    }
+    .messenger-empty {
+        margin: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        align-items: center;
+        text-align: center;
+        color: #64748b;
+        max-width: 280px;
+    }
+    .messenger-bubble-row {
+        display: flex;
+        animation: slideIn .3s ease forwards;
+    }
+    .messenger-bubble-row:nth-child(1) { animation-delay: 0ms; }
+    .messenger-bubble-row:nth-child(2) { animation-delay: 50ms; }
+    .messenger-bubble-row:nth-child(3) { animation-delay: 100ms; }
+    .messenger-bubble-row:nth-child(n+4) { animation-delay: 150ms; }
+    @@keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(12px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    .messenger-bubble-row.is-user {
+        justify-content: flex-end;
+    }
+    .messenger-bubble-row.is-seller {
+        justify-content: flex-start;
+    }
+    .messenger-bubble {
+        max-width: min(80%, 560px);
+        padding: 12px 14px;
+        border-radius: 18px;
+        font-size: .95rem;
+        line-height: 1.45;
+        box-shadow: 0 10px 24px rgba(15,23,42,.07);
+        transition: transform .2s ease, opacity .2s ease;
+    }
+    .messenger-bubble-row.is-user .messenger-bubble {
+        background: #0f172a;
+        color: #fff;
+        border-bottom-right-radius: 6px;
+    }
+    .messenger-bubble-row.is-seller .messenger-bubble {
+        background: #fff;
+        color: #0f172a;
+        border: 1px solid #e2e8f0;
+        border-bottom-left-radius: 6px;
+    }
+    .messenger-composer {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    .messenger-composer-label {
+        font-size: .86rem;
+        font-weight: 700;
+        color: #475569;
+    }
+    .messenger-composer-box {
+        display: flex;
+        align-items: flex-end;
+        gap: 12px;
+        padding: 12px;
+        border: 1px solid #dbe3ec;
+        border-radius: 22px;
+        background: #fff;
+        transition: border-color .2s ease, box-shadow .2s ease;
+    }
+    .messenger-composer-box:focus-within {
+        border-color: #0f172a;
+        box-shadow: 0 0 0 3px rgba(15,23,42,.08);
+    }
+    .messenger-input {
+        flex: 1;
+        resize: none;
+        border: 0;
+        outline: none;
+        background: transparent;
+        font: 500 .95rem/1.45 "Inter", sans-serif;
+        color: #0f172a;
+        min-height: 52px;
+        transition: color .2s ease;
+    }
+    .messenger-send-btn {
+        border: 0;
+        border-radius: 999px;
+        background: #0f172a;
+        color: #fff;
+        padding: 11px 16px;
+        font: 700 .88rem/1 "Inter", sans-serif;
+        opacity: .52;
+        cursor: not-allowed;
+        transition: all .3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .messenger-send-btn.is-ready {
+        opacity: 1;
+        cursor: pointer;
+        box-shadow: 0 10px 22px rgba(15,23,42,.18);
+    }
+    .messenger-send-btn.is-sending {
+        opacity: .7;
+        cursor: not-allowed;
+    }
+
+    /* ===== FLOATING CHAT MODAL ===== */
+    .seller-chat-modal {
+        position: fixed;
+        right: 24px;
+        bottom: 24px;
+        width: min(420px, calc(100vw - 32px));
+        height: min(680px, calc(100vh - 32px));
+        background: #fff;
+        border-radius: 24px;
+        box-shadow: 0 24px 64px rgba(15, 23, 42, 0.22);
+        overflow: hidden;
+        z-index: 1200;
+        display: none;
+        border: 1px solid rgba(15, 23, 42, 0.08);
+    }
+
+    .seller-chat-modal.active {
+        display: block;
+    }
+
+    .seller-chat-box {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+    .seller-chat-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 16px 18px;
+        background: #111;
+        color: #fff;
+    }
+
+    .seller-chat-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .seller-chat-store-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.14);
+        color: #fff;
+        text-decoration: none;
+        font: 600 12px/1 "Poppins", sans-serif;
+        white-space: nowrap;
+    }
+
+    .seller-chat-actions button {
+        width: 34px;
+        height: 34px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 0;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.14);
+        color: #fff;
+        cursor: pointer;
+    }
+
+    .seller-chat-frame-wrap {
+        flex: 1;
+        min-height: 0;
+        background: #f8fafc;
+    }
+
+    .seller-chat-frame {
+        width: 100%;
+        height: 100%;
+        border: 0;
+        display: block;
+        background: #fff;
+    }
+
+    .seller-chat-message {
+        display: flex;
+        margin-bottom: 12px;
+    }
+
+    .seller-chat-message.buyer {
+        justify-content: flex-end;
+    }
+
+    .seller-chat-message .bubble {
+        max-width: 80%;
+        padding: 12px 14px;
+        border-radius: 18px;
+        background: #fff;
+        color: #111;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+    }
+
+    .seller-chat-message.buyer .bubble {
+        background: #111;
+        color: #fff;
+    }
+
+    .bubble-body {
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+
+    .bubble-meta {
+        margin-top: 8px;
+        font-size: 11px;
+        opacity: 0.72;
+    }
+
+    .bubble-attachment-image,
+    .chat-attachment-preview-image {
+        width: 100%;
+        max-height: 220px;
+        object-fit: cover;
+        border-radius: 14px;
+        margin-top: 10px;
+    }
+
+    .bubble-attachment-video,
+    .chat-attachment-preview-video {
+        width: 100%;
+        max-height: 220px;
+        border-radius: 14px;
+        margin-top: 10px;
+    }
+
+    .bubble-attachment-link {
+        display: inline-block;
+        margin-top: 10px;
+        font-size: 12px;
+        color: inherit;
+        text-decoration: underline;
+    }
+
+    .seller-chat-input {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 16px;
+        border-top: 1px solid rgba(15, 23, 42, 0.08);
+        background: #fff;
+    }
+
+    .seller-chat-input textarea {
+        flex: 1;
+        resize: none;
+        min-height: 44px;
+        max-height: 120px;
+        border: 1px solid rgba(15, 23, 42, 0.12);
+        border-radius: 16px;
+        padding: 12px 14px;
+        font: inherit;
+        outline: 0;
+    }
+
+    .chat-attachment-input {
+        display: none;
+    }
+
+    .chat-attachment-btn,
+    .chat-attachment-clear,
+    .send-icon-btn {
+        width: 42px;
+        height: 42px;
+        border: 0;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        background: #e2e8f0;
+        color: #111;
+        flex-shrink: 0;
+    }
+
+    .send-icon-btn {
+        background: #111;
+        color: #fff;
+    }
+
+    .chat-attachment-preview {
+        padding: 0 16px 16px;
+        background: #fff;
+    }
+
+    .chat-attachment-status {
+        padding: 0 16px 16px;
+        font-size: 12px;
+        color: #475569;
+        background: #fff;
+    }
+
+    .chat-empty,
+    .seller-loading-message {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 120px;
+        text-align: center;
+        color: #64748b;
+        font-size: 14px;
+        padding: 24px;
+    }
+
+    .quick-message-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 12px;
+    }
+
+    .quick-message-btn {
+        border: 1px solid rgba(15, 23, 42, 0.1);
+        background: #fff;
+        color: #111;
+        border-radius: 999px;
+        padding: 8px 12px;
+        font-size: 12px;
+        cursor: pointer;
+    }
+
+    .chat-head-container {
+        position: fixed;
+        right: 24px;
+        bottom: 24px;
+        z-index: 1190;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .chat-head {
+        width: 58px;
+        height: 58px;
+        border: 0;
+        border-radius: 999px;
+        background: #111;
+        color: #fff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        font-weight: 700;
+        cursor: pointer;
+        box-shadow: 0 18px 40px rgba(15, 23, 42, 0.24);
+    }
+
+    @@media (max-width: 780px) {
+        .messenger-page {
+            padding: 20px 12px 40px;
+        }
+        .messenger-topbar {
+            padding: 22px 20px;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .seller-action-options {
+            grid-template-columns: 1fr;
+            padding: 0;
+        }
+        .seller-action-card {
+            padding: 18px;
+            border-radius: 20px;
+        }
+        .seller-action-icon {
+            font-size: 28px;
+        }
+        .seller-action-content h3 {
+            font-size: .95rem;
+        }
+        .seller-action-content p {
+            font-size: .82rem;
+        }
+        .quick-actions-card, .messenger-thread-card {
+            padding: 18px;
+            border-radius: 24px;
+        }
+        .messenger-composer-box {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .messenger-send-btn {
+            width: 100%;
+        }
+        
+        /* Chat modal responsive styles */
+        .seller-chat-modal {
+            right: 12px;
+            left: 12px;
+            bottom: 12px;
+            width: auto;
+            height: min(78vh, 720px);
+        }
+
+        .chat-head-container {
+            right: 12px;
+            bottom: 12px;
+        }
+    }
+
+    @@media (max-width: 1180px) {
+        .seller-profile-bar-inner {
+            grid-template-columns: 1fr;
+            align-items: stretch;
+        }
+
+        .seller-profile-actions {
+            justify-content: flex-start;
+        }
+
+        .seller-shop-products-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+    }
+
+    @@media (max-width: 860px) {
+        .seller-shop-page {
+            padding-top: 18px;
+        }
+
+        .seller-profile-bar-inner,
+        .seller-shop-about-card {
+            padding: 22px 20px;
+            border-radius: 24px;
+        }
+
+        .seller-profile-left {
+            align-items: flex-start;
+        }
+
+        .seller-profile-stats {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .seller-shop-products-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+        }
+
+        .seller-promo-banner,
+        .seller-shop-empty {
+            border-radius: 24px;
+        }
+    }
+
+    @@media (max-width: 560px) {
+        .seller-profile-left {
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .seller-profile-avatar {
+            width: 76px;
+            height: 76px;
+        }
+
+        .seller-profile-meta {
+            gap: 8px;
+        }
+
+        .seller-profile-stats {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .seller-profile-actions {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .seller-profile-btn {
+            width: 100%;
+        }
+
+        .seller-shop-products-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .seller-shop-products-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .ss-product-card-body {
+            padding: 16px;
+        }
+    }
+</style>
+
+<!-- Floating Chat Modal -->
+<div id="sellerShopChatModal" class="seller-chat-modal" aria-hidden="true">
+    <div class="seller-chat-box">
+        <div class="seller-chat-header">
+            <span id="sellerShopChatTitle">Seller Chat</span>
+            <div class="seller-chat-actions">
+                <button type="button" onclick="minimizeSellerShopChat()" title="Minimize">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                </button>
+                <button type="button" onclick="closeSellerShopChat()" title="Close">×</button>
+            </div>
+        </div>
+        <div class="seller-chat-frame-wrap">
+            <iframe id="sellerShopChatFrame" class="seller-chat-frame" title="Seller Messenger" loading="lazy"></iframe>
+        </div>
+    </div>
+</div>
+
+<div id="sellerShopChatHeadContainer" class="chat-head-container"></div>
+
+@section Scripts {
+<script src="~/Messaging/js/StorefrontMessaging.js" asp-append-version="true"></script>
+<script>
+const SELLER_ID = @sellerId;
+let currentChatSeller = null;
+let currentChatUserId = null;
+let currentSellerShop = null;
+let isFollowing = false;
+let csrfTokenPromise = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadSellerShop(SELLER_ID);
+});
+
+async function loadSellerShop(id) {
+    try {
+        const [sellerRes, productsRes] = await Promise.all([
+            fetch(`/api/sellers/${id}`),
+            fetch(`/api/products/seller/${id}`)
+        ]);
+        if (!sellerRes.ok) throw new Error('Seller not found');
+        const seller = await sellerRes.json();
+        const products = await productsRes.json();
+        renderSellerShop(seller, products);
+    } catch(e) {
+        document.getElementById('seller-shop-loading').innerHTML =
+            '<p style="color:#888;text-align:center;padding:4rem;">Shop not found. <a href="/Home/Shop">Back to Shop</a></p>';
+    }
+}
+
+function renderSellerShop(seller, products) {
+    document.getElementById('seller-shop-loading').style.display = 'none';
+    document.getElementById('seller-shop-content').style.display = 'block';
+    document.title = `${seller.shopName} - NEXT HORIZON`;
+
+    window.sellerShopMessengerUrl = `/consumer/messenger/?sellerId=${seller.id}&embed=chat`;
+
+    // Promo banner
+    document.getElementById('seller-promo-img').src = seller.coverImage;
+    document.getElementById('seller-promo-img').alt = seller.shopName + ' promotion';
+
+    // Profile
+    document.getElementById('seller-shop-avatar').src = seller.avatar;
+    document.getElementById('seller-shop-avatar').alt = seller.shopName;
+    document.getElementById('seller-shop-name').textContent = seller.shopName;
+    document.getElementById('seller-shop-loc-text').textContent = seller.location;
+    document.getElementById('seller-shop-joined-text').textContent = seller.joinedAgo;
+    document.getElementById('seller-shop-description').textContent = seller.description;
+    document.getElementById('seller-messenger-name').textContent = seller.shopName;
+    document.getElementById('sellerShopChatTitle').textContent = seller.shopName;
+    currentChatSeller = seller;
+    currentSellerShop = seller;
+
+    // Stats
+    document.getElementById('ss-products-count').textContent = seller.totalProducts;
+    document.getElementById('ss-followers-count').textContent = formatShopCount(seller.followers);
+    document.getElementById('ss-rating-value').textContent = seller.rating.toFixed(1);
+    document.getElementById('ss-ratings-count').textContent = formatShopCount(seller.totalRatings);
+    document.getElementById('ss-response-rate').textContent = seller.responseRate + '%';
+    isFollowing = Boolean(seller.isFollowing);
+    syncFollowButton();
+
+    // Products
+    document.getElementById('ss-products-total').textContent = `(${products.length} items)`;
+
+    if (products.length === 0) {
+        document.getElementById('seller-shop-empty').style.display = 'flex';
+        return;
+    }
+
+    const grid = document.getElementById('seller-shop-products-grid');
+    grid.innerHTML = products.map(p => {
+        const hasDiscount = p.originalPrice && p.originalPrice > p.price;
+        const discountPct = hasDiscount ? Math.round((1 - p.price / p.originalPrice) * 100) : 0;
+        return `
+        <div class="ss-product-card" onclick="window.location.href='/Home/Product?id=${p.id}'">
+            <div class="ss-product-card-img">
+                <img src="${p.image}" alt="${p.name}" loading="lazy"
+                    onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27300%27 height=%27300%27%3E%3Crect width=%27300%27 height=%27300%27 fill=%27%23fafafa%27/%3E%3C/svg%3E'">
+                ${hasDiscount ? `<span class="ss-product-badge-sale">-${discountPct}%</span>` : ''}
+                ${p.stock === 0 && !p.isPreOrder && !p.isRestockPreOrder ? '<span class="ss-product-badge-soldout">Sold Out</span>' : ''}
+                ${p.isPreOrder ? '<span class="ss-product-badge-preorder">Pre-Order</span>' : ''}
+                <div class="ss-product-card-overlay">View Product</div>
+            </div>
+            <div class="ss-product-card-body">
+                <p class="ss-product-brand">${p.brand}</p>
+                <h4 class="ss-product-name">${p.name}</h4>
+                <div class="ss-product-price-row">
+                    ${hasDiscount
+                        ? `<span class="ss-product-price-sale">${formatShopPeso(p.price)}</span><span class="ss-product-price-original">${formatShopPeso(p.originalPrice)}</span>`
+                        : `<span class="ss-product-price">${formatShopPeso(p.price)}</span>`
+                    }
+                </div>
+                <div class="ss-product-rating">
+                    <span class="stars">${getShopStars(p.rating)}</span>
+                    <span class="ss-product-rating-count">(${p.reviewCount})</span>
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function formatShopCount(n) {
+    if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+    return n.toString();
+}
+
+function formatFollowerTimestamp(value) {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+    return `Followed ${date.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+}
+
+async function getCsrfToken() {
+    if (!csrfTokenPromise) {
+        csrfTokenPromise = fetch('/api/security/csrf-token', { credentials: 'same-origin' })
+            .then(async response => {
+                const payload = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    throw new Error(payload.message || 'Unable to prepare follow request.');
+                }
+                return payload.token || '';
+            })
+            .catch(error => {
+                csrfTokenPromise = null;
+                throw error;
+            });
+    }
+
+    return csrfTokenPromise;
+}
+
+function syncFollowButton() {
+    const btn = document.getElementById('seller-shop-follow-btn');
+    if (!btn) return;
+
+    if (isFollowing) {
+        btn.classList.add('following');
+        btn.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+            Following`;
+        return;
+    }
+
+    btn.classList.remove('following');
+    btn.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+        Follow`;
+}
+
+async function openFollowersModal() {
+    const modal = document.getElementById('followers-modal');
+    const title = document.getElementById('followers-modal-title');
+    const summary = document.getElementById('followers-modal-summary');
+    const list = document.getElementById('followers-modal-list');
+    if (!modal || !summary || !list) return;
+
+    modal.hidden = false;
+    title.textContent = `${currentSellerShop?.shopName || 'Seller'} Followers`;
+    summary.textContent = 'Loading followers...';
+    list.innerHTML = '';
+
+    try {
+        const response = await fetch(`/api/sellers/${SELLER_ID}/followers`, { credentials: 'same-origin' });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            throw new Error(payload.message || 'Unable to load followers.');
+        }
+
+        const items = Array.isArray(payload.items) ? payload.items : [];
+        summary.textContent = `${payload.count || items.length} follower${(payload.count || items.length) === 1 ? '' : 's'}`;
+
+        if (!items.length) {
+            list.innerHTML = '<div class="followers-modal-empty">No followers yet.</div>';
+            return;
+        }
+
+        list.innerHTML = items.map(item => `
+            <div class="follower-row">
+                <img class="follower-avatar" src="${escapeHtml(item.avatar || '')}" alt="${escapeHtml(item.displayName || 'Follower')}">
+                <div class="follower-body">
+                    <div class="follower-name">${escapeHtml(item.displayName || 'Follower')}</div>
+                    <div class="follower-meta">${escapeHtml(formatFollowerTimestamp(item.followedAt))}</div>
+                </div>
+            </div>
+        `).join('');
+    } catch (error) {
+        summary.textContent = 'Followers unavailable';
+        list.innerHTML = `<div class="followers-modal-empty">${escapeHtml(error.message || 'Unable to load followers.')}</div>`;
+    }
+}
+
+function closeFollowersModal() {
+    const modal = document.getElementById('followers-modal');
+    if (modal) modal.hidden = true;
+}
+
+function formatShopPeso(amount) {
+    return '₱' + Number(amount).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function getShopStars(rating) {
+    let html = '';
+    for (let i = 1; i <= 5; i++) {
+        if (rating >= i) html += '<span class="star filled">★</span>';
+        else if (rating >= i - 0.5) html += '<span class="star half">★</span>';
+        else html += '<span class="star">★</span>';
+    }
+    return html;
+}
+
+function ensureSellerShopChatHead() {
+    const container = document.getElementById('sellerShopChatHeadContainer');
+    if (!container || container.childElementCount) return;
+
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'chat-head';
+    button.textContent = 'S';
+    button.setAttribute('aria-label', 'Open seller chat');
+    button.addEventListener('click', function () {
+        sellerShopChat();
+    });
+    container.appendChild(button);
+}
+
+function ensureSellerShopChatFrame() {
+    const frame = document.getElementById('sellerShopChatFrame');
+    const targetUrl = window.sellerShopMessengerUrl || `/consumer/messenger/?sellerId=${SELLER_ID}&embed=chat`;
+    if (!frame) return;
+
+    const absoluteTargetUrl = new URL(targetUrl, window.location.origin).href;
+    if (frame.src !== absoluteTargetUrl) {
+        frame.src = targetUrl;
+    }
+}
+
+function sellerShopChat() {
+    try {
+        ensureSellerShopChatFrame();
+        const modal = document.getElementById('sellerShopChatModal');
+        if (!modal) return;
+        modal.classList.add('active');
+        modal.setAttribute('aria-hidden', 'false');
+        document.getElementById('sellerShopChatHeadContainer')?.replaceChildren();
+    } catch (error) {
+        console.error('Error opening chat:', error);
+    }
+}
+
+window.closeSellerShopChat = function () {
+    const modal = document.getElementById('sellerShopChatModal');
+    if (!modal) return;
+    modal.classList.remove('active');
+    modal.setAttribute('aria-hidden', 'true');
+    document.getElementById('sellerShopChatHeadContainer')?.replaceChildren();
+};
+
+window.sendSellerShopMessage = function () {
+    ensureSellerShopChatFrame();
+};
+
+window.minimizeSellerShopChat = function () {
+    const modal = document.getElementById('sellerShopChatModal');
+    if (!modal) return;
+    modal.classList.remove('active');
+    modal.setAttribute('aria-hidden', 'true');
+    ensureSellerShopChatHead();
+};
+
+function closeSellerMessenger() {
+    const messengerView = document.getElementById('seller-messenger-view');
+    messengerView.classList.remove('active');
+    setTimeout(() => {
+        messengerView.style.display = 'none';
+    }, 300);
+}
+
+// Messenger functionality
+let messengerState = {
+    currentUserId: null,
+    quickActions: [],
+    selectedFaqId: null,
+    isSending: false
+};
+
+async function loadSellerQuickActions() {
+    const quickActionsScroller = document.getElementById('quick-actions-scroller');
+    quickActionsScroller.innerHTML = '<div class="quick-actions-placeholder">Loading quick actions...</div>';
+    setMessengerStatus('Loading');
+
+    try {
+        const url = `/api/storefront-chat/conversation?sellerId=${SELLER_ID}`;
+        const response = await fetch(url, { credentials: 'same-origin' });
+        const payload = await response.json();
+
+        if (!response.ok) {
+            throw new Error(payload.message || 'Unable to load quick actions.');
+        }
+
+        messengerState.currentUserId = String(payload.currentUserId || '');
+        messengerState.quickActions = Array.isArray(payload.faqs) ? payload.faqs : [];
+        renderSellerQuickActions();
+        setMessengerStatus(messengerState.quickActions.length ? 'Ready' : 'No FAQs');
+    } catch (error) {
+        quickActionsScroller.innerHTML = `<div class="quick-actions-placeholder">${escapeHtml(error.message || 'Unable to load quick actions.')}</div>`;
+        setMessengerStatus('Unavailable');
+    }
+}
+
+function renderSellerQuickActions() {
+    const quickActionsScroller = document.getElementById('quick-actions-scroller');
+    const actionOptions = document.getElementById('seller-action-options');
+    
+    if (!messengerState.quickActions.length) {
+        quickActionsScroller.innerHTML = '<div class="quick-actions-placeholder">No active FAQs were found for this account.</div>';
+        setComposerState(null);
+        if (actionOptions) actionOptions.classList.remove('is-hidden');
+        return;
+    }
+
+    messengerState.selectedFaqId = messengerState.quickActions[0].faqId;
+    quickActionsScroller.innerHTML = '';
+
+    messengerState.quickActions.forEach((faq, index) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = `quick-action-chip${index === 0 ? ' is-active' : ''}`;
+        button.dataset.faqId = String(faq.faqId);
+        button.textContent = faq.question || 'Untitled FAQ';
+        button.title = faq.question || 'Untitled FAQ';
+        button.addEventListener('click', () => handleSellerQuickActionClick(faq.faqId));
+        quickActionsScroller.appendChild(button);
+    });
+
+    setComposerState(messengerState.quickActions[0]);
+    // Hide action options when FAQs are loaded
+    if (actionOptions) actionOptions.classList.add('is-hidden');
+}
+
+function handleSellerQuickActionClick(faqId) {
+    const faq = messengerState.quickActions.find(item => item.faqId === faqId);
+    if (!faq) return;
+
+    messengerState.selectedFaqId = faqId;
+    document.querySelectorAll('#quick-actions-scroller .quick-action-chip').forEach((chip) => {
+        chip.classList.toggle('is-active', chip.dataset.faqId === String(faqId));
+    });
+
+    setComposerState(faq);
+    requestAnimationFrame(() => {
+        submitSellerQuickAction();
+    });
+}
+
+async function submitSellerQuickAction() {
+    if (!messengerState.selectedFaqId || messengerState.isSending) return;
+
+    messengerState.isSending = true;
+    const sendButton = document.getElementById('messenger-send-btn');
+    const thread = document.getElementById('messenger-thread');
+    
+    sendButton.disabled = true;
+    sendButton.classList.remove('is-ready');
+    sendButton.classList.add('is-sending');
+    sendButton.textContent = 'Sending...';
+    thread.classList.add('is-loading');
+    setMessengerStatus('Sending');
+
+    try {
+        const response = await fetch('/api/storefront-chat/faq-click', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sellerId: SELLER_ID, faqId: messengerState.selectedFaqId })
+        });
+        const payload = await response.json();
+
+        if (!response.ok) {
+            throw new Error(payload.message || 'Unable to send quick action.');
+        }
+
+        messengerState.currentUserId = String(payload.currentUserId || messengerState.currentUserId || '');
+        thread.classList.remove('is-loading');
+        renderSellerMessages(Array.isArray(payload.messages) ? payload.messages : []);
+        setMessengerStatus('Sent');
+        
+        setTimeout(() => {
+            setMessengerStatus('Ready');
+        }, 1200);
+    } catch (error) {
+        thread.classList.remove('is-loading');
+        renderSellerError(error.message || 'Unable to send quick action.');
+        setMessengerStatus('Retry');
+    } finally {
+        messengerState.isSending = false;
+        sendButton.textContent = 'Auto Send';
+        sendButton.classList.remove('is-sending');
+        setComposerState(messengerState.quickActions.find(item => item.faqId === messengerState.selectedFaqId) || null);
+    }
+}
+
+function renderSellerMessages(messages) {
+    const thread = document.getElementById('messenger-thread');
+    const actionOptions = document.getElementById('seller-action-options');
+    thread.innerHTML = '';
+
+    if (!messages.length) {
+        thread.innerHTML = `
+            <div class="messenger-empty">
+                <strong>No messages yet.</strong>
+                <span>Select a quick action above to start the conversation.</span>
+            </div>`;
+        return;
+    }
+
+    // Hide action options when messages are present
+    if (actionOptions) actionOptions.classList.add('is-hidden');
+
+    const fragment = document.createDocumentFragment();
+    messages.forEach((message) => {
+        const row = document.createElement('div');
+        const isUser = String(message.senderUserId) === messengerState.currentUserId;
+        row.className = `messenger-bubble-row ${isUser ? 'is-user' : 'is-seller'}`;
+
+        const bubble = document.createElement('div');
+        bubble.className = 'messenger-bubble';
+        bubble.textContent = message.isDeleted ? '[message deleted]' : (message.body || '');
+        row.appendChild(bubble);
+        fragment.appendChild(row);
+    });
+    
+    thread.appendChild(fragment);
+    
+    requestAnimationFrame(() => {
+        thread.scrollTo({
+            top: thread.scrollHeight,
+            behavior: 'smooth'
+        });
+    });
+}
+
+function renderSellerError(message) {
+    const thread = document.getElementById('messenger-thread');
+    const actionOptions = document.getElementById('seller-action-options');
+    thread.innerHTML = `
+        <div class="messenger-empty">
+            <strong>Message failed.</strong>
+            <span>${escapeHtml(message)}</span>
+        </div>`;
+    // Keep action options visible on error
+    if (actionOptions) actionOptions.classList.remove('is-hidden');
+}
+
+function setComposerState(faq) {
+    const input = document.getElementById('messenger-input');
+    const sendButton = document.getElementById('messenger-send-btn');
+    input.value = faq?.question || '';
+    const ready = Boolean(faq?.faqId);
+    sendButton.disabled = !ready || messengerState.isSending;
+    sendButton.classList.toggle('is-ready', ready && !messengerState.isSending);
+}
+
+function setMessengerStatus(text) {
+    const statusPill = document.getElementById('messenger-status-pill');
+    if (statusPill) statusPill.textContent = text;
+}
+
+// Toggle quick actions visibility
+document.addEventListener('DOMContentLoaded', () => {
+    const quickActionsToggle = document.getElementById('quick-actions-toggle');
+    const quickActionsBody = document.getElementById('quick-actions-body');
+    
+    if (quickActionsToggle && quickActionsBody) {
+        quickActionsToggle.addEventListener('click', () => {
+            const isHidden = quickActionsBody.classList.toggle('is-hidden');
+            quickActionsToggle.textContent = isHidden ? 'Show' : 'Hide';
+            quickActionsToggle.setAttribute('aria-expanded', String(!isHidden));
+        });
+    }
+    
+    // Close messenger with Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const messengerView = document.getElementById('seller-messenger-view');
+            if (messengerView && messengerView.classList.contains('active')) {
+                closeSellerMessenger();
+            }
+        }
+    });
+
+    // Attach robust click handler to Chat Now button and log for debugging
+    try {
+        const chatBtn = document.querySelector('.seller-profile-btn-chat');
+        if (chatBtn) {
+            // remove any existing temporary listener to avoid duplicates
+            chatBtn.removeEventListener('click', chatBtn._debugClickHandler);
+            const handler = function (ev) {
+                console.log('Chat Now button clicked (debug listener)');
+                try { sellerShopChat(); } catch (err) { console.error('sellerShopChat error:', err); }
+            };
+            chatBtn.addEventListener('click', handler);
+            // keep reference so it can be removed later
+            chatBtn._debugClickHandler = handler;
+        } else {
+            console.warn('Chat Now button not found for debug listener');
+        }
+    } catch (e) {
+        console.error('Error attaching chat debug listener', e);
+    }
+
+    const followersTrigger = document.getElementById('seller-followers-trigger');
+    if (followersTrigger) {
+        followersTrigger.addEventListener('click', openFollowersModal);
+        followersTrigger.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                openFollowersModal();
+            }
+        });
+    }
+});
+
+function escapeHtml(value) {
+    return String(value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+}
+
+function closeSellerChat() {
+    window.closeSellerShopChat();
+}
+
+function formatShopPeso(amount) {
+    return '\u20B1' + Number(amount).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function getShopStars(rating) {
+    let html = '';
+    for (let i = 1; i <= 5; i++) {
+        if (rating >= i) html += '<span class="star filled">&#9733;</span>';
+        else if (rating >= i - 0.5) html += '<span class="star half">&#9733;</span>';
+        else html += '<span class="star">&#9733;</span>';
+    }
+    return html;
+}
+
+async function toggleFollow() {
+    const btn = document.getElementById('seller-shop-follow-btn');
+    if (!btn) return;
+
+    const nextState = !isFollowing;
+    btn.disabled = true;
+
+    try {
+        const csrfToken = await getCsrfToken();
+        const response = await fetch(`/api/sellers/${SELLER_ID}/follow`, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken
+            },
+            body: JSON.stringify({ follow: nextState })
+        });
+
+        const payload = await response.json().catch(() => ({}));
+        if (response.status === 401) {
+            throw new Error('You must log in first to follow this shop.');
+        }
+        if (!response.ok) {
+            throw new Error(payload.message || 'Unable to update follow status.');
+        }
+
+        isFollowing = Boolean(payload.isFollowing);
+        if (currentSellerShop) {
+            currentSellerShop.followers = Number(payload.followers || 0);
+        }
+        document.getElementById('ss-followers-count').textContent = formatShopCount(Number(payload.followers || 0));
+        syncFollowButton();
+
+        if (typeof toast !== 'undefined') {
+            if (isFollowing) toast.success('You are now following this shop.');
+            else toast.info('Unfollowed this shop.');
+        }
+    } catch (error) {
+        if (typeof toast !== 'undefined') {
+            toast.info(error.message || 'Unable to update follow status.');
+        }
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+</script>
+}
+
+

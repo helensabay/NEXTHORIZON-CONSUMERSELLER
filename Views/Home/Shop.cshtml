@@ -1,0 +1,572 @@
+@{
+    ViewData["Title"] = "Shop";
+}
+
+<!-- Shop Page -->
+<main class="shop-page">
+
+    <div class="container">
+        <div class="products-header">
+            <h1 class="shop-title-text" id="shop-strip-title">All Products</h1>
+            <button class="filter-toggle-btn" id="filter-toggle-btn" onclick="toggleFilterSidebar()">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path d="M2 4h12M4 8h8M6 12h4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+                <span id="filter-toggle-text">Hide Filter</span>
+            </button>
+        </div>
+
+        <div class="shop-layout" id="shop-layout">
+            <aside class="filter-sidebar is-open" id="filter-sidebar">
+                <div class="fd-body">
+
+                    <div class="fd-accordion is-open" id="subcategory-filter-section">
+                        <button class="fd-acc-trigger" onclick="toggleAccordion(this)">
+                            Item Type <span class="fd-acc-icon">&#8722;</span>
+                        </button>
+                        <div class="fd-acc-content">
+                            <div id="subcategory-filter-list"></div>
+                        </div>
+                    </div>
+
+                    <div class="fd-accordion">
+                        <button class="fd-acc-trigger" onclick="toggleAccordion(this)">
+                            Price Range <span class="fd-acc-icon">+</span>
+                        </button>
+                        <div class="fd-acc-content" style="display:none;">
+                            <div class="price-range-inputs">
+                                <div class="price-input-wrap">
+                                    <span class="price-input-prefix">&#x20B1;</span>
+                                    <input type="number" id="price-min" placeholder="Min" min="0" max="20000" step="100" oninput="onPriceInputChange()">
+                                </div>
+                                <span class="price-sep">--</span>
+                                <div class="price-input-wrap">
+                                    <span class="price-input-prefix">&#x20B1;</span>
+                                    <input type="number" id="price-max" placeholder="Max" min="0" max="99999" step="100" oninput="onPriceInputChange()">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="fd-accordion is-open">
+                        <button class="fd-acc-trigger" onclick="toggleAccordion(this)">
+                            Brand <span class="fd-acc-icon">&#8722;</span>
+                        </button>
+                        <div class="fd-acc-content">
+                            <input type="text" class="brand-search-input" id="brand-search-input"
+                                   placeholder="Search brands..." oninput="filterBrandList(this.value)">
+                            <div id="brand-filter-list"></div>
+                        </div>
+                    </div>
+
+                    <div class="fd-accordion" id="size-filter-section" style="display:none;">
+                        <button class="fd-acc-trigger" onclick="toggleAccordion(this)">
+                            Size <span class="fd-acc-icon">+</span>
+                        </button>
+                        <div class="fd-acc-content" style="display:none;">
+                            <div class="size-filter-grid">
+                                <button class="size-filter-btn" data-size="XS" onclick="toggleSizeFilter('XS')">XS</button>
+                                <button class="size-filter-btn" data-size="S" onclick="toggleSizeFilter('S')">S</button>
+                                <button class="size-filter-btn" data-size="M" onclick="toggleSizeFilter('M')">M</button>
+                                <button class="size-filter-btn" data-size="L" onclick="toggleSizeFilter('L')">L</button>
+                                <button class="size-filter-btn" data-size="XL" onclick="toggleSizeFilter('XL')">XL</button>
+                                <button class="size-filter-btn" data-size="XXL" onclick="toggleSizeFilter('XXL')">XXL</button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="fd-footer">
+                    <button class="fd-clear-btn" onclick="clearAllFilters()">Clear All</button>
+                </div>
+            </aside>
+
+            <section class="products-section">
+                <div id="products-grid" class="products-grid">
+                    <div id="products-loading" class="products-loading">
+                        <div class="loading-spinner"></div>
+                        <p>Loading products...</p>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+</main>
+
+@section Scripts {
+<script>
+let selectedSizes = [];
+let currentSort = 'price-low';
+// allProducts and currentCategory come from app.js globals
+
+function toggleFilterSidebar() {
+    const sidebar = document.getElementById('filter-sidebar');
+    const text = document.getElementById('filter-toggle-text');
+    if (!sidebar) return;
+    sidebar.classList.toggle('is-open');
+    if (text) text.textContent = sidebar.classList.contains('is-open') ? 'Hide Filter' : 'Show Filter';
+}
+
+function filterBrandList(query) {
+    const items = document.querySelectorAll('#brand-filter-list .filter-checkbox');
+    const q = (query || '').toLowerCase();
+    items.forEach(label => {
+        const text = label.textContent.toLowerCase();
+        label.style.display = text.includes(q) ? '' : 'none';
+    });
+}
+
+function getHeaderSearchInput() {
+    return document.getElementById('header-search-input') || document.getElementById('search-overlay-input');
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const siteHeader = document.querySelector('header');
+    if (siteHeader) {
+        const setOffset = () => {
+            document.documentElement.style.setProperty('--products-header-top', siteHeader.offsetHeight + 'px');
+        };
+        setOffset();
+        window.addEventListener('resize', setOffset);
+    }
+
+    loadProducts();
+
+    const urlQ = new URLSearchParams(window.location.search).get('q') || '';
+    const hsi = getHeaderSearchInput();
+    if (hsi && urlQ) hsi.value = urlQ;
+    if (hsi) hsi.addEventListener('input', () => applyFilters());
+
+    const searchForm = document.querySelector('.header-search-form');
+    if (searchForm) {
+        searchForm.addEventListener('submit', e => {
+            e.preventDefault();
+            applyFilters();
+        });
+    }
+});
+
+async function loadProducts() {
+    const loader = document.getElementById('products-loading');
+    try {
+        const response = await fetch('/api/products');
+        if (!response.ok) {
+            const errorBody = await response.json().catch(() => null);
+            const message = errorBody?.message || `${response.status} ${response.statusText}`;
+            throw new Error(message);
+        }
+
+        const data = await response.json();
+        allProducts = Array.isArray(data) ? data : [];
+
+        buildFiltersForScope(allProducts);
+
+        const urlQ = (new URLSearchParams(window.location.search).get('q') || '').trim().toLowerCase();
+        if (urlQ === 'sale') {
+            const matched = allProducts.filter(p => p.originalPrice && p.originalPrice > p.price);
+            renderProducts(matched);
+            updateProductCount(matched.length);
+        } else if (urlQ) {
+            const matched = allProducts.filter(p =>
+                (p.name || '').toLowerCase().includes(urlQ) ||
+                (p.brand || '').toLowerCase().includes(urlQ) ||
+                (p.subCategory || p.subcategory || '').toLowerCase().includes(urlQ)
+            );
+            renderProducts(matched);
+            updateProductCount(matched.length);
+        } else {
+            renderProducts(allProducts);
+            updateProductCount(allProducts.length);
+        }
+
+        if (loader) loader.remove();
+    } catch (error) {
+        console.error('Error loading products:', error);
+        if (loader) loader.innerHTML = `<p>Failed to load products. ${error?.message ? error.message : ''}</p>`;
+    }
+}
+
+function buildFiltersForScope(scopeProducts) {
+    buildSubcategoryFilter(scopeProducts);
+    buildBrandFilter(scopeProducts);
+    updateSizeVisibility();
+}
+
+function buildSubcategoryFilter(scopeProducts) {
+    const subMap = {};
+    scopeProducts.forEach(p => {
+        const sub = p.subCategory || p.subcategory;
+        if (sub) subMap[sub] = (subMap[sub] || 0) + 1;
+    });
+    const list = document.getElementById('subcategory-filter-list');
+    if (!list) return;
+
+    const already = Array.from(document.querySelectorAll('input[name="subcategory"]:checked')).map(c => c.value);
+    list.innerHTML = Object.keys(subMap).sort().map(sub => `
+        <label class="filter-checkbox">
+            <input type="checkbox" name="subcategory" value="${sub}"
+                   ${already.includes(sub) ? 'checked' : ''}
+                   onchange="applyFilters()">
+            <span class="fd-filter-label">${sub} <span class="fd-filter-count sub-count" data-sub="${sub}">(${subMap[sub]})</span></span>
+        </label>
+    `).join('');
+}
+
+function buildBrandFilter(scopeProducts) {
+    const brandMap = {};
+    scopeProducts.forEach(p => {
+        if (p.brand) brandMap[p.brand] = (brandMap[p.brand] || 0) + 1;
+    });
+    const list = document.getElementById('brand-filter-list');
+    if (!list) return;
+
+    const already = Array.from(document.querySelectorAll('input[name="brand"]:checked')).map(c => c.value);
+    list.innerHTML = Object.keys(brandMap).sort().map(brand => `
+        <label class="filter-checkbox">
+            <input type="checkbox" name="brand" value="${brand}"
+                   ${already.includes(brand) ? 'checked' : ''}
+                   onchange="applyFilters()">
+            <span class="fd-filter-label">${brand} <span class="fd-filter-count brand-count" data-brand="${brand}">(${brandMap[brand]})</span></span>
+        </label>
+    `).join('');
+}
+
+function updateFilterCounts(filteredProducts) {
+    const subMap = {};
+    filteredProducts.forEach(p => {
+        const sub = p.subCategory || p.subcategory;
+        if (sub) subMap[sub] = (subMap[sub] || 0) + 1;
+    });
+    document.querySelectorAll('.sub-count').forEach(el => {
+        el.textContent = '(' + (subMap[el.dataset.sub] || 0) + ')';
+    });
+
+    const brandMap = {};
+    filteredProducts.forEach(p => {
+        if (p.brand) brandMap[p.brand] = (brandMap[p.brand] || 0) + 1;
+    });
+    document.querySelectorAll('.brand-count').forEach(el => {
+        el.textContent = '(' + (brandMap[el.dataset.brand] || 0) + ')';
+    });
+}
+
+function onSliderInput() {
+    applyFilters();
+}
+
+function onPriceInputChange() {
+    applyFilters();
+}
+
+function applyFilters() {
+    let filtered = [...allProducts];
+
+    if (currentCategory !== 'all') {
+        filtered = filtered.filter(p => p.category === currentCategory);
+    }
+
+    const minVal = parseFloat(document.getElementById('price-min')?.value);
+    const maxVal = parseFloat(document.getElementById('price-max')?.value);
+    filtered = filtered.filter(p => {
+        const meetsMin = isNaN(minVal) ? true : p.price >= minVal;
+        const meetsMax = isNaN(maxVal) ? true : p.price <= maxVal;
+        return meetsMin && meetsMax;
+    });
+
+    const subcategories = Array.from(document.querySelectorAll('input[name="subcategory"]:checked')).map(cb => cb.value);
+    if (subcategories.length > 0) {
+        filtered = filtered.filter(p => subcategories.includes(p.subCategory || p.subcategory));
+    }
+
+    const brands = Array.from(document.querySelectorAll('input[name="brand"]:checked')).map(cb => cb.value);
+    if (brands.length > 0) {
+        filtered = filtered.filter(p => brands.includes(p.brand));
+    }
+
+    if (selectedSizes.length > 0) {
+        filtered = filtered.filter(p => p.sizes && p.sizes.some(s => selectedSizes.includes(s)));
+    }
+
+    const searchQ = (getHeaderSearchInput()?.value || '').trim().toLowerCase();
+    if (searchQ === 'sale') {
+        filtered = filtered.filter(p => p.originalPrice && p.originalPrice > p.price);
+    } else if (searchQ) {
+        filtered = filtered.filter(p =>
+            (p.name || '').toLowerCase().includes(searchQ) ||
+            (p.brand || '').toLowerCase().includes(searchQ) ||
+            (p.subCategory || p.subcategory || '').toLowerCase().includes(searchQ)
+        );
+    }
+
+    updateSizeVisibility(subcategories);
+    updateFilterCounts(filtered);
+
+    if (currentSort === 'price-low') filtered.sort((a, b) => a.price - b.price);
+    else if (currentSort === 'price-high') filtered.sort((a, b) => b.price - a.price);
+    else if (currentSort === 'rating') filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    else if (currentSort === 'newest') filtered.sort((a, b) => b.id - a.id);
+
+    renderProducts(filtered);
+    updateProductCount(filtered.length);
+}
+
+function updateSizeVisibility(subcategories) {
+    const sizeSection = document.getElementById('size-filter-section');
+    if (!sizeSection) return;
+    const checkedSubs = subcategories || Array.from(document.querySelectorAll('input[name="subcategory"]:checked')).map(cb => cb.value);
+    const onlyNonApparel = checkedSubs.length > 0 && checkedSubs.every(s => s === 'Running Shoes' || s === 'Accessories');
+    sizeSection.style.display = onlyNonApparel ? 'none' : 'block';
+}
+
+function toggleSizeFilter(size) {
+    const btn = document.querySelector(`.size-filter-btn[data-size="${size}"]`);
+    if (selectedSizes.includes(size)) {
+        selectedSizes = selectedSizes.filter(s => s !== size);
+        if (btn) btn.classList.remove('active');
+    } else {
+        selectedSizes.push(size);
+        if (btn) btn.classList.add('active');
+    }
+    applyFilters();
+}
+
+function clearAllFilters() {
+    document.querySelectorAll('.filter-checkbox input').forEach(cb => cb.checked = false);
+    document.querySelectorAll('.size-filter-btn').forEach(btn => btn.classList.remove('active'));
+    selectedSizes = [];
+
+    const pmin = document.getElementById('price-min');
+    const pmax = document.getElementById('price-max');
+    if (pmin) pmin.value = '';
+    if (pmax) pmax.value = '';
+
+    const brandSearch = document.getElementById('brand-search-input');
+    if (brandSearch) brandSearch.value = '';
+    filterBrandList('');
+
+    currentCategory = 'all';
+    currentSort = 'price-low';
+
+    const sortSel = document.querySelector('.shop-sort-select');
+    if (sortSel) sortSel.value = 'price-low';
+
+    buildFiltersForScope(allProducts);
+    applyFilters();
+}
+
+function sortProducts(sortBy) {
+    currentSort = sortBy;
+    applyFilters();
+}
+
+function updateProductCount(count) {
+    const pc = document.getElementById('product-count');
+    if (pc) pc.textContent = `(${count})`;
+
+    const fdBtn = document.getElementById('fd-view-btn');
+    if (fdBtn) fdBtn.textContent = `View ${count.toLocaleString()} item${count !== 1 ? 's' : ''}`;
+
+    const checkedSubs = Array.from(document.querySelectorAll('input[name="subcategory"]:checked')).map(cb => cb.value);
+    const checkedBrands = Array.from(document.querySelectorAll('input[name="brand"]:checked')).map(cb => cb.value);
+    const labelParam = (new URLSearchParams(window.location.search).get('label') || '').trim();
+    const urlQ = (new URLSearchParams(window.location.search).get('q') || '').trim();
+    const liveQ = (getHeaderSearchInput()?.value || '').trim();
+    const activeQ = liveQ || urlQ;
+
+    let label = 'All Products';
+    if (labelParam) {
+        label = labelParam;
+    } else if (activeQ && activeQ.toLowerCase() === 'sale') {
+        label = 'Sale';
+    } else if (activeQ) {
+        label = activeQ;
+    } else if (checkedSubs.length === 1) {
+        label = checkedSubs[0];
+    } else if (checkedSubs.length > 1) {
+        label = 'Multiple Categories';
+    } else if (checkedBrands.length === 1) {
+        label = checkedBrands[0];
+    } else if (currentCategory && currentCategory !== 'all') {
+        label = currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1);
+    }
+
+    const stripTitle = document.getElementById('shop-strip-title');
+    if (stripTitle) stripTitle.textContent = label;
+}
+
+function renderProducts(products) {
+    const grid = document.getElementById('products-grid');
+    if (!grid) return;
+
+    if (products.length === 0) {
+        grid.innerHTML = `
+        <div class="shop-empty-state">
+            <svg width="56" height="56" viewBox="0 0 56 56" fill="none"><circle cx="28" cy="28" r="27" stroke="#e5e5e5" stroke-width="1.5"/><path d="M18 28h20M28 18v20" stroke="#ccc" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <p class="shop-empty-title">No products found</p>
+            <p class="shop-empty-sub">Try adjusting your filters or search terms</p>
+            <button class="shop-empty-reset" onclick="clearAllFilters()">Clear all filters</button>
+        </div>`;
+        return;
+    }
+
+    grid.innerHTML = products.map((product, _ci) => {
+        const soldOut = product.stock === 0;
+        const colorImages = product.colorImages || {};
+        const availableColors = product.availableColors || [];
+
+        const swatchesHtml = availableColors.length > 0 ? `
+            <div class="card-color-swatches" onclick="event.stopPropagation()">
+                <button class="card-swatch-arrow card-swatch-arrow-l" onclick="event.stopPropagation();scrollSwatches(this,-1)" tabindex="-1">&#8249;</button>
+                <div class="card-swatch-track" id="cst-${product.id}">
+                ${availableColors.map(color => {
+                    const imgs = colorImages[color];
+                    const swatchSrc = imgs && imgs.length > 0 ? imgs[0] : null;
+                    const encodedColor = encodeURIComponent(color);
+                    if (swatchSrc) {
+                        return `<button class="card-color-swatch card-swatch-img" title="${color}"
+                            onmouseenter="cardSwatchHover(this,'${product.id}','${swatchSrc.replace(/'/g,"\\'")}')"
+                            onmouseleave="cardSwatchLeave(this,'${product.id}')"
+                            onclick="event.stopPropagation();window.location.href='/Home/Product?id=${product.id}&color=${encodedColor}'">
+                            <img src="${swatchSrc}" alt="${color}">
+                        </button>`;
+                    } else {
+                        const cssColor = shopColorToCss(color);
+                        return `<button class="card-color-swatch card-swatch-dot" title="${color}" style="background:${cssColor};"
+                            onclick="event.stopPropagation();window.location.href='/Home/Product?id=${product.id}&color=${encodedColor}'"
+                        ></button>`;
+                    }
+                }).join('')}
+                </div>
+                <button class="card-swatch-arrow card-swatch-arrow-r" onclick="event.stopPropagation();scrollSwatches(this,1)" tabindex="-1">&#8250;</button>
+            </div>` : '';
+
+        return `
+        <article class="product-card${soldOut ? ' sold-out' : ''}"
+            style="--card-i:${_ci}"
+            onclick="window.location.href='/Home/Product?id=${product.id}'">
+            <div class="product-image">
+                <img src="${product.image}" alt="${product.name}" loading="lazy"
+                    id="card-img-${product.id}" data-default-src="${product.image}"
+                    onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27400%27 height=%27400%27%3E%3Crect width=%27400%27 height=%27400%27 fill=%27%23fafafa%27/%3E%3C/svg%3E'">
+                ${soldOut
+                    ? '<div class="sold-out-overlay"><span>SOLD OUT</span></div>'
+                    : '<div class="product-overlay"><span>View Details</span></div>'}
+                ${product.originalPrice && product.originalPrice > product.price && !soldOut
+                    ? `<div class="card-sale-badge">SALE</div>` : ''}
+
+            </div>
+            ${swatchesHtml}
+            <div class="product-card-body">
+                <div class="product-card-meta">
+                    <span class="product-category-tag">${product.subCategory || product.subcategory || product.category || ''}</span>
+                    ${product.brand ? `<span class="product-card-brand">${product.brand}</span>` : ''}
+                </div>
+                <h3 class="product-card-name">${product.name}</h3>
+                <div class="product-card-footer">
+                    ${product.originalPrice && product.originalPrice > product.price ? `
+                    <div class="product-card-price-group">
+                        <span class="product-card-price product-card-price--sale">${formatPeso(product.price)}</span>
+                        <span class="product-card-price-original">${formatPeso(product.originalPrice)}</span>
+                        <span class="product-card-pct-off">${Math.round((1 - product.price / product.originalPrice) * 100)}% off</span>
+                    </div>` : `
+                    <span class="product-card-price">${formatPeso(product.price)}</span>`}
+                    <div class="product-card-stars-wrap">
+                        <div class="product-card-stars">${getStars(product.rating)}</div>
+                        ${soldOut ? '<span class="card-stock-badge">Sold Out</span>' : ''}
+                    </div>
+                </div>
+            </div>
+        </article>`;
+    }).join('');
+
+    setTimeout(initSwatchArrows, 60);
+}
+
+const SHOP_COLOR_MAP = {
+    'white':'#ffffff','black':'#111111','grey':'#9e9e9e','gray':'#9e9e9e',
+    'navy':'#1a237e','red':'#e53935','blue':'#1e88e5','green':'#43a047',
+    'yellow':'#fdd835','pink':'#e91e63','purple':'#8e24aa','orange':'#fb8c00',
+    'brown':'#6d4c41','charcoal':'#37474f','teal':'#00897b','gold':'#ffc107',
+    'silver':'#bdbdbd','crimson':'#c62828','volt':'#cddc39','carbon':'#455a64',
+    'light blue':'#64b5f6','lime':'#cddc39'
+};
+
+function shopColorToCss(name) {
+    return SHOP_COLOR_MAP[(name || '').toLowerCase().split('/')[0].trim()] || '#cccccc';
+}
+
+function scrollSwatches(arrowBtn, dir) {
+    const wrap = arrowBtn.closest('.card-color-swatches');
+    const track = wrap.querySelector('.card-swatch-track');
+    if (!track) return;
+    track.scrollBy({ left: dir * 120, behavior: 'smooth' });
+    setTimeout(() => updateSwatchArrows(wrap), 180);
+}
+
+function updateSwatchArrows(wrap) {
+    const track = wrap.querySelector('.card-swatch-track');
+    const lBtn = wrap.querySelector('.card-swatch-arrow-l');
+    const rBtn = wrap.querySelector('.card-swatch-arrow-r');
+    if (!track || !lBtn || !rBtn) return;
+    const overflows = track.scrollWidth > track.clientWidth + 2;
+    const show = overflows ? 'flex' : 'none';
+    lBtn.style.display = show;
+    rBtn.style.display = show;
+    if (overflows) {
+        lBtn.disabled = track.scrollLeft <= 2;
+        rBtn.disabled = track.scrollLeft >= track.scrollWidth - track.clientWidth - 2;
+    }
+}
+
+function initSwatchArrows() {
+    document.querySelectorAll('.card-color-swatches').forEach(wrap => {
+        updateSwatchArrows(wrap);
+        const track = wrap.querySelector('.card-swatch-track');
+        if (track) track.addEventListener('scroll', () => updateSwatchArrows(wrap), { passive: true });
+    });
+}
+
+window.addEventListener('resize', () => {
+    document.querySelectorAll('.card-color-swatches').forEach(wrap => updateSwatchArrows(wrap));
+});
+
+function cardSwatchHover(btn, productId, imgSrc) {
+    const img = document.getElementById('card-img-' + productId);
+    if (img && imgSrc) img.src = imgSrc;
+    btn.parentElement.querySelectorAll('.card-color-swatch').forEach(b => b.classList.remove('card-swatch-active'));
+    btn.classList.add('card-swatch-active');
+}
+
+function cardSwatchLeave(btn, productId) {
+    if (!btn.classList.contains('card-swatch-selected')) {
+        const img = document.getElementById('card-img-' + productId);
+        if (img) {
+            const sel = btn.parentElement.querySelector('.card-swatch-selected');
+            if (!sel) img.src = img.dataset.defaultSrc;
+        }
+        btn.classList.remove('card-swatch-active');
+    }
+}
+
+function cardSwatchClick(btn, productId, imgSrc) {
+    const img = document.getElementById('card-img-' + productId);
+    if (img && imgSrc) {
+        img.src = imgSrc;
+        img.dataset.defaultSrc = imgSrc;
+    }
+    btn.parentElement.querySelectorAll('.card-color-swatch').forEach(b => b.classList.remove('card-swatch-selected', 'card-swatch-active'));
+    btn.classList.add('card-swatch-selected', 'card-swatch-active');
+}
+
+async function addToWishlistFromCard(productId) {
+    try {
+        await fetch(`/api/wishlist/${productId}`, { method: 'POST' });
+        document.querySelectorAll(`.card-wishlist-btn[data-pid="${productId}"]`).forEach(b => {
+            b.classList.add('card-wishlist-active');
+        });
+    } catch (e) {
+        console.error(e);
+    }
+}
+</script>
+}

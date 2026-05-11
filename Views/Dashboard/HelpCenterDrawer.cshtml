@@ -1,0 +1,153 @@
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Help Center</title>
+    <link rel="stylesheet" href="/css/help-center.css" />
+    <link rel="stylesheet" href="/css/help-center-chat.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+</head>
+<body class="help-center-drawer-page">
+    <partial name="_HelpCenterContent" />
+    <script src="/js/helpcenter.js"></script>
+    <script src="/js/help-center-chat.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        let selectedHelpCategory = null;
+
+        async function loadCategories() {
+            let categories = [];
+            try {
+                const res = await fetch('/api/faqs/categories');
+                if (res.ok) {
+                    categories = await res.json();
+                }
+
+                if (!categories || categories.length === 0) {
+                    categories = ['baligya', 'Testing'];
+                }
+
+                const grid = document.getElementById('helpCenterGrid');
+                if (!grid) return;
+
+                grid.innerHTML = '';
+
+                categories.forEach(cat => {
+                    const card = document.createElement('div');
+                    card.className = 'help-card';
+                    card.setAttribute('data-title', cat);
+
+                    const icon = document.createElement('div');
+                    icon.className = 'help-card-icon';
+                    icon.innerHTML = '<i class="fas fa-question"></i>';
+
+                    const content = document.createElement('div');
+                    content.className = 'help-card-content';
+
+                    const title = document.createElement('h3');
+                    title.textContent = cat;
+
+                    const description = document.createElement('p');
+                    description.textContent = `Consumer FAQs for ${cat}.`;
+
+                    const link = document.createElement('a');
+                    link.href = '#';
+                    link.textContent = 'View Details';
+                    link.addEventListener('click', (event) => {
+                        event.preventDefault();
+                        loadFaqs(cat);
+                    });
+
+                    content.appendChild(title);
+                    content.appendChild(description);
+                    content.appendChild(link);
+
+                    card.appendChild(icon);
+                    card.appendChild(content);
+
+                    grid.appendChild(card);
+                });
+            } catch (error) {
+                const grid = document.getElementById('helpCenterGrid');
+                if (grid) {
+                    grid.innerHTML = '<p>Error loading categories</p>';
+                }
+                console.error('Error loading categories:', error);
+            }
+        }
+
+        window.loadFaqs = async function(category) {
+            try {
+                selectedHelpCategory = category;
+                const res = await fetch(`/api/faqs/items/${encodeURIComponent(category)}`);
+                if (!res.ok) {
+                    const body = await res.text();
+                    throw new Error(body || `Failed to load FAQs: ${res.status}`);
+                }
+
+                const faqs = await res.json();
+                const container = document.getElementById('faqContainer');
+                const chatWithAgentRow = document.getElementById('chatWithAgentRow');
+                if (!container) return;
+
+                container.innerHTML = '';
+
+                if (!faqs || faqs.length === 0) {
+                    container.innerHTML = '<p>No FAQs available for this category</p>';
+                    if (chatWithAgentRow) {
+                        chatWithAgentRow.classList.remove('hidden');
+                    }
+                    return;
+                }
+
+                faqs.forEach(faq => {
+                    const item = document.createElement('div');
+                    item.className = 'faq-item';
+                    item.innerHTML = `
+                        <button class="faq-question">${faq.question || faq.Question || 'No question'}</button>
+                        <p class="faq-answer">${faq.answer || faq.Answer || 'No answer available'}</p>
+                    `;
+                    container.appendChild(item);
+                });
+
+                document.querySelectorAll('.faq-question').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const answer = btn.nextElementSibling;
+                        if (answer) {
+                            answer.style.display = answer.style.display === 'block' ? 'none' : 'block';
+                        }
+                    });
+                });
+
+                if (chatWithAgentRow) {
+                    chatWithAgentRow.classList.remove('hidden');
+                }
+            } catch (error) {
+                const container = document.getElementById('faqContainer');
+                if (container) {
+                    container.innerHTML = '<p>Error loading FAQs</p>';
+                }
+                console.error('Error loading FAQs:', error);
+            }
+        };
+
+        window.openChatWithAgent = function() {
+            if (!selectedHelpCategory) {
+                alert('Please choose a category first.');
+                return;
+            }
+
+            if (typeof sendTopic === 'function') {
+                sendTopic(selectedHelpCategory);
+            }
+        };
+
+        loadCategories();
+    });
+    </script>
+</body>
+</html>

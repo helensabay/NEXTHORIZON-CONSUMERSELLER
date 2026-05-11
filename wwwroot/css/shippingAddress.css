@@ -1,0 +1,495 @@
+﻿/* =============================================================
+   SHIPPING ADDRESS - PROFESSIONAL MONOCHROME DESIGN
+   ============================================================= */
+
+:root {
+    --black: #000000;
+    --white: #ffffff;addressList
+    --light-gray: #f5f5f5;
+    --medium-gray: #e0e0e0;
+    --dark-gray: #666666;
+    --border-radius: 4px; /* Professional sharp corners */
+    --transition: 0.2s ease-in-out;
+}
+
+/* Layout & Container */
+.profile-layout-container {
+    display: flex;
+    width: 100%;
+    min-height: 100vh;
+    background-color: var(--white);
+}
+
+.main-content-wrapper {
+    flex: 1;
+    padding: 40px 0;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.address-container-centered {
+    width: 90%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Header & Title Section */
+.header-with-action {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 15px;
+}
+
+.page-title {
+    font-size: 1.75rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: -0.5px;
+    margin: 0;
+    color: var(--black);
+}
+
+.section-divider {
+    border: 0;
+    border-top: 1px solid var(--medium-gray);
+    margin-bottom: 30px;
+}
+
+/* Address List Grid */
+#addressList {
+    display: grid;
+    /* Occupy side space: 2 columns on tablets, 3 on desktops */
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 24px;
+    width: 100%;
+    margin-top: 20px;
+}
+
+/* Address Card Styling */
+.saved-address-card {
+    background-color: var(--white);
+    border: 1px solid var(--medium-gray);
+    border-radius: var(--border-radius);
+    padding: 25px;
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    transition: var(--transition);
+}
+
+    .saved-address-card:hover {
+        border-color: var(--black);
+    }
+
+.default-card {
+    border: 2px solid var(--black);
+    background-color: #F5F2F2;
+}
+
+.default-badge {
+    position: absolute;
+    top: -12px;
+    left: 15px;
+    background: var(--black);
+    color: var(--white);
+    font-size: 10px;
+    font-weight: 800;
+    padding: 3px 10px;
+    border-radius: 2px;
+    text-transform: uppercase;
+}
+
+.street-line {
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--black);
+    margin-bottom: 5px;
+    text-transform: uppercase;
+}
+
+.area-line {
+    color: var(--dark-gray);
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+/* Controls inside Card */
+.address-controls {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+}
+
+.control-btn {
+    background: none;
+    border: 1px solid var(--medium-gray);
+    padding: 8px;
+    cursor: pointer;
+    border-radius: var(--border-radius);
+    transition: var(--transition);
+    color: var(--dark-gray);
+}
+
+    .control-btn:hover {
+        background: var(--black);
+        color: var(--white);
+        border-color: var(--black);
+    }
+
+/* Form Card Styling */
+.address-form-card {
+    background-color: var(--white);
+    padding: 30px;
+    border: 1px solid var(--medium-gray);
+    border-radius: var(--border-radius);
+    animation: fadeIn 0.4s ease;
+}
+
+.form-header {
+    margin-bottom: 30px;
+}
+
+.back-link {
+    background: none;
+    border: none;
+    color: var(--dark-gray);
+    font-weight: 700;
+    font-size: 0.75rem;
+    cursor: pointer;
+    padding: 0;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+    .back-link:hover {
+        color: var(--black);
+    }
+
+.form-section-title {
+    font-size: 1rem;
+    font-weight: 800;
+    border-bottom: 2px solid var(--black);
+    display: inline-block;
+    margin-bottom: 30px;
+    padding-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Form Grid & Inputs */
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.full-row {
+    grid-column: span 2;
+}
+
+.input-field label {
+    font-weight: 800;
+    font-size: 11px;
+    color: var(--black);
+    margin-bottom: 8px;
+    display: block;
+    text-transform: uppercase;
+}
+
+.custom-input {
+    width: 100%;
+    padding: 14px;
+    border: 1px solid var(--medium-gray);
+    border-radius: var(--border-radius);
+    font-size: 14px;
+    background-color: var(--white);
+    transition: var(--transition);
+}
+
+    .custom-input:focus {
+        outline: none;
+        border-color: var(--black);
+    }
+
+    .custom-input::placeholder {
+        color: #ccc;
+    }
+
+/* iOS Switch - Monochrome */
+.toggle-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 30px 0;
+    padding: 20px 0;
+    border-top: 1px solid var(--light-gray);
+}
+
+.toggle-label {
+    font-weight: 700;
+    font-size: 14px;
+    text-transform: uppercase;
+}
+
+.ios-switch {
+    position: relative;
+    width: 40px;
+    height: 20px;
+}
+
+    .ios-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--medium-gray);
+    transition: .4s;
+    border-radius: 20px;
+}
+
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 14px;
+        width: 14px;
+        left: 3px;
+        bottom: 3px;
+        background: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+
+input:checked + .slider {
+    background: var(--black);
+}
+
+    input:checked + .slider:before {
+        transform: translateX(20px);
+    }
+
+/* Buttons */
+.btn-add-new {
+    background: var(--black);
+    color: var(--white);
+    border: none;
+    padding: 12px 24px;
+    font-size: 11px;
+    font-weight: 800;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: var(--transition);
+}
+
+.form-buttons {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.btn-pill {
+    flex: 1;
+    border: none;
+    padding: 16px;
+    font-weight: 800;
+    font-size: 12px;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: var(--transition);
+}
+
+.btn-black {
+    background: var(--black);
+    color: var(--white);
+}
+
+.btn-gray {
+    background: var(--white);
+    color: var(--black);
+    border: 1px solid var(--medium-gray);
+}
+
+.btn-pill:hover {
+    opacity: 0.8;
+}
+
+/* Empty State */
+.empty-address-view {
+    width: 100%;
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 60px;
+    border: 1px dashed var(--medium-gray);
+    border-radius: 8px;
+    text-align: center;
+    background-color: var(--white);
+}
+
+.empty-icon-wrapper {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 25px;
+}
+.light-icon {
+    font-size: 80px;
+    color: #eeeeee; /* Very light gray like the credit card icon */
+}
+
+.plus-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -10%);
+    font-size: 40px;
+    color: #eeeeee;
+    font-weight: 300;
+}
+
+.empty-title {
+    font-weight: 900;
+    font-size: 1.2rem;
+    margin-bottom: 8px;
+    color: var(--black);
+}
+
+.empty-text {
+    font-weight: 800;
+    color: var(--black);
+    text-transform: uppercase;
+    margin-bottom: 5px;
+}
+
+.empty-subtext {
+    color: var(--dark-gray);
+    font-size: 0.95rem;
+    margin-bottom: 30px;
+}
+
+.btn-black-caps {
+    background: var(--black);
+    color: var(--white);
+    border: none;
+    padding: 14px 30px;
+    font-weight: 800;
+    font-size: 12px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+    .btn-black-caps:hover {
+        transform: scale(1.02);
+    }
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Mobile Adjustments */
+@media (max-width: 768px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .full-row {
+        grid-column: span 1;
+    }
+
+    .header-with-action {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    #addressList {
+        grid-template-columns: 1fr;
+    }
+
+    .form-buttons {
+        flex-direction: column;
+    }
+}
+
+.emptyAddBtn{
+    background-color: black
+}
+/* SweetAlert2 Monochrome Overrides */
+.swal2-popup {
+    border-radius: 4px !important;
+    font-family: inherit !important;
+}
+
+.swal2-styled.swal2-confirm {
+    background-color: var(--black) !important;
+    border-radius: 4px !important;
+    text-transform: uppercase !important;
+    font-weight: 800 !important;
+    font-size: 12px !important;
+    padding: 12px 30px !important;
+}
+
+.swal2-styled.swal2-cancel {
+    background-color: var(--white) !important;
+    color: var(--black) !important;
+    border: 1px solid var(--medium-gray) !important;
+    border-radius: 4px !important;
+    text-transform: uppercase !important;
+    font-weight: 800 !important;
+}
+
+
+.btn-submit-black {
+    background-color: #000000;
+    color: #ffffff;
+    border: none;
+    /* Professional Bold Typography */
+    font-weight: 800;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    /* Layout & Sizing */
+    padding: 15px 40px;
+    margin-top: 20px;
+    width: auto;
+    /* Interaction & Corners */
+    border-radius: 4px; /* Sharp but slightly softened */
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    /* Hover State */
+    .btn-submit-black:hover {
+        background-color: #333333; /* Subtle gray shift */
+        transform: translateY(-1px); /* Slight lift */
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Active/Click State */
+    .btn-submit-black:active {
+        transform: translateY(0);
+    }

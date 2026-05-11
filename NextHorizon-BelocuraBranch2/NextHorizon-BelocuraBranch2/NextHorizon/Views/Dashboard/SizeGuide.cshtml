@@ -1,0 +1,634 @@
+@model NextHorizon.Models.ViewSizeGuideViewModel
+@using System.Text.Json
+@{
+    ViewData["Title"] = "Product Size Guide";
+    ViewData["DashboardHeading"] = "Size Guide";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/SizeGuide.css" />
+}
+        <div class="page-wrapper">
+            <form asp-action="SaveSizeGuide" asp-controller="Seller" method="post" enctype="multipart/form-data" id="sizeGuideForm">
+                @Html.AntiForgeryToken()
+
+                @if (TempData["ErrorMessage"] != null)
+                {
+                    <div style="background:#ffe5e5;color:#9b1c1c;padding:12px 14px;border-radius:10px;margin-bottom:18px;">
+                        <strong>Error:</strong> @TempData["ErrorMessage"]
+                    </div>
+                }
+                @if (TempData["SuccessMessage"] != null)
+                {
+                    <div style="background:#e6ffed;color:#1f6e3f;padding:12px 14px;border-radius:10px;margin-bottom:18px;">
+                        <strong>Success:</strong> @TempData["SuccessMessage"]
+                    </div>
+                }
+                <input type="hidden" name="productId" value="@Model.ProductId" />
+                <input type="hidden" name="guideInputMode" id="guideInputMode" value="both" />
+                <input type="hidden" name="existingPhotoUrlsJson" id="existingPhotoUrlsJson" value='@JsonSerializer.Serialize(Model.UploadedPhotoUrls)' />
+                <input type="hidden" name="removedPhotoUrlsJson" id="removedPhotoUrlsJson" value="[]" />
+                <input type="hidden" name="photoMeasurementUnit" id="photoMeasurementUnit" value="@Model.PhotoMeasurementUnit" />
+                <input type="hidden" name="existingPhotoUnitsJson" id="existingPhotoUnitsJson" value='@JsonSerializer.Serialize(Model.PhotoGuideUnitsByUrl)' />
+                <input type="hidden" name="existingPhotoUnitsByOrderJson" id="existingPhotoUnitsByOrderJson" value="[]" />
+                <input type="hidden" name="newPhotoUnitsJson" id="newPhotoUnitsJson" value="[]" />
+                <input type="hidden" name="tableDataJson" id="tableDataJson" value='@JsonSerializer.Serialize(new { photoMeasurementUnit = Model.PhotoMeasurementUnit, tableMeasurementUnit = Model.TableMeasurementUnit, photoGuideUnitsByUrl = Model.PhotoGuideUnitsByUrl, tables = Model.Tables })' />
+
+                <div class="page-header">
+                    <div class="page-header-left">
+                        <div class="page-eyebrow">Inventory Management</div>
+                        <h1 class="page-title">Product Size Guide</h1>
+                        <div class="product-context-card">
+                            @if (!string.IsNullOrWhiteSpace(Model.ProductImageUrl))
+                            {
+                                <img src="@Model.ProductImageUrl" alt="@Model.ProductTitle" class="product-context-image" />
+                            }
+                            else
+                            {
+                                <div class="product-context-image" style="display:flex;align-items:center;justify-content:center;color:var(--text-tertiary);">
+                                    <i class="fa-regular fa-image"></i>
+                                </div>
+                            }
+                            <div class="product-context-meta">
+                                <div class="product-context-name">@Model.ProductTitle</div>
+                                <div class="product-context-sub">@(!string.IsNullOrWhiteSpace(Model.Category) ? Model.Category : "Uncategorized")@(!string.IsNullOrWhiteSpace(Model.ProductBrand) ? $" - {Model.ProductBrand}" : string.Empty)</div>
+                                @if (!string.IsNullOrWhiteSpace(Model.ProductDetails))
+                                {
+                                    <div class="product-context-details">@Model.ProductDetails</div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                <div class="card-header">
+                    <div class="card-icon"><i class="fa-solid fa-ruler"></i></div>
+                    <div>
+                        <div class="card-title">Size Guide</div>
+                        <div class="card-subtitle">Upload images and build your size reference tables.</div>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="field-label">How would you like to add size guide data?</label>
+                    <div class="guide-mode-toggle" id="guideModeToggle">
+                        <button type="button" class="guide-mode-btn" data-mode="image">Upload Image</button>
+                        <button type="button" class="guide-mode-btn" data-mode="table">Create Table</button>
+                        <button type="button" class="guide-mode-btn" data-mode="both">Both</button>
+                    </div>
+                </div>
+
+                <div id="imageGuideSection" class="guide-section">
+                <div class="field-group">
+                    <div class="field">
+                        <label class="field-label" for="sizeGuideTitle">Size Guide Title</label>
+                        <input type="text" class="field-input" id="sizeGuideTitle" name="tableTitle" value="@Model.TableTitle" placeholder="Size Guide Title">
+                    </div>
+
+                    <div class="field">
+                        <label class="field-label">Upload Photos</label>
+                        <input type="file" id="imageInput" name="newPhotos" multiple accept="image/*" style="display: none;">
+                        <div class="upload-zone" id="uploadBox">
+                            <div class="upload-zone-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+                            <div class="upload-zone-text">
+                                <strong>Upload Photos</strong>
+                                <span>Click or drag to upload</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <label class="field-label">Uploaded Images</label>
+                        <div class="thumbnail-strip" id="thumbnailRow"></div>
+                    </div>
+                </div>
+                </div>
+
+                <div class="divider-container" id="guideDivider">
+                    <span>OR</span>
+                </div>
+
+                <div id="tableGuideSection" class="guide-section">
+                <h2 class="page-title" style="margin-bottom: 15px;">Create Size Guide</h2>
+
+                <div class="field-group cols-2">
+                    <div class="field">
+                        <label class="field-label" for="tableMeasurementUnit">Table Guide Unit</label>
+                        <select class="field-input custom-select" id="tableMeasurementUnit" name="tableMeasurementUnit">
+                            <option value="" disabled>Table Guide Unit</option>
+                            <option value="cm">Centimeters (cm)</option>
+                            <option value="in">Inches (in)</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label class="field-label" for="categoryInput">Category</label>
+                        <input type="text" class="field-input" id="categoryInput" name="category" value="@Model.Category" placeholder="Category">
+                    </div>
+                </div>
+
+                <button type="button" class="btn btn-secondary" id="btnShowCreateTableModal">Create Table</button>
+                <button type="button" class="btn btn-secondary" id="btnAddAnotherGuide" style="margin-left: 10px;">Add Another Size Guide</button>
+
+                <div id="dynamic-tables-container"></div>
+                </div>
+
+                <div class="action-buttons">
+                    <a asp-controller="Seller" asp-action="Index" class="btn btn-ghost"><i class="fa-solid fa-arrow-left" style="margin-right: 10px;"></i> Back</a>
+                    <button class="btn btn-primary" id="btnSaveSizeGuide">Save Size Guide</button>
+                </div>
+                </div>
+            </form>
+        </div>
+
+<div class="overlay-modal" id="createTableModal">
+    <div class="overlay-content">
+        <h3>Table Dimensions</h3>
+        <p style="color: #666; margin-bottom: 20px; font-size: 0.9rem;">How many columns and rows do you need?</p>
+        <div class="modal-inputs">
+            <input type="number" id="colCountInput" placeholder="Columns" min="1" value="5">
+            <input type="number" id="rowCountInput" placeholder="Rows" min="1" value="4">
+        </div>
+        <div class="modal-actions">
+            <button class="btn-modal btn-cancel-modal" onclick="closeModal('createTableModal')">Cancel</button>
+            <button class="btn-modal btn-confirm-modal" id="btnGenerateTable">Generate</button>
+        </div>
+    </div>
+</div>
+
+<div class="overlay-modal" id="deleteRowColModal">
+    <div class="overlay-content">
+        <h3>Delete Options</h3>
+        <p style="color: #666; margin-bottom: 20px; font-size: 0.9rem;">What would you like to remove from this table?</p>
+        <div class="modal-actions">
+            <button class="btn-modal btn-cancel-modal" onclick="closeModal('deleteRowColModal')">Cancel</button>
+            <button class="btn-modal btn-danger-modal" id="btnConfirmDeleteRow">Delete Row</button>
+            <button class="btn-modal btn-danger-modal" id="btnConfirmDeleteCol">Delete Column</button>
+            <button class="btn-modal btn-delete-entire" id="btnConfirmDeleteTable">Delete Entire Table</button>
+        </div>
+        <p id="deleteWarning" style="color: var(--accent-red); font-size: 0.85rem; margin-top: 15px; display: none;">Cannot delete the last remaining row/column!</p>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const uploadBox = document.getElementById('uploadBox');
+        const imageInput = document.getElementById('imageInput');
+        const thumbnailRow = document.getElementById('thumbnailRow');
+        const sizeGuideForm = document.getElementById('sizeGuideForm');
+        const guideModeToggle = document.getElementById('guideModeToggle');
+        const imageGuideSection = document.getElementById('imageGuideSection');
+        const tableGuideSection = document.getElementById('tableGuideSection');
+        const guideDivider = document.getElementById('guideDivider');
+        const initialPhotoMeasurementUnit = @Html.Raw(JsonSerializer.Serialize(Model.PhotoMeasurementUnit ?? Model.MeasurementUnit ?? "in"));
+
+        let existingPhotoUrls = @Html.Raw(JsonSerializer.Serialize(Model.UploadedPhotoUrls));
+        let existingPhotoUnitsByUrl = @Html.Raw(JsonSerializer.Serialize(Model.PhotoGuideUnitsByUrl ?? new Dictionary<string, string>()));
+        let removedPhotoUrls = [];
+        let newFiles = [];
+        let newFileUnits = {};
+        let currentPhotoMeasurementUnit = 'in';
+
+        function normalizeUnit(value) {
+            return (value || '').toString().trim().toLowerCase() === 'cm' ? 'cm' : 'in';
+        }
+
+        function getDefaultPhotoUnit() {
+            return normalizeUnit(currentPhotoMeasurementUnit || 'in');
+        }
+
+        function refreshPhotoInputState() {
+            const activeExistingUrls = [];
+            const existingUnitsPayload = {};
+            const existingUnitsByOrderPayload = [];
+
+            // Always read unit values from the live DOM controls so the saved payload
+            // reflects what the user currently sees in each thumbnail selector.
+            const thumbs = Array.from(thumbnailRow.querySelectorAll('.thumb-item'));
+            thumbs.forEach(thumb => {
+                const type = thumb.dataset.type;
+                const unitSelect = thumb.querySelector('.thumb-unit-select');
+                const unit = normalizeUnit(unitSelect?.value || getDefaultPhotoUnit());
+
+                if (type === 'existing') {
+                    const url = thumb.dataset.url;
+                    if (url && !removedPhotoUrls.includes(url)) {
+                        activeExistingUrls.push(url);
+                        existingPhotoUnitsByUrl[url] = unit;
+                        existingUnitsPayload[url] = unit;
+                        existingUnitsByOrderPayload.push(unit);
+                    }
+                }
+
+                if (type === 'new') {
+                    const id = thumb.dataset.id;
+                    if (id) {
+                        newFileUnits[id] = unit;
+                    }
+                }
+            });
+
+            const newUnitsPayload = newFiles.map(item => normalizeUnit(newFileUnits[item.id] || getDefaultPhotoUnit()));
+
+            const allVisibleUnits = existingUnitsByOrderPayload.concat(newUnitsPayload);
+            if (allVisibleUnits.length > 0) {
+                currentPhotoMeasurementUnit = normalizeUnit(allVisibleUnits[0]);
+            } else {
+                const tableUnit = document.getElementById('tableMeasurementUnit')?.value;
+                currentPhotoMeasurementUnit = normalizeUnit(tableUnit || currentPhotoMeasurementUnit || initialPhotoMeasurementUnit || 'in');
+            }
+
+            document.getElementById('existingPhotoUrlsJson').value = JSON.stringify(activeExistingUrls);
+            document.getElementById('removedPhotoUrlsJson').value = JSON.stringify(removedPhotoUrls);
+            document.getElementById('photoMeasurementUnit').value = currentPhotoMeasurementUnit;
+            document.getElementById('existingPhotoUnitsJson').value = JSON.stringify(existingUnitsPayload);
+            document.getElementById('existingPhotoUnitsByOrderJson').value = JSON.stringify(existingUnitsByOrderPayload);
+            document.getElementById('newPhotoUnitsJson').value = JSON.stringify(newUnitsPayload);
+        }
+
+        function createThumbnail({ url, type, id, unit }) {
+            const thumbDiv = document.createElement('div');
+            thumbDiv.className = 'thumb-item';
+            thumbDiv.dataset.type = type;
+            if (id) thumbDiv.dataset.id = id;
+            if (url) thumbDiv.dataset.url = url;
+            const normalizedUnit = normalizeUnit(unit || getDefaultPhotoUnit());
+
+            thumbDiv.innerHTML = `
+                <div class="thumb-preview">
+                    <img src="${url}" alt="Uploaded Photo">
+                    <button type="button" class="thumb-delete" aria-label="Remove photo">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <select class="thumb-unit-select" aria-label="Photo unit">
+                    <option value="in" ${normalizedUnit === 'in' ? 'selected' : ''}>in</option>
+                    <option value="cm" ${normalizedUnit === 'cm' ? 'selected' : ''}>cm</option>
+                </select>
+            `;
+            return thumbDiv;
+        }
+
+        function addExistingPhotoThumb(url) {
+            const unit = normalizeUnit(existingPhotoUnitsByUrl[url] || getDefaultPhotoUnit());
+            existingPhotoUnitsByUrl[url] = unit;
+            const thumb = createThumbnail({ url, type: 'existing', unit });
+            thumbnailRow.appendChild(thumb);
+        }
+
+        function addNewFileThumb(file) {
+            const id = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2);
+            const unit = getDefaultPhotoUnit();
+            newFiles.push({ id, file });
+            newFileUnits[id] = unit;
+            const url = URL.createObjectURL(file);
+            const thumb = createThumbnail({ url, type: 'new', id, unit });
+            thumbnailRow.appendChild(thumb);
+        }
+
+        uploadBox.addEventListener('click', () => imageInput.click());
+        imageInput.addEventListener('change', function(event) {
+            const files = event.target.files;
+            for (let i = 0; i < files.length; i++) {
+                addNewFileThumb(files[i]);
+            }
+            imageInput.value = '';
+        });
+
+        thumbnailRow.addEventListener('click', function(e) {
+            const button = e.target.closest('.thumb-delete');
+            if (!button) return;
+            const thumbItem = button.closest('.thumb-item');
+            const type = thumbItem.dataset.type;
+
+            if (type === 'existing') {
+                const url = thumbItem.dataset.url;
+                if (url && !removedPhotoUrls.includes(url)) {
+                    removedPhotoUrls.push(url);
+                }
+                if (url && Object.prototype.hasOwnProperty.call(existingPhotoUnitsByUrl, url)) {
+                    delete existingPhotoUnitsByUrl[url];
+                }
+            }
+
+            if (type === 'new') {
+                const id = thumbItem.dataset.id;
+                newFiles = newFiles.filter(f => f.id !== id);
+                if (id && Object.prototype.hasOwnProperty.call(newFileUnits, id)) {
+                    delete newFileUnits[id];
+                }
+            }
+
+            thumbItem.remove();
+            refreshPhotoInputState();
+        });
+
+        thumbnailRow.addEventListener('change', function(e) {
+            const select = e.target.closest('.thumb-unit-select');
+            if (!select) return;
+            const thumbItem = select.closest('.thumb-item');
+            if (!thumbItem) return;
+
+            const unit = normalizeUnit(select.value);
+            const type = thumbItem.dataset.type;
+        
+            if (type === 'existing') {
+                const url = thumbItem.dataset.url;
+                if (url) existingPhotoUnitsByUrl[url] = unit;
+            } else if (type === 'new') {
+                const id = thumbItem.dataset.id;
+                if (id) newFileUnits[id] = unit;
+            }
+            refreshPhotoInputState();
+        });
+
+        // --- Modal / table logic ---
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) {
+            document.getElementById(id).style.display = 'none';
+            document.getElementById('deleteWarning').style.display = 'none';
+        }
+
+        const btnShowCreateTableModal = document.getElementById('btnShowCreateTableModal');
+        const btnAddAnotherGuide = document.getElementById('btnAddAnotherGuide');
+        const btnGenerateTable = document.getElementById('btnGenerateTable');
+        const tablesContainer = document.getElementById('dynamic-tables-container');
+        let targetTableForDeletion = null;
+
+        function setGuideInputMode(mode) {
+            const normalized = ['image', 'table', 'both'].includes(mode) ? mode : 'both';
+            document.getElementById('guideInputMode').value = normalized;
+
+            guideModeToggle.querySelectorAll('.guide-mode-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.mode === normalized);
+            });
+
+            const showImage = normalized === 'image' || normalized === 'both';
+            const showTable = normalized === 'table' || normalized === 'both';
+
+            imageGuideSection.style.display = showImage ? '' : 'none';
+            tableGuideSection.style.display = showTable ? '' : 'none';
+            guideDivider.style.display = (showImage && showTable) ? '' : 'none';
+        }
+
+        guideModeToggle.addEventListener('click', function(event) {
+            const btn = event.target.closest('.guide-mode-btn');
+            if (!btn) return;
+            setGuideInputMode(btn.dataset.mode || 'both');
+        });
+
+        btnShowCreateTableModal.addEventListener('click', () => openModal('createTableModal'));
+        btnAddAnotherGuide.addEventListener('click', () => openModal('createTableModal'));
+        btnGenerateTable.addEventListener('click', () => {
+            const cols = parseInt(document.getElementById('colCountInput').value) || 5;
+            const rows = parseInt(document.getElementById('rowCountInput').value) || 4;
+            createDynamicTable(rows, cols);
+            closeModal('createTableModal');
+        });
+
+        function getCellPlaceholder(rowIndex, colIndex) {
+            if (rowIndex === 0) {
+                return colIndex === 0 ? 'Measurement' : `Size ${colIndex}`;
+            }
+            if (colIndex === 0) {
+                return `Row ${rowIndex}`;
+            }
+            return '';
+        }
+
+        function createDynamicTable(rows, cols, values, tableTitle, tableMeasurementUnit, tablePhotoOrder) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'table-wrapper';
+
+            const safeTitle = (tableTitle || '').toString().replace(/"/g, '&quot;');
+            const defaultUnit = (tableMeasurementUnit || document.getElementById('tableMeasurementUnit').value || 'in').toLowerCase() === 'cm' ? 'cm' : 'in';
+            const safePhotoOrder = Number.isInteger(tablePhotoOrder) && tablePhotoOrder > 0 ? tablePhotoOrder : '';
+            const titleInputHTML = `
+                <div class="field-group cols-2" style="margin-bottom:10px;">
+                    <div class="field">
+                        <label class="field-label">Size Guide Title</label>
+                        <input type="text" class="field-input table-title-input" placeholder="Table Title" value="${safeTitle}" style="padding: 15px 25px; font-weight: 600;">
+                    </div>
+                    <div class="field">
+                        <label class="field-label">Guide Unit</label>
+                        <select class="field-input custom-select table-unit-input">
+                            <option value="in" ${defaultUnit === 'in' ? 'selected' : ''}>Inches (in)</option>
+                            <option value="cm" ${defaultUnit === 'cm' ? 'selected' : ''}>Centimeters (cm)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="field" style="margin-bottom:10px;">
+                    <label class="field-label">Guide Photo Order</label>
+                    <input type="number" min="1" class="field-input table-photo-order-input" placeholder="1 = first uploaded image, 2 = second, etc." value="${safePhotoOrder}">
+                </div>`;
+            const addColBtn = `<button class="corner-btn btn-add-col" title="Add Column"><i class="fa-solid fa-plus"></i></button>`;
+            const addRowBtn = `<button class="corner-btn btn-add-row" title="Add Row"><i class="fa-solid fa-plus"></i></button>`;
+            const delRcBtn = `<button class="corner-btn btn-delete-rc" title="Delete Options"><i class="fa-solid fa-xmark"></i></button>`;
+
+            let tableHTML = `<div class="table-inner-wrapper"><table class="size-guide-table"><tbody>`;
+            for (let r = 0; r < rows; r++) {
+                tableHTML += `<tr>`;
+                for (let c = 0; c < cols; c++) {
+                    const value = (values && values[r] && values[r][c]) ? values[r][c] : '';
+                    const placeholder = value ? '' : getCellPlaceholder(r, c);
+                    tableHTML += `<td><input type="text" class="field-input" value="${value?.toString().replace(/"/g, '&quot;') || ''}" placeholder="${placeholder.replace(/"/g, '&quot;')}"></td>`;
+                }
+                tableHTML += `</tr>`;
+            }
+            tableHTML += `</tbody></table></div>`;
+
+            wrapper.innerHTML = titleInputHTML + `<div style="position: relative;">` + addColBtn + addRowBtn + delRcBtn + tableHTML + `</div>`;
+            tablesContainer.appendChild(wrapper);
+        }
+
+        tablesContainer.addEventListener('click', function(e) {
+            const target = e.target.closest('.corner-btn');
+            if (!target) return;
+
+            const wrapper = target.closest('.table-wrapper');
+            const tableBody = wrapper.querySelector('tbody');
+            const rows = tableBody.querySelectorAll('tr');
+
+            if (target.classList.contains('btn-add-col')) {
+                rows.forEach((row, rowIndex) => {
+                    const colIndex = row.querySelectorAll('td').length;
+                    const newCell = document.createElement('td');
+                    newCell.innerHTML = `<input type="text" class="field-input" placeholder="${getCellPlaceholder(rowIndex, colIndex)}">`;
+                    row.appendChild(newCell);
+                });
+            }
+
+            if (target.classList.contains('btn-add-row')) {
+                const colCount = rows[0].querySelectorAll('td').length;
+                const rowIndex = rows.length;
+                const newRow = document.createElement('tr');
+                for (let i = 0; i < colCount; i++) {
+                    const newCell = document.createElement('td');
+                    newCell.innerHTML = `<input type="text" class="field-input" placeholder="${getCellPlaceholder(rowIndex, i)}">`;
+                    newRow.appendChild(newCell);
+                }
+                tableBody.appendChild(newRow);
+            }
+
+            if (target.classList.contains('btn-delete-rc')) {
+                targetTableForDeletion = tableBody;
+                openModal('deleteRowColModal');
+            }
+        });
+
+        document.getElementById('btnConfirmDeleteRow').addEventListener('click', () => {
+            if (!targetTableForDeletion) return;
+            const rows = targetTableForDeletion.querySelectorAll('tr');
+            if (rows.length <= 1) {
+                document.getElementById('deleteWarning').style.display = 'block';
+                return;
+            }
+            targetTableForDeletion.removeChild(rows[rows.length - 1]);
+            closeModal('deleteRowColModal');
+        });
+
+        document.getElementById('btnConfirmDeleteCol').addEventListener('click', () => {
+            if (!targetTableForDeletion) return;
+            const rows = targetTableForDeletion.querySelectorAll('tr');
+            const colCount = rows[0].querySelectorAll('td').length;
+            if (colCount <= 1) {
+                document.getElementById('deleteWarning').style.display = 'block';
+                return;
+            }
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                row.removeChild(cells[cells.length - 1]);
+            });
+            closeModal('deleteRowColModal');
+        });
+
+        document.getElementById('btnConfirmDeleteTable').addEventListener('click', () => {
+            if (!targetTableForDeletion) return;
+            const entireTableWrapper = targetTableForDeletion.closest('.table-wrapper');
+            if (entireTableWrapper) {
+                entireTableWrapper.remove();
+            }
+            closeModal('deleteRowColModal');
+        });
+
+        function getTablesFromDOM() {
+            const wrappers = Array.from(tablesContainer.querySelectorAll('.table-wrapper'));
+            return wrappers.map(wrapper => {
+                const titleInput = wrapper.querySelector('.table-title-input');
+                const table = wrapper.querySelector('.size-guide-table');
+                const data = [];
+                if (table) {
+                    table.querySelectorAll('tr').forEach(row => {
+                        const rowData = [];
+                        row.querySelectorAll('td input').forEach(cell => {
+                            rowData.push((cell.value || '').trim());
+                        });
+                        data.push(rowData);
+                    });
+                }
+
+                return {
+                    title: (titleInput?.value || '').trim(),
+                    measurementUnit: (wrapper.querySelector('.table-unit-input')?.value || '').trim(),
+                    photoOrder: parseInt(wrapper.querySelector('.table-photo-order-input')?.value || '0', 10) || 0,
+                    data
+                };
+            });
+        }
+
+        function hasAnyUserValue(tableData) {
+            return tableData.some(row => row.some(cell => (cell || '').trim() !== ''));
+        }
+
+        function initializeFromModel() {
+            currentPhotoMeasurementUnit = normalizeUnit(initialPhotoMeasurementUnit || 'in');
+            document.getElementById('photoMeasurementUnit').value = currentPhotoMeasurementUnit;
+
+            // Render existing photo URLs if any
+            existingPhotoUrls.forEach(url => addExistingPhotoThumb(url));
+            refreshPhotoInputState();
+
+            // Set dropdowns based on saved values
+            const tableMeasurementUnitValue = @Html.Raw(JsonSerializer.Serialize(Model.TableMeasurementUnit ?? Model.MeasurementUnit ?? ""));
+            const categoryValue = @Html.Raw(JsonSerializer.Serialize(Model.Category ?? ""));
+            document.getElementById('tableMeasurementUnit').value = tableMeasurementUnitValue;
+            document.getElementById('categoryInput').value = categoryValue;
+
+            const tableUnitInput = document.getElementById('tableMeasurementUnit');
+            if (tableUnitInput) {
+                tableUnitInput.addEventListener('change', function () {
+                    const normalizedTableUnit = normalizeUnit(tableUnitInput.value || 'in');
+                    tablesContainer.querySelectorAll('.table-unit-input').forEach(select => {
+                        select.value = normalizedTableUnit;
+                    });
+                    currentPhotoMeasurementUnit = normalizedTableUnit;
+                    refreshPhotoInputState();
+                });
+            }
+
+            // Render existing tables if present
+            const initialTables = @Html.Raw(JsonSerializer.Serialize(Model.Tables ?? new List<NextHorizon.Models.SizeGuideTableItem>()));
+            if (initialTables && initialTables.length) {
+                initialTables.forEach(t => {
+                    const data = Array.isArray(t.data) ? t.data : [];
+                    if (!data.length) return;
+                    const maxCols = Math.max(...data.map(r => r.length));
+                    createDynamicTable(data.length, maxCols, data, t.title || '', t.measurementUnit || '', t.photoOrder || 0);
+                });
+            } else {
+                const initialData = @Html.Raw(JsonSerializer.Serialize(Model.TableData ?? new List<List<string>>()));
+                if (initialData && initialData.length) {
+                    createDynamicTable(initialData.length, Math.max(...initialData.map(r => r.length)), initialData, @Html.Raw(JsonSerializer.Serialize(Model.TableTitle ?? "")), @Html.Raw(JsonSerializer.Serialize(Model.TableMeasurementUnit ?? "in")), 0);
+                }
+            }
+
+            const hasImages = existingPhotoUrls.length > 0;
+            const hasTables = tablesContainer.querySelectorAll('.table-wrapper').length > 0;
+            const initialMode = hasImages && hasTables ? 'both' : (hasImages ? 'image' : (hasTables ? 'table' : 'both'));
+            setGuideInputMode(initialMode);
+        }
+
+        document.getElementById('btnSaveSizeGuide').addEventListener('click', async (event) => {
+            event.preventDefault();
+
+            const mode = document.getElementById('guideInputMode').value || 'both';
+            refreshPhotoInputState();
+            const tables = mode === 'image' ? [] : getTablesFromDOM().filter(t => hasAnyUserValue(t.data));
+            const payload = {
+                photoMeasurementUnit: document.getElementById('photoMeasurementUnit').value || currentPhotoMeasurementUnit || '',
+                tableMeasurementUnit: document.getElementById('tableMeasurementUnit').value || '',
+                photoGuideUnitsByUrl: JSON.parse(document.getElementById('existingPhotoUnitsJson').value || '{}'),
+                tables
+            };
+            document.getElementById('tableDataJson').value = JSON.stringify(payload);
+
+            // Keep the legacy top title in sync with first table title when available.
+            const firstTitle = tables.find(t => (t.title || '').trim() !== '')?.title || '';
+            if (!document.getElementById('sizeGuideTitle').value.trim() && firstTitle) {
+                document.getElementById('sizeGuideTitle').value = firstTitle;
+            }
+
+            // Send as Fetch so we can show helpful error feedback when save fails.
+            const formData = new FormData(sizeGuideForm);
+            // File input is cleared after previewing, so append queued files explicitly.
+            newFiles.forEach(item => {
+                formData.append('newPhotos', item.file, item.file.name);
+            });
+            const response = await fetch(sizeGuideForm.action, { method: 'POST', body: formData });
+            if (response.redirected) {
+                window.location.href = response.url;
+                return;
+            }
+            if (response.ok) {
+                window.location.reload();
+                return;
+            }
+
+            const errorText = await response.text();
+            console.error('Size guide save failed:', response.status, response.statusText, errorText);
+            alert('Unable to save size guide at this time. See console for details.');
+        });
+        initializeFromModel();
+    </script>
+}

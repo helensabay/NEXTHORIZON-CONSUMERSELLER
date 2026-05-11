@@ -1,0 +1,219 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+<!-- ── Main Header ────────────────────────────────── -->
+<header id="main-header">
+    <!-- Top Row: Logo — Search — Icons -->
+    <div class="header-inner">
+
+       
+
+        <div class="header-top">
+            <button class="hdr-icon-btn sidebar-trigger-btn" id="mobile-sidebar-trigger" aria-label="Open Menu">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </button>
+
+            <div class="logo">
+                <a href="/"><img src="/logo.png" alt="NEXT HORIZON" class="header-logo-img"></a>
+            </div>
+
+            <div class="hdr-search-wrap" id="hdr-search-wrap">
+                <button class="hdr-search-bar" id="search-toggle-btn" onclick="openSearchOverlay()" aria-label="Search">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+                    <span>Search</span>
+                </button>
+                <div class="hdr-search-active" id="hdr-search-active">
+                    <svg class="hdr-sa-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+                    <input type="search" id="search-overlay-input" class="hdr-sa-input" placeholder="Search" autocomplete="off" spellcheck="false" oninput="handleSearchInput(this.value)">
+                    <button class="hdr-sa-clear" onclick="clearOrCloseSearch()" aria-label="Close search">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+                    </button>
+                </div>
+            </div>
+
+@{
+    var consumerMessengerHref = "/consumer/messenger/";
+}
+
+            <div class="header-actions">
+                <a href="@consumerMessengerHref"
+                   class="hdr-icon-btn"
+                   aria-label="Messages"
+                   title="Messages">
+                    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                </a>
+               
+                <a href="/Home/Cart" class="hdr-icon-btn" aria-label="Shopping Cart">
+                    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1" /><circle cx="20" cy="21" r="1" /><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" /></svg>
+                    <span id="cart-count" class="hdr-badge">0</span>
+                </a>
+                <div class="notif-wrap" id="notif-wrap">
+                    <button class="hdr-icon-btn notif-btn" id="notif-btn" onclick="toggleNotifDropdown()" aria-label="Notifications">
+                        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>
+                        <span class="notif-dot" id="notif-dot"></span>
+                    </button>
+                    <div class="notif-dropdown" id="notif-dropdown">
+                        <div class="notif-header">
+                            <span>Notifications</span>
+                            <button class="notif-clear-btn" onclick="clearNotifications()">Clear all</button>
+                        </div>
+                        <ul class="notif-list" id="notif-list">
+                            <li class="notif-item unread">
+                                <div class="notif-icon notif-icon-order">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" /><line x1="3" y1="6" x2="21" y2="6" /><path d="M16 10a4 4 0 01-8 0" /></svg>
+                                </div>
+                                <div class="notif-body">
+                                    <p class="notif-text">Your order has been confirmed!</p>
+                                    <span class="notif-time">Just now</span>
+                                </div>
+                            </li>
+                            <li class="notif-item unread">
+                                <div class="notif-icon notif-icon-preorder">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+                                </div>
+                                <div class="notif-body">
+                                    <p class="notif-text">Apex Carbon Racer 2026 pre-order opens March 2026.</p>
+                                    <span class="notif-time">2 hours ago</span>
+                                </div>
+                            </li>
+                            <li class="notif-item">
+                                <div class="notif-icon notif-icon-promo">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" /><line x1="7" y1="7" x2="7.01" y2="7" /></svg>
+                                </div>
+                                <div class="notif-body">
+                                    <p class="notif-text">New arrivals just dropped — check them out!</p>
+                                    <span class="notif-time">1 day ago</span>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="profile-dropdown-wrap">
+                    <button class="hdr-icon-btn" aria-label="Account">
+                        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                    </button>
+                    <div class="profile-dropdown">
+                        <a asp-controller="AccountProfile" asp-action="ProfileView" class="profile-dropdown-item">View Profile</a>
+                        <a href="/" class="profile-dropdown-item" onclick="logout()">Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Row: Navigation -->
+    <div class="header-nav-bar">
+        <div class="header-inner">
+            <nav class="mega-nav" id="main-nav" aria-label="Main navigation">
+                <div class="mega-item">
+                    <a href="/Home/Challenges" class="mega-link">Challenges</a>
+                </div>
+                <div class="mega-item">
+                    <a href="/Home/Shop?q=sale" class="mega-link mega-link--sale">Sale</a>
+                </div>
+                <div class="mega-item">
+                    <a href="/Home/Shop?q=next+horizon+products" class="mega-link">Next Horizon Products</a>
+                </div>
+                <div class="mega-item">
+                    <a href="/Home/Shop?gender=men" class="mega-link">Men</a>
+                    <div class="mega-panel mega-panel--3col">
+                        <div class="mega-col">
+                            <h4 class="mega-col-title">Shoes</h4>
+                            <a href="/Home/Shop?gender=men&cat=road-running">Road Running</a>
+                            <a href="/Home/Shop?gender=men&cat=trail-running">Trail Running</a>
+                            <a href="/Home/Shop?gender=men&cat=racing">Racing</a>
+                        </div>
+                        <div class="mega-col">
+                            <h4 class="mega-col-title">Apparel</h4>
+                            <a href="/Home/Shop?gender=men&cat=shirts">Shirts</a>
+                            <a href="/Home/Shop?gender=men&cat=singlets">Singlets</a>
+                            <a href="/Home/Shop?gender=men&cat=shorts">Shorts</a>
+                            <a href="/Home/Shop?gender=men&cat=tights">Tights</a>
+                        </div>
+                        <div class="mega-col">
+                            <h4 class="mega-col-title">Accessories</h4>
+                            <a href="/Home/Shop?gender=men&cat=socks">Socks</a>
+                            <a href="/Home/Shop?gender=men&cat=caps">Caps</a>
+                            <a href="/Home/Shop?gender=men&cat=sunglasses">Sunglasses</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="mega-item">
+                    <a href="/Home/Shop?gender=women" class="mega-link">Women</a>
+                    <div class="mega-panel mega-panel--3col">
+                        <div class="mega-col">
+                            <h4 class="mega-col-title">Shoes</h4>
+                            <a href="/Home/Shop?gender=women&cat=road-running">Road Running</a>
+                            <a href="/Home/Shop?gender=women&cat=trail-running">Trail Running</a>
+                            <a href="/Home/Shop?gender=women&cat=racing">Racing</a>
+                        </div>
+                        <div class="mega-col">
+                            <h4 class="mega-col-title">Apparel</h4>
+                            <a href="/Home/Shop?gender=women&cat=shirts">Shirts</a>
+                            <a href="/Home/Shop?gender=women&cat=singlets">Singlets</a>
+                            <a href="/Home/Shop?gender=women&cat=shorts">Shorts</a>
+                            <a href="/Home/Shop?gender=women&cat=tights">Tights &amp; Leggings</a>
+                            <a href="/Home/Shop?gender=women&cat=sports-bras">Sports Bras</a>
+                        </div>
+                        <div class="mega-col">
+                            <h4 class="mega-col-title">Accessories</h4>
+                            <a href="/Home/Shop?gender=women&cat=socks">Socks</a>
+                            <a href="/Home/Shop?gender=women&cat=caps">Caps</a>
+                            <a href="/Home/Shop?gender=women&cat=sunglasses">Sunglasses</a>
+                            <a href="/Home/Shop?gender=women&cat=hair-accessories">Hair Accessories</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="mega-item">
+                    <a href="/Home/Shop?q=flash+deals" class="mega-link">Flash Deals</a>
+                </div>
+                <div class="mega-item">
+                    <a href="/Home/Shop?q=free+shipping" class="mega-link">Free Shipping</a>
+                </div>
+            </nav>
+        </div>
+    </div>
+</header>
+
+<!-- ── Adidas-style Search Dropdown ────────────────── -->
+<div id="search-dropdown" class="search-dropdown" role="dialog" aria-label="Search">
+    <div class="search-dropdown-panel">
+        <!-- Popular chips — shown when no query -->
+        <div class="search-popular-wrap" id="search-popular-wrap">
+            <p class="search-popular-label">Popular Search Terms</p>
+            <div class="search-chips">
+                <a href="/Home/Shop?q=running+shoes" class="search-chip">Running Shoes</a>
+                <a href="/Home/Shop?q=trail" class="search-chip">Trail</a>
+                <a href="/Home/Shop?q=carbon+racer" class="search-chip">Carbon Racer</a>
+                <a href="/Home/Shop?q=new+arrivals" class="search-chip">New Arrivals</a>
+                <a href="/Home/Shop?q=puma" class="search-chip">Puma</a>
+                <a href="/Home/Shop?q=sale" class="search-chip">Sale</a>
+                <a href="/Home/Shop?q=lightweight" class="search-chip">Lightweight</a>
+                <a href="/Home/Shop?q=basketball" class="search-chip">Basketball Shoes</a>
+            </div>
+        </div>
+        <!-- Two-column results — shown when query exists -->
+        <div class="search-results-cols" id="search-results-cols">
+            <div class="search-sug-col">
+                <h3 class="search-col-title">Suggestions</h3>
+                <ul class="search-sug-list" id="search-sug-list"></ul>
+                <a class="search-see-all" id="search-see-all" href="/Home/Shop">See all &quot;&quot;</a>
+            </div>
+            <div class="search-prod-col">
+                <h3 class="search-col-title">Products</h3>
+                <div class="search-prod-list" id="search-prod-list"></div>
+            </div>
+        </div>
+    </div>
+    <div class="search-dropdown-backdrop" onclick="closeSearchOverlay()"></div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/header.css" asp-append-version="true" />
+}

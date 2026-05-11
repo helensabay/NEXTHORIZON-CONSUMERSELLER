@@ -1,0 +1,178 @@
+﻿@{
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+}
+
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap');
+</style>
+
+<div class="profile-sidebar" id="sidebar">
+
+    <nav class="sidebar-menu">
+        <a asp-controller="AccountProfile" asp-action="ProfileView"
+           class="sidebar-link @(currentAction == "ProfileView" ? "active" : "")">
+            <i class="bi bi-speedometer2"></i> Fitness Overview
+        </a>
+        <a asp-controller="AccountProfile" asp-action="UpdateProfile"
+           class="sidebar-link @(currentAction == "UpdateProfile" ? "active" : "")">
+            <i class="bi bi-person-gear"></i> Update Profile
+        </a>
+        <a asp-controller="AccountProfile" asp-action="UploadActivity"
+           class="sidebar-link @(currentAction == "UploadActivity" ? "active" : "")">
+            <i class="bi bi-cloud-arrow-up"></i> Upload Activity
+        </a>
+        <a asp-controller="AccountProfile" asp-action="ShippingAddress"
+           class="sidebar-link @(currentAction == "ShippingAddress" ? "active" : "")">
+            <i class="bi bi-geo-alt"></i> Shipping Address
+        </a>
+        <a asp-controller="AccountProfile" asp-action="PaymentMethods"
+           class="sidebar-link @(currentAction == "PaymentMethods" ? "active" : "")">
+            <i class="bi bi-credit-card"></i> Payment Methods
+        </a>
+        <a asp-controller="AccountProfile" asp-action="MyPurchases"
+           class="sidebar-link @(currentAction == "MyPurchases" ? "active" : "")">
+            <i class="bi bi-bag-check"></i> My Purchases
+        </a>
+    </nav>
+</div>
+
+<style>
+    :root {
+        --sidebar-width: 280px;
+        --sidebar-bg: #e9e9e9;
+        --active-bg: #333333;
+        --accent-line: #000000;
+    }
+
+    /* --- Desktop Sidebar Styles --- */
+    .profile-sidebar {
+        .profile-sidebar {
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: #ffffff !important;
+            position: fixed;
+            /* Adjust 'top' to sit BELOW the new 2-row header */
+            top: 130px;
+            left: 0;
+            border-right: 1px solid #d1d1d1;
+            z-index: 1000; /* Below the header dropdowns but above content */
+            font-family: 'Poppins', sans-serif;
+        }
+        /* Ensure the sidebar doesn't hide behind the header */
+        @@media (max-width: 991px) {
+            .profile-sidebar {
+                top: 0; /* Full screen on mobile */
+                z-index: 15000;
+            }
+        }
+
+    .sidebar-mobile-toggle, .sidebar-close-btn {
+        display: none;
+    }
+
+    .sidebar-menu {
+        display: flex;
+        flex-direction: column;
+        padding-top: 20px;
+        width: 100%; /* Ensure menu is full width */
+    }
+
+    .sidebar-link {
+        display: flex;
+        align-items: center;
+        width: 100%; /* Take up full sidebar space */
+        padding: 18px 25px;
+        text-decoration: none !important;
+        color: #000;
+        font-weight: 700; /* High weight for Poppins */
+        font-size: 1rem;
+        transition: all 0.2s ease;
+        box-sizing: border-box;
+        border-left: 10px solid transparent; /* Accent placeholder on LEFT */
+    }
+
+        /* Active State: Background fills everything, Accent on left */
+        .sidebar-link:hover, .sidebar-link.active {
+            background-color: var(--active-bg) !important;
+            color: #fff !important;
+            border-left: 10px solid var(--accent-line) !important; /* Visual accent on left */
+            border-right: none;
+        }
+
+        .sidebar-link i {
+            margin-right: 15px;
+            width: 20px;
+            text-align: center;
+            font-size: 1.2rem;
+        }
+
+    /* --- Mobile Styles (768px and below) --- */
+ 
+
+        .sidebar-close-btn {
+            display: block;
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #000;
+            cursor: pointer;
+            z-index: 10003;
+        }
+
+        .profile-sidebar {
+            top: 0;
+            transform: translateX(-100%);
+            z-index: 10001;
+            padding-top: 80px;
+        }
+
+            .profile-sidebar.open {
+                transform: translateX(0);
+            }
+    }
+</style>
+
+<script>
+     // Simple function to handle the sidebar backdrop logic
+    function closeMobileSidebar() {
+        const sidebar = document.querySelector('.profile-sidebar');
+        const backdrop = document.getElementById('sidebar-backdrop');
+        if(sidebar) sidebar.classList.remove('open');
+        if(backdrop) backdrop.style.display = 'none';
+    }
+
+    // Logic to show backdrop when sidebar opens
+    document.addEventListener('DOMContentLoaded', () => {
+        const trigger = document.getElementById('mobile-sidebar-trigger');
+        const backdrop = document.getElementById('sidebar-backdrop');
+        const sidebar = document.querySelector('.profile-sidebar');
+
+        if(trigger) {
+            trigger.addEventListener('click', () => {
+                sidebar.classList.add('open');
+                backdrop.style.display = 'block';
+            });
+        }
+    });
+
+        window.addEventListener('resize', () => {
+        // Check if we are now on Desktop (width > 991px)
+        if (window.innerWidth > 991) {
+            const sidebar = document.querySelector('.profile-sidebar');
+            const backdrop = document.getElementById('sidebar-backdrop');
+
+            // Remove the 'open' class so it doesn't "pop in" if the user shrinks the screen again
+            if (sidebar) {
+                sidebar.classList.remove('open');
+            }
+
+            // Force hide the backdrop
+            if (backdrop) {
+                backdrop.style.display = 'none';
+            }
+        }
+    });
+</script>

@@ -1,0 +1,71 @@
+@model List<MyAspNetApp.Models.DbProduct>
+@{
+    ViewData["Title"] = "Pending Products";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pending Products</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { margin: 0; font-family: 'Inter', sans-serif; background: #f6f2ec; color: #171717; }
+        .page { max-width: 1100px; margin: 0 auto; padding: 32px 20px 48px; }
+        .header { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px; }
+        .header h1 { margin: 0; font-size: 2rem; }
+        .header p { margin: 8px 0 0; color: #6a6258; }
+        .nav { display: flex; gap: 12px; flex-wrap: wrap; }
+        .nav a { text-decoration: none; background: #171717; color: #fff; padding: 10px 16px; border-radius: 999px; font-weight: 700; }
+        .grid { display: grid; gap: 16px; }
+        .card { display: grid; grid-template-columns: 88px 1fr auto; gap: 16px; align-items: center; background: #fff; border: 1px solid #ded4c8; border-radius: 20px; padding: 16px; }
+        .card img { width: 88px; height: 88px; object-fit: cover; border-radius: 14px; background: #eee5db; }
+        .meta h3 { margin: 0 0 6px; }
+        .meta p { margin: 0; color: #6a6258; }
+        .status { display: inline-flex; margin-top: 10px; background: #f4e0af; color: #8b6516; padding: 6px 10px; border-radius: 999px; font-size: .82rem; font-weight: 700; }
+        .actions a { text-decoration: none; background: #ece4d8; color: #171717; padding: 10px 14px; border-radius: 999px; font-weight: 700; }
+        .empty { background: #fff; border: 1px dashed #ded4c8; border-radius: 20px; padding: 28px; text-align: center; color: #6a6258; }
+        @@media (max-width: 760px) { .card { grid-template-columns: 72px 1fr; } .card img { width: 72px; height: 72px; } .actions { grid-column: 1 / -1; } }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <div class="header">
+            <div>
+                <h1>Pending Products</h1>
+                <p>Products here are waiting for admin approval.</p>
+            </div>
+            <div class="nav">
+                <a href="/Seller">Back to Seller</a>
+                <a href="/Seller/ApprovedProducts">Approved Products</a>
+                <a href="/Admin/ProductApprovals">Admin Panel</a>
+            </div>
+        </div>
+
+        @if (Model.Any())
+        {
+            <div class="grid">
+                @foreach (var product in Model)
+                {
+                    <article class="card">
+                        <img src="@(string.IsNullOrWhiteSpace(product.ImagePath) ? "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='88' height='88'%3E%3Crect width='88' height='88' fill='%23eee5db'/%3E%3C/svg%3E" : product.ImagePath)" alt="@product.ProductName" />
+                        <div class="meta">
+                            <h3>@product.ProductName</h3>
+                            <p>@(string.IsNullOrWhiteSpace(product.Category) ? "Uncategorized" : product.Category)</p>
+                            <span class="status">Pending</span>
+                        </div>
+                        <div class="actions">
+                            <a href="/Seller/ViewProduct?id=@product.ProductId&state=pending">View Product</a>
+                        </div>
+                    </article>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="empty">No pending products.</div>
+        }
+    </div>
+</body>
+</html>

@@ -1,0 +1,259 @@
+﻿@using System.Linq
+@using NextHorizon.Models
+@model List<OrderViewModel>
+
+@{
+    ViewData["Title"] = "My Purchases";
+
+    // 1. Get current status from Query String (matches your MyPurchases pattern)
+    var currentStatus = Context.Request.Query["status"].ToString();
+    if (string.IsNullOrEmpty(currentStatus)) currentStatus = "All";
+
+    // 2. Filter logic using the ViewModel provided by the Controller
+    var filteredOrders = currentStatus == "All"
+        ? Model
+        : Model?.Where(o => o.Status.Equals(currentStatus, StringComparison.OrdinalIgnoreCase)).ToList();
+}
+
+<div class="profile-layout-container">
+
+    <main class="main-content-wrapper">
+        <div class="account-details-full-width">
+
+            <div class="order-status-navbar">
+                @{
+                    var statuses = new[] { "All", "To Pay", "To Ship", "To Receive", "Completed", "To Review", "Returns", "Cancelled" };
+                    foreach (var s in statuses)
+                    {
+                        <a asp-action="MyPurchasesOptions" asp-route-status="@s"
+                           class="status-item @(currentStatus == s ? "active" : "")">
+                            <span>@s</span>
+                        </a>
+                    }
+                }
+            </div>
+
+            <div id="orders-list">
+                @if (filteredOrders != null && filteredOrders.Any())
+                {
+                    @foreach (var order in filteredOrders)
+                    {
+                        <div class="order-card-monochrome shadow-sm mb-3">
+                            <div class="order-card-header">
+                                <div class="header-left">
+                                    <span class="status-tag @order.Status.Replace(" ", "-").ToLower()">
+                                        @order.Status.ToUpper()
+                                    </span>
+                                    <span class="shop-name-mono"><i class="bi bi-shop"></i> @order.SellerName</span>
+                                </div>
+                                <div class="header-right">
+                                    <span class="order-id-mono">#@order.OrderNumber</span>
+                                </div>
+                            </div>
+
+                            <div class="order-card-body" style="display: flex; justify-content: space-between; align-items: flex-start;">
+
+                                <div class="product-info-wrapper">
+                                    <img src="@order.ProductImage" class="order-img-large" alt="@order.ProductName" onerror="this.src='/images/placeholder.png'" />
+
+                                    <div class="product-details-main">
+                                        <h4 class="product-name-text">@order.ProductName</h4>
+                                        <div class="product-meta-grid">
+                                            <span><strong>Color:</strong> @order.Color</span>
+                                            <span><strong>Size:</strong> @(order.Size ?? "N/A")</span>
+                                            <span><strong>QTY:</strong> @order.Quantity</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="order-pricing-section">
+                                    <p class="price-label">TOTAL</p>
+                                    <h4 class="price-value-small">₱@order.TotalAmount.ToString("N2")</h4>
+                                </div>
+
+                            </div>
+
+                            <div class="order-total-bar">
+                                <span class="total-label">Order Total:</span>
+                                <span class="total-amount-mono">₱@order.TotalAmount.ToString("N2")</span>
+                            </div>
+
+                            <div class="order-card-footer">
+                                <button class="btn-action btn-outline"
+                                        onclick="viewOrderDetails(
+                                                    '@order.OrderNumber',
+                                                    '@order.Status',
+                                                    '@order.PaymentMethod',
+                                                    '@order.SellerName',
+                                                    '@order.ReceiverName',
+                                                    '@order.PhoneNumber',
+                                                    '@Html.Raw(order.ShippingAddress?.Replace("'", "\\'"))',
+                                                    '₱@order.TotalAmount.ToString("N2")',
+                                                    '@order.Color',
+                                                    '@(order.Size ?? "N/A")',
+                                                    '@order.Quantity')">
+                                    VIEW DETAILS
+                                </button>
+
+                                @if (order.Status == "To Pay")
+                                {
+                                    <button class="btn-action btn-black">PAY NOW</button>
+                                }
+                                else if (order.Status == "To Receive")
+                                {
+                                    <button class="btn-action btn-black">ORDER RECEIVED</button>
+                                }
+                                else if (order.Status == "Completed")
+                                {
+                                    <button class="btn-action btn-black">BUY AGAIN</button>
+                                }
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="empty-orders-container">
+                        <div class="empty-icon-wrapper"><i class="bi bi-bag-x"></i></div>
+                        <p>No orders yet</p>
+                        <small class="text-muted">Orders with status "@currentStatus" will appear here.</small>
+                    </div>
+                }
+            </div>
+        </div>
+    </main>
+</div>
+
+<div id="customOrderOverlay" class="custom-overlay">
+    <div class="overlay-backdrop" onclick="closeOrderDetails()"></div>
+    <div class="custom-modal-content">
+
+        <div id="modalStatusBanner" class="mono-status-banner">
+            <div class="banner-left">
+                <h4 id="modalStatusText" class="m-0">STATUS</h4>
+                <p id="modalStatusSubtext" class="m-0 small">Awaiting updates...</p>
+            </div>
+            <i id="modalStatusIcon" class="bi bi-box-seam"></i>
+        </div>
+
+        <div class="app-modal-scrollable">
+            <div class="app-section">
+                <div class="section-title">
+                    <span><i class="bi bi-geo-alt"></i> DELIVERY & PAYMENT</span>
+                    <button id="editOrderBtn" class="mono-edit-link" onclick="toggleOrderEdit()">Edit</button>
+                </div>
+
+                <div id="orderDetailsDisplay">
+                    <p id="displayReceiver" class="fw-bold mb-1"></p>
+                    <p id="displayPhone" class="small mb-1"></p>
+                    <p id="displayAddress" class="small text-muted mb-2"></p>
+                    <div class="payment-display-box">
+                        <span id="displayPayment" class="fw-bold small ms-1">Payment: GCash</span>
+                    </div>
+                </div>
+
+                <div id="productDetailsDisplay" class="mt-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="small text-muted">Color:</span>
+                        <span id="displayColor" class="fw-bold small">-</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="small text-muted">Size:</span>
+                        <span id="displaySize" class="fw-bold small">-</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="small text-muted">Quantity:</span>
+                        <span id="displayQty" class="fw-bold small">0</span>
+                    </div>
+                </div>
+
+                <div id="orderEditForm" class="d-none mt-2">
+                    <label class="mono-label">Receiver Name</label>
+                    <input type="text" id="inputReceiver" class="mono-input">
+
+                    <div class="d-flex gap-2">
+                        <div class="w-100">
+                            <label class="mono-label">Phone Number</label>
+                            <input type="text" id="inputPhone" class="mono-input">
+                        </div>
+                        <div class="w-100">
+                            <label class="mono-label">Payment Method</label>
+                            <select id="inputPayment" class="mono-select">
+                                <option value="GCash">GCash</option>
+                                <option value="COD">COD</option>
+                                <option value="Credit Card">Credit Card</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <label class="mono-label">Shipping Address</label>
+                    <textarea id="inputAddress" class="mono-input" rows="2"></textarea>
+
+                    <div class="d-flex gap-2 mt-2">
+                        <div class="w-100">
+                            <label class="mono-label">Color</label>
+                            <select id="inputColor" class="mono-select">
+                                <option value="Black">Black</option>
+                                <option value="White">White</option>
+                                <option value="Beige">Beige</option>
+                                <option value="Gray">Gray</option>
+                            </select>
+                        </div>
+                        <div class="w-100">
+                            <label class="mono-label">Size</label>
+                            <select id="inputSize" class="mono-select">
+                                <option value="Small">Small</option>
+                                <option value="Medium">Medium</option>
+                                <option value="Large">Large</option>
+                                <option value="38">38</option>
+                                <option value="42">42</option>
+                            </select>
+                        </div>
+                        <div style="width: 80px;">
+                            <label class="mono-label">QTY</label>
+                            <input type="number" id="inputQty" class="mono-input" min="1">
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 mt-3">
+                        <button class="btn-mono-save w-100" onclick="saveOrderChanges()">SAVE CHANGES</button>
+                        <button class="btn-mono-cancel w-100" onclick="toggleOrderEdit()">CANCEL</button>
+                    </div>
+                </div>
+
+                <div id="editLockNote" class="mono-lock-note d-none mt-2">
+                    <i class="bi bi-lock-fill"></i> Locked: Order Details can no longer be edited.
+                </div>
+            </div>
+
+            <div class="app-section border-top pt-3">
+                <div class="app-row">
+                    <span class="label">Order Number</span>
+                    <div class="d-flex align-items-center gap-2">
+                        <span id="modalOrderNumber" class="value fw-bold"></span>
+                        <button class="mono-copy-btn" onclick="copyOrderId()">Copy</button>
+                    </div>
+                </div>
+                <div class="app-row mt-3">
+                    <span class="label">Order Total</span>
+                    <span id="modalTotalAmount" class="total-price-mono">₱0.00</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="app-modal-footer">
+            <button class="btn-mono-close" onclick="closeOrderDetails()">CLOSE</button>
+        </div>
+    </div>
+</div>
+
+<div id="toastContainer" class="toast-container"></div>
+
+
+@section Scripts {
+    <script src="~/js/myPurchaseOptions.js"></script>
+}
+@section Styles {
+    <link rel="stylesheet" href="~/css/myPurchasesOptions.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/optionOrderCards.css" asp-append-version="true" />
+}

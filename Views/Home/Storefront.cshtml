@@ -1,0 +1,583 @@
+@model MyAspNetApp.Models.ViewModels.LeaderboardPageViewModel
+@{
+    ViewData["Title"] = "Home";
+}
+
+@section Styles {
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+
+:root {
+    --black: #000000; --white: #FFFFFF; --gray-100: #F7F7F7; --gray-200: #EBEBEB;
+    --gray-400: #999999; --gray-600: #555555; --border: rgba(0,0,0,0.08);
+    --font-display: 'Bebas Neue', sans-serif; --font-body: 'DM Sans', sans-serif;
+    --radius-md: 12px; --radius-lg: 18px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-body); background: #fff; color: #000; overflow-x: hidden; }
+
+/* LEADERBOARD */
+.leaderboard-section { background: #fff; padding: 72px 0 0; position: relative; }
+.leaderboard-header { padding: 0 40px 36px; display: flex; justify-content: space-between; align-items: flex-end; }
+.lb-title-group { display: flex; flex-direction: column; gap: 6px; }
+.lb-eyebrow { font-size: 10px; letter-spacing: 5px; color: var(--gray-400); text-transform: uppercase; }
+.lb-title-row { display: flex; align-items: baseline; gap: 20px; }
+.lb-title { font-family: var(--font-display); font-size: clamp(40px,5vw,64px); letter-spacing: 3px; font-weight: 400; color: #000; line-height: 1; }
+.lb-view-all { font-size: 10px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; color: var(--gray-600); text-decoration: none; border-bottom: 1px solid rgba(0,0,0,.3); padding-bottom: 1px; transition: color .2s, border-color .2s; white-space: nowrap; flex-shrink: 0; }
+.lb-view-all:hover { color: #000; border-color: #000; }
+.lb-header-right { display: flex; align-items: center; gap: 16px; }
+.lb-controls { display: flex; gap: 8px; }
+.lb-nav { width: 42px; height: 42px; border-radius: 50%; border: 1.5px solid #000; background: #fff; color: #000; cursor: pointer; display: grid; place-items: center; font-size: 16px; transition: all .2s; }
+.lb-nav:hover { background: #000; color: #fff; }
+.lb-scroll { display: flex; gap: 24px; overflow-x: auto; padding: 0 40px 52px; scroll-behavior: smooth; scroll-snap-type: x mandatory; scrollbar-width: none; }
+.lb-scroll::-webkit-scrollbar { display: none; }
+.lb-card { flex: 0 0 270px; border-radius: var(--radius-lg); overflow: hidden; background: #fff; border: 1px solid rgba(0,0,0,.07); scroll-snap-align: start; cursor: pointer; transition: transform .35s cubic-bezier(.22,.68,0,1.2), box-shadow .3s, border-color .3s; opacity: 0; animation: fadeUp .55s ease forwards; box-shadow: 0 2px 12px rgba(0,0,0,.05); }
+.lb-card:hover { transform: translateY(-8px); box-shadow: 0 18px 44px rgba(0,0,0,.11); border-color: rgba(0,0,0,.15); }
+.lb-card.rank-1 { border-color: rgba(0,0,0,.1); border-width: 1px; }
+.lb-card:nth-child(1){animation-delay:.04s} .lb-card:nth-child(2){animation-delay:.10s} .lb-card:nth-child(3){animation-delay:.16s}
+.lb-card:nth-child(4){animation-delay:.22s} .lb-card:nth-child(5){animation-delay:.28s} .lb-card:nth-child(6){animation-delay:.34s}
+.lb-img-wrap { position: relative; margin: 10px 10px 0; border-radius: 10px; height: 340px; overflow: hidden; background: var(--gray-100); }
+.lb-card-img { width: 100%; height: 100%; object-fit: cover; display: block; filter: saturate(.75) contrast(1.05); transition: transform .45s, filter .3s; }
+.lb-card:hover .lb-card-img { transform: scale(1.06); filter: saturate(1) contrast(1); }
+.lb-img-empty { height: 100%; display: grid; place-items: center; padding: 24px; color: var(--gray-400); font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; text-align: center; }
+.lb-overlay { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 40%, rgba(0,0,0,.35) 70%, rgba(0,0,0,.7) 100%); border-radius: 10px; }
+.lb-rank-badge { position: absolute; top: 12px; left: 12px; background: rgba(0,0,0,.75); backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,.2); border-radius: 100px; padding: 4px 12px; font-family: var(--font-display); font-size: 15px; letter-spacing: 1px; color: #fff; z-index: 2; }
+.lb-card.rank-1 .lb-rank-badge { background: #fff; color: #000; border-color: #fff; }
+.lb-stats-row { display: none; }
+.lb-card.rank-1 .lb-img-wrap::after { content: ''; position: absolute; top: 0; left: -120%; width: 55%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,.08), transparent); animation: shimmer 3.5s ease-in-out infinite; pointer-events: none; z-index: 3; }
+@@keyframes shimmer { 0%{left:-120%} 55%,100%{left:130%} }
+.lb-foot { padding: 44px 14px 18px; text-align: center; position: relative; }
+.lb-avatar { position: absolute; top: -26px; left: 50%; transform: translateX(-50%); width: 52px; height: 52px; border-radius: 50%; border: 2.5px solid #fff; object-fit: cover; box-shadow: 0 3px 10px rgba(0,0,0,.15); }
+.lb-avatar-empty { position: absolute; top: -26px; left: 50%; transform: translateX(-50%); width: 52px; height: 52px; border-radius: 50%; border: 2.5px solid #fff; background: #f1f1f1; box-shadow: 0 3px 10px rgba(0,0,0,.15); }
+.lb-name { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: #000; margin-bottom: 2px; }
+.lb-meta { font-size: 10px; color: var(--gray-400); letter-spacing: 1px; text-transform: uppercase; }
+.lb-footer { display: flex; justify-content: center; padding: 24px 0 0; }
+.lb-empty { margin: 0 40px 52px; border: 1px dashed rgba(0,0,0,.18); border-radius: var(--radius-lg); padding: 28px; text-align: center; color: var(--gray-600); letter-spacing: 1px; text-transform: uppercase; font-size: 11px; }
+
+/* POPULAR BRANDS — puzzle */
+.brands-section { background: #fff; padding: 64px 0 0; border-top: 1px solid var(--border); width: 100%; }
+.brands-top { padding: 0 40px; margin-bottom: 32px; }
+.brands-label-group { display: flex; flex-direction: column; gap: 6px; }
+.brands-eyebrow { font-size: 10px; letter-spacing: 5px; color: var(--gray-400); text-transform: uppercase; display: block; }
+.brands-title-row { display: flex; justify-content: space-between; align-items: baseline; gap: 20px; }
+.brands-title { font-family: var(--font-display); font-size: clamp(40px,5vw,64px); letter-spacing: 3px; font-weight: 400; color: #000; line-height: 1; }
+.brands-link { font-size: 10px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; color: var(--gray-600); text-decoration: none; border-bottom: 1px solid rgba(0,0,0,.3); padding-bottom: 1px; transition: color .2s, border-color .2s; white-space: nowrap; flex-shrink: 0; }
+.brands-link:hover { color: #000; border-color: #000; }
+
+.brands-puzzle {
+    position: relative; width: 100%;
+    background-image: url('https://images.unsplash.com/photo-1528459801416-a9e53bbf4e17?q=80&w=1600&auto=format&fit=crop');
+    background-size: cover; background-position: center;
+}
+.brands-puzzle::before { content: ''; position: absolute; inset: 0; background: rgba(0,0,0,0.52); z-index: 0; }
+
+.brands-flow { position: relative; z-index: 1; display: flex; flex-direction: column; }
+
+.brands-row { display: flex; width: 100%; border-top: 1px solid rgba(255,255,255,.12); opacity: 0; transform: translateY(12px); transition: opacity .5s ease, transform .5s ease; }
+.brands-row:last-child { border-bottom: 1px solid rgba(255,255,255,.12); }
+.brands-row.in-view { opacity: 1; transform: translateY(0); }
+.brands-row:nth-child(1){transition-delay:.03s} .brands-row:nth-child(2){transition-delay:.09s}
+.brands-row:nth-child(3){transition-delay:.15s} .brands-row:nth-child(4){transition-delay:.21s}
+.brands-row:nth-child(5){transition-delay:.27s}
+
+.bc { flex-grow: 1; position: relative; overflow: hidden; cursor: pointer; border-right: 1px solid rgba(255,255,255,.12); display: flex; align-items: center; min-width: 0; }
+.bc:last-child { border-right: none; }
+
+.bc-reveal { position: absolute; inset: 0; background-image: url('https://images.unsplash.com/photo-1528459801416-a9e53bbf4e17?q=80&w=1600&auto=format&fit=crop'); background-size: cover; background-position: center; opacity: 0; transition: opacity .45s ease; z-index: 0; }
+.bc:hover .bc-reveal { opacity: 1; }
+
+.bc-inner { position: relative; z-index: 1; width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+
+/* Name + count stacked vertically on the left */
+.bc-text { display: flex; flex-direction: column; gap: 4px; }
+
+.bc-name { font-family: var(--font-display); letter-spacing: 2px; color: #fff; line-height: 1; white-space: nowrap; transition: color .3s, letter-spacing .3s; }
+.bc-count { font-family: var(--font-body); font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,.45); transition: color .3s; white-space: nowrap; }
+
+.bc:hover .bc-name  { color: #000; letter-spacing: 3px; }
+.bc:hover .bc-count { color: rgba(0,0,0,.4); }
+
+.bc-arrow { width: 44px; height: 44px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,.4); background: rgba(255,255,255,.1); backdrop-filter: blur(4px); display: grid; place-items: center; font-size: 18px; color: #fff; flex-shrink: 0; transition: all .32s cubic-bezier(.22,.68,0,1.2); }
+.bc:hover .bc-arrow { background: #000; border-color: #000; color: #fff; transform: rotate(45deg) scale(1.1); }
+
+.bc.sz-xl { height: 140px; } .bc.sz-xl .bc-inner { padding: 0 36px; } .bc.sz-xl .bc-name { font-size: clamp(52px,6vw,82px); } .bc.sz-xl .bc-count { font-size: 11px; }
+.bc.sz-lg { height: 112px; } .bc.sz-lg .bc-inner { padding: 0 30px; } .bc.sz-lg .bc-name { font-size: clamp(36px,4.2vw,58px); } .bc.sz-lg .bc-count { font-size: 10px; }
+.bc.sz-md { height: 88px;  } .bc.sz-md .bc-inner { padding: 0 26px; } .bc.sz-md .bc-name { font-size: clamp(26px,2.8vw,40px); } .bc.sz-md .bc-count { font-size: 9px; }
+.bc.sz-sm { height: 70px;  } .bc.sz-sm .bc-inner { padding: 0 22px; } .bc.sz-sm .bc-name { font-size: clamp(18px,2vw,28px); } .bc.sz-sm .bc-count { font-size: 9px; }
+
+/* PRE-ORDER */
+.preorder-announce-section { background: var(--gray-100); padding: 80px 40px; position: relative; overflow: hidden; border-top: 1px solid var(--border); }
+.preorder-announce-section::before { content: 'COMING SOON'; position: absolute; font-family: var(--font-display); font-size: 140px; letter-spacing: 16px; color: rgba(0,0,0,.04); top: 50%; left: 50%; transform: translate(-50%,-50%); white-space: nowrap; pointer-events: none; }
+.preorder-label-bar { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 48px; }
+.preorder-eyebrow { font-size: 10px; letter-spacing: 6px; text-transform: uppercase; color: #000; font-weight: 700; }
+.preorder-eyebrow-dot { width: 4px; height: 4px; border-radius: 50%; background: #000; opacity: .3; }
+.preorder-cards-wrap { display: grid; grid-template-columns: repeat(auto-fit,minmax(320px,1fr)); gap: 24px; max-width: 1200px; margin: 0 auto; }
+.preorder-card { background: #fff; border: 1.5px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; display: flex; flex-direction: column; transition: border-color .2s, transform .2s, box-shadow .2s; }
+.preorder-card:hover { border-color: #000; transform: translateY(-4px); box-shadow: 0 16px 40px rgba(0,0,0,.1); }
+.preorder-card-image { position: relative; aspect-ratio: 4/3; overflow: hidden; }
+.preorder-card-image img { width: 100%; height: 100%; object-fit: cover; filter: saturate(.7); transition: transform .4s, filter .3s; }
+.preorder-card:hover .preorder-card-image img { transform: scale(1.04); filter: saturate(1); }
+.preorder-card-badge { position: absolute; top: 14px; right: 14px; background: #000; color: #fff; font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; padding: 5px 12px; border-radius: 100px; }
+.preorder-card-body { padding: 24px; display: flex; flex-direction: column; gap: 12px; }
+.preorder-card-tag { display: inline-flex; align-items: center; gap: 7px; font-size: 9px; letter-spacing: 2.5px; text-transform: uppercase; color: #000; font-weight: 700; }
+.preorder-dot-pulse { width: 6px; height: 6px; border-radius: 50%; background: #000; animation: pulse 1.8s ease-in-out infinite; }
+@@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.3;transform:scale(.7)} }
+.preorder-card-name { font-family: var(--font-display); font-size: 28px; letter-spacing: 1px; color: #000; }
+.preorder-card-desc { font-size: 13px; color: var(--gray-600); line-height: 1.6; }
+.preorder-card-meta-row { display: flex; gap: 20px; padding: 16px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.preorder-card-meta-item { display: flex; flex-direction: column; gap: 3px; }
+.preorder-meta-label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--gray-400); }
+.preorder-meta-value { font-size: 14px; font-weight: 700; color: #000; }
+.preorder-card-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.preorder-cta-btn { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: #000; color: #fff; font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; text-decoration: none; padding: 12px 20px; border-radius: 100px; transition: opacity .2s; }
+.preorder-cta-btn:hover { opacity: .75; }
+.preorder-details-btn { display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: #000; text-decoration: none; border: 1.5px solid #000; padding: 12px 20px; border-radius: 100px; transition: all .2s; }
+.preorder-details-btn:hover { background: #000; color: #fff; }
+
+@@keyframes fadeUp { from{opacity:0;transform:translateY(22px)} to{opacity:1;transform:translateY(0)} }
+
+/* ═══════════════════════════════
+   JUST FOR YOU
+═══════════════════════════════ */
+.jfy-section { background: #fff; padding: 72px 40px 80px; border-top: 1px solid var(--border); }
+.jfy-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 40px; }
+.jfy-title-group { display: flex; flex-direction: column; gap: 6px; }
+.jfy-eyebrow { font-size: 10px; letter-spacing: 5px; color: var(--gray-400); text-transform: uppercase; }
+.jfy-title { font-family: var(--font-display); font-size: clamp(40px,5vw,64px); letter-spacing: 3px; font-weight: 400; color: #000; line-height: 1; }
+.jfy-view-all { font-size: 10px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; color: var(--gray-600); text-decoration: none; border-bottom: 1px solid rgba(0,0,0,.3); padding-bottom: 1px; transition: color .2s; white-space: nowrap; }
+.jfy-view-all:hover { color: #000; }
+
+/* Product grid */
+.jfy-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
+
+/* Product card */
+.jfy-card { position: relative; cursor: pointer; opacity: 0; transform: translateY(20px); transition: opacity .5s ease, transform .5s ease, box-shadow .3s; }
+.jfy-card.in-view { opacity: 1; transform: translateY(0); }
+.jfy-card:nth-child(1){transition-delay:.03s} .jfy-card:nth-child(2){transition-delay:.07s}
+.jfy-card:nth-child(3){transition-delay:.11s} .jfy-card:nth-child(4){transition-delay:.15s}
+.jfy-card:nth-child(5){transition-delay:.19s} .jfy-card:nth-child(6){transition-delay:.23s}
+.jfy-card:nth-child(7){transition-delay:.27s} .jfy-card:nth-child(8){transition-delay:.31s}
+.jfy-card:nth-child(9){transition-delay:.35s} .jfy-card:nth-child(10){transition-delay:.39s}
+
+.jfy-card:hover { box-shadow: 0 12px 40px rgba(0,0,0,.08); }
+
+/* Image container */
+.jfy-img-wrap { position: relative; aspect-ratio: 3/4; overflow: hidden; border-radius: var(--radius-md); background: var(--gray-100); }
+.jfy-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .45s cubic-bezier(.22,.68,0,1.2), filter .3s; filter: saturate(.85); }
+.jfy-card:hover .jfy-img-wrap img { transform: scale(1.05); filter: saturate(1); }
+
+/* Quick add button — slides up from bottom on hover */
+.jfy-quick-add { position: absolute; bottom: 0; left: 0; right: 0; background: #000; color: #fff; font-family: var(--font-body); font-size: 9px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase; text-align: center; padding: 12px; transform: translateY(100%); transition: transform .3s cubic-bezier(.22,.68,0,1.2); border-radius: 0 0 var(--radius-md) var(--radius-md); cursor: pointer; border: none; width: 100%; }
+.jfy-card:hover .jfy-quick-add { transform: translateY(0); }
+.jfy-quick-add:hover { background: #222; }
+
+/* Badge: Sale / New */
+.jfy-badge { position: absolute; top: 10px; left: 10px; font-size: 8px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; padding: 4px 10px; border-radius: 100px; z-index: 2; }
+.jfy-badge.new  { background: #000; color: #fff; }
+.jfy-badge.sale { background: #fff; color: #000; border: 1.5px solid #000; }
+
+/* Info row below image */
+.jfy-info { padding: 12px 2px 0; display: flex; flex-direction: column; gap: 4px; }
+.jfy-name { font-size: 12px; font-weight: 600; color: #000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.jfy-brand { font-size: 10px; color: var(--gray-400); letter-spacing: 1px; text-transform: uppercase; }
+.jfy-price-row { display: flex; align-items: center; gap: 8px; margin-top: 2px; }
+.jfy-price { font-size: 13px; font-weight: 700; color: #000; }
+.jfy-price-original { font-size: 11px; color: var(--gray-400); text-decoration: line-through; }
+
+/* Load more */
+.jfy-load-wrap { text-align: center; margin-top: 48px; }
+.jfy-load-btn { display: inline-flex; align-items: center; gap: 8px; font-size: 10px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: #000; background: #fff; border: 1.5px solid #000; border-radius: 100px; padding: 13px 36px; cursor: pointer; transition: all .2s; }
+.jfy-load-btn:hover { background: #000; color: #fff; }
+.jfy-load-btn:disabled { opacity: .4; cursor: default; }
+
+@@media (max-width: 1100px) { .jfy-grid { grid-template-columns: repeat(4,1fr); } }
+@@media (max-width: 800px)  { .jfy-grid { grid-template-columns: repeat(3,1fr); } }
+@@media (max-width: 600px)  { .jfy-grid { grid-template-columns: repeat(2,1fr); } .jfy-section { padding: 56px 20px 64px; } }
+
+@@media (max-width: 600px) {
+    .leaderboard-header, .lb-scroll, .brands-top { padding-left: 20px; padding-right: 20px; }
+}
+</style>
+}
+
+<!-- LEADERBOARD -->
+<section class="leaderboard-section">
+    <div class="leaderboard-header">
+        <div class="lb-title-group">
+            <span class="lb-eyebrow">@Model.SeasonLabel - @Model.Subtitle</span>
+            <div class="lb-title-row">
+                <h2 class="lb-title">LEADERBOARD</h2>
+            </div>
+        </div>
+        <div class="lb-header-right">
+            <div class="lb-controls">
+                <button class="lb-nav prev" type="button" aria-label="Previous">←</button>
+                <button class="lb-nav next" type="button" aria-label="Next">→</button>
+            </div>
+        </div>
+    </div>
+    @if (Model.HasEntries)
+    {
+        <div class="lb-scroll" id="leaderboardScroll">
+            @foreach (var entry in Model.Entries)
+            {
+                <div class="lb-card @(entry.Rank == 1 ? "rank-1" : $"rank-{entry.Rank}")">
+                    <div class="lb-img-wrap">
+                        @if (!string.IsNullOrWhiteSpace(entry.CoverImageUrl))
+                        {
+                            <img src="@entry.CoverImageUrl" class="lb-card-img" alt="@entry.AthleteName" onerror="this.onerror=null; this.src='/images/hero-runner.jpg';">
+                            <div class="lb-img-empty" hidden>Proof image file missing</div>
+                        }
+                        else
+                        {
+                            <img src="/images/hero-runner.jpg" class="lb-card-img" alt="@entry.AthleteName">
+                        }
+                        <div class="lb-overlay"></div>
+                        <div class="lb-rank-badge">#@entry.Rank</div>
+                    </div>
+                    <div class="lb-foot">
+                        @if (!string.IsNullOrWhiteSpace(entry.AvatarUrl))
+                        {
+                            <img class="lb-avatar" src="@entry.AvatarUrl" alt="@entry.AthleteName">
+                        }
+                        else
+                        {
+                            <span class="lb-avatar-empty" aria-hidden="true"></span>
+                        }
+                        <div class="lb-name">@entry.AthleteName</div>
+                        <div class="lb-meta">@entry.DistanceDisplay</div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="lb-empty">No leaderboard records found in the database yet.</div>
+    }
+    <div class="lb-footer">
+        <a href="/Leaderboard/LeaderboardDashboard" class="lb-view-all">View All Rankings -></a>
+    </div>
+</section>
+
+<!-- POPULAR BRANDS -->
+<section class="brands-section" id="brandsSection">
+    <div class="brands-top">
+        <div class="brands-label-group">
+            <span class="brands-eyebrow">Curated Collection</span>
+            <div class="brands-title-row">
+                <h2 class="brands-title">POPULAR BRANDS</h2>
+                <a href="/Home/Shop" class="brands-link">Shop All →</a>
+            </div>
+        </div>
+    </div>
+    <div class="brands-puzzle">
+        <div class="brands-flow" id="brandsFlow"></div>
+    </div>
+</section>
+
+<!-- PRE-ORDER -->
+<section class="preorder-announce-section" id="preorder-announce">
+    <div class="preorder-label-bar">
+        <span class="preorder-eyebrow-dot"></span>
+        <span class="preorder-eyebrow">Coming Soon</span>
+        <span class="preorder-eyebrow-dot"></span>
+    </div>
+    <div id="preorder-cards-wrap" class="preorder-cards-wrap"></div>
+</section>
+
+<!-- JUST FOR YOU -->
+<section class="jfy-section" id="jfySection">
+    <div class="jfy-header">
+        <div class="jfy-title-group">
+            <span class="jfy-eyebrow">Picked For You</span>
+            <h2 class="jfy-title">JUST FOR YOU</h2>
+        </div>
+        <a href="/Home/Shop" class="jfy-view-all">Browse All Products →</a>
+    </div>
+    <div class="jfy-grid" id="jfyGrid"></div>
+    <div class="jfy-load-wrap">
+        <button class="jfy-load-btn" id="jfyLoadMore">Load More</button>
+    </div>
+</section>
+
+@section Scripts {
+<script>
+/* Hero brands ticker */
+(function () {
+    var track = document.getElementById('brandsTrack');
+    var wrapper = document.getElementById('brandsTicker');
+    if (!track || !wrapper) return;
+
+    function initTicker() {
+        if (track.dataset.ready === '1') return;
+        track.dataset.ready = '1';
+
+        var items = Array.from(track.children);
+        var singleW = items.reduce(function (sum, el) { return sum + el.offsetWidth; }, 0);
+        var wrapW = wrapper.offsetWidth;
+        if (!singleW || !wrapW) return;
+
+        var copies = Math.ceil((wrapW * 3) / singleW) + 1;
+        for (var i = 0; i < copies; i++) {
+            items.forEach(function (item) { track.appendChild(item.cloneNode(true)); });
+        }
+
+        var totalW = track.scrollWidth / (copies + 1);
+        var pos = 0;
+        var speed = 0.08;
+        var paused = false;
+
+        wrapper.addEventListener('mouseenter', function () { paused = true; });
+        wrapper.addEventListener('mouseleave', function () { paused = false; });
+
+        function tick() {
+            if (!paused) {
+                pos += speed;
+                if (pos >= totalW) pos -= totalW;
+                track.style.transform = 'translateX(-' + pos + 'px)';
+            }
+            requestAnimationFrame(tick);
+        }
+
+        requestAnimationFrame(tick);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initTicker);
+    } else {
+        initTicker();
+    }
+})();
+/* ─── Leaderboard nav ─── */
+(function () {
+    const s = document.getElementById('leaderboardScroll');
+    if (!s) return;
+    document.querySelector('.lb-nav.prev')?.addEventListener('click', () => s.scrollBy({ left: -300, behavior: 'smooth' }));
+    document.querySelector('.lb-nav.next')?.addEventListener('click', () => s.scrollBy({ left:  300, behavior: 'smooth' }));
+})();
+
+/* ─── Brands ─── */
+async function loadBrands() {
+    let brands = [];
+    try {
+        const r = await fetch('/api/brands');
+        if (r.ok) {
+            brands = await r.json();
+        } else {
+            const pr = await fetch('/api/products');
+            const products = await pr.json();
+            const map = {};
+            products.forEach(p => {
+                if (p.brand) {
+                    if (!map[p.brand]) map[p.brand] = { name: p.brand, count: 0 };
+                    map[p.brand].count++;
+                }
+            });
+            brands = Object.values(map);
+        }
+    } catch (e) { console.warn('Brands load failed:', e); }
+    if (!brands.length) { document.getElementById('brandsSection').style.display = 'none'; return; }
+    renderBrandRows(brands);
+}
+
+function sizeFromCount(count) {
+    if (count >= 40) return 'sz-xl';
+    if (count >= 25) return 'sz-lg';
+    if (count >= 15) return 'sz-md';
+    return 'sz-sm';
+}
+
+function renderBrandRows(brands) {
+    const flow = document.getElementById('brandsFlow');
+    if (!flow) return;
+    const sorted = [...brands].sort((a, b) => (b.count || 0) - (a.count || 0));
+    const rowSizes = [3, 4, 3, 4, 3, 4, 3];
+    const rows = [];
+    let i = 0, r = 0;
+    while (i < sorted.length) {
+        const sz = rowSizes[r % rowSizes.length];
+        rows.push(sorted.slice(i, i + sz));
+        i += sz; r++;
+    }
+    rows.forEach(row => {
+        const rowEl = document.createElement('div');
+        rowEl.className = 'brands-row';
+        row.forEach(b => {
+            const name  = typeof b === 'string' ? b : (b.name || b.brandName || '');
+            const count = typeof b === 'object' ? (b.count || b.productCount || 0) : 0;
+            const sz    = sizeFromCount(count);
+            const card  = document.createElement('div');
+            card.className = `bc ${sz}`;
+            card.innerHTML = `
+                <div class="bc-reveal"></div>
+                <div class="bc-inner">
+                    <div class="bc-text">
+                        <span class="bc-name">${name}</span>
+                        ${count > 0 ? `<span class="bc-count">${count} ${count === 1 ? 'item' : 'items'}</span>` : ''}
+                    </div>
+                    <div class="bc-arrow">↗</div>
+                </div>`;
+            card.addEventListener('click', () => { window.location.href = `/Home/Shop?brand=${encodeURIComponent(name)}`; });
+            rowEl.appendChild(card);
+        });
+        flow.appendChild(rowEl);
+    });
+    const io = new IntersectionObserver(entries => {
+        entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in-view'); io.unobserve(e.target); } });
+    }, { threshold: 0.08 });
+    document.querySelectorAll('.brands-row').forEach(row => io.observe(row));
+}
+
+/* ─── Just For You ─── */
+let jfyAllProducts = [];
+let jfyShown = 0;
+const JFY_PAGE = 10;
+
+async function loadJustForYou() {
+    try {
+        const res = await fetch('/api/products');
+        jfyAllProducts = await res.json();
+        jfyAllProducts = jfyAllProducts
+            .filter(p => getProductImage(p))
+            .sort((a, b) => Number(b.id || 0) - Number(a.id || 0));
+        if (!jfyAllProducts.length) {
+            document.getElementById('jfySection').style.display = 'none';
+            return;
+        }
+        renderJfyCards();
+        setupJfyLoadMore();
+        setupJfyReveal();
+    } catch (e) {
+        document.getElementById('jfySection').style.display = 'none';
+    }
+}
+
+function renderJfyCards() {
+    const grid = document.getElementById('jfyGrid');
+    if (!grid) return;
+    const slice = jfyAllProducts.slice(jfyShown, jfyShown + JFY_PAGE);
+    if (!slice.length) return;
+
+    slice.forEach(p => {
+        const imageUrl = getProductImage(p);
+        const isNew  = p.isNew || p.newArrival || false;
+        const isSale = p.isOnSale || (p.originalPrice && p.originalPrice > p.price) || false;
+        const badge  = isNew ? '<span class="jfy-badge new">New</span>'
+                     : isSale ? '<span class="jfy-badge sale">Sale</span>' : '';
+        const origPrice = isSale && (p.originalPrice || p.compareAtPrice)
+            ? `<span class="jfy-price-original">${formatPeso(p.originalPrice || p.compareAtPrice)}</span>` : '';
+
+        const card = document.createElement('div');
+        card.className = 'jfy-card';
+        card.innerHTML = `
+            <div class="jfy-img-wrap">
+                <img src="${imageUrl}"
+                     alt="${p.name}"
+                     onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22400%22 height=%22533%22%3E%3Crect width=%22400%22 height=%22533%22 fill=%22%23F5F5F3%22/%3E%3C/svg%3E'">
+                ${badge}
+                <button class="jfy-quick-add" onclick="event.stopPropagation(); addToCart(${p.id}, ${p.sellerId ?? 0})">Add to Cart</button>
+            </div>
+            <div class="jfy-info">
+                <div class="jfy-brand">${p.brand || ''}</div>
+                <div class="jfy-name">${p.name}</div>
+                <div class="jfy-price-row">
+                    <span class="jfy-price">${formatPeso(p.price)}</span>
+                    ${origPrice}
+                </div>
+            </div>`;
+        card.addEventListener('click', () => { window.location.href = `/Home/Product?id=${p.id}`; });
+        grid.appendChild(card);
+    });
+
+    jfyShown += slice.length;
+
+    // Reveal animation via IntersectionObserver
+    setupJfyReveal();
+
+    // Hide load more if all shown
+    const btn = document.getElementById('jfyLoadMore');
+    if (btn) btn.disabled = jfyShown >= jfyAllProducts.length;
+}
+
+function setupJfyReveal() {
+    const io = new IntersectionObserver(entries => {
+        entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in-view'); io.unobserve(e.target); } });
+    }, { threshold: 0.08 });
+    document.querySelectorAll('.jfy-card:not(.in-view)').forEach(c => io.observe(c));
+}
+
+function setupJfyLoadMore() {
+    const btn = document.getElementById('jfyLoadMore');
+    if (!btn) return;
+    btn.addEventListener('click', () => { renderJfyCards(); });
+}
+
+function getProductImage(product) {
+    if (!product) return '';
+    const direct = product.image || product.imageUrl || '';
+    if (typeof direct === 'string' && direct.trim()) return direct.trim();
+    if (Array.isArray(product.images)) {
+        const firstImage = product.images.find(x => typeof x === 'string' && x.trim());
+        if (firstImage) return firstImage.trim();
+    }
+    if (product.colorImages && typeof product.colorImages === 'object') {
+        for (const gallery of Object.values(product.colorImages)) {
+            if (!Array.isArray(gallery)) continue;
+            const firstImage = gallery.find(x => typeof x === 'string' && x.trim());
+            if (firstImage) return firstImage.trim();
+        }
+    }
+    return '';
+}
+
+function addToCart(productId, sellerId) {
+    fetch('/api/cart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId, quantity: 1, sellerId: sellerId || 0 })
+    }).then(() => {
+        // Brief visual feedback
+        const btns = document.querySelectorAll(`.jfy-card .jfy-quick-add`);
+        // Could show a toast here
+    }).catch(console.error);
+}
+
+/* ─── Pre-orders ─── */
+async function loadPreOrders() {
+    try {
+        const p = await (await fetch('/api/products')).json();
+        const pre = p.filter(x => x.isPreOrder);
+        const w = document.getElementById('preorder-cards-wrap');
+        if (!w) return;
+        if (!pre.length) { document.getElementById('preorder-announce').style.display = 'none'; return; }
+        w.innerHTML = pre.map(p => `
+        <div class="preorder-card">
+            <div class="preorder-card-image"><img src="${p.image}" alt="${p.name}"><div class="preorder-card-badge">New Release</div></div>
+            <div class="preorder-card-body">
+                <div class="preorder-card-tag"><span class="preorder-dot-pulse"></span>Pre-Order Now</div>
+                <h2 class="preorder-card-name">${p.name}</h2>
+                <p class="preorder-card-desc">${p.description}</p>
+                <div class="preorder-card-meta-row">
+                    <div class="preorder-card-meta-item"><span class="preorder-meta-label">Price</span><span class="preorder-meta-value">${formatPeso(p.price)}</span></div>
+                    <div class="preorder-card-meta-item"><span class="preorder-meta-label">Ships</span><span class="preorder-meta-value">${p.expectedReleaseDate || 'Coming Soon'}</span></div>
+                    ${p.brand ? `<div class="preorder-card-meta-item"><span class="preorder-meta-label">Brand</span><span class="preorder-meta-value">${p.brand}</span></div>` : ''}
+                </div>
+                <div class="preorder-card-actions">
+                    <a href="/Home/Product?id=${p.id}" class="preorder-cta-btn">Pre-Order Now →</a>
+                    <a href="/Home/Product?id=${p.id}" class="preorder-details-btn">View Details</a>
+                </div>
+            </div>
+        </div>`).join('');
+    } catch (e) { document.getElementById('preorder-announce').style.display = 'none'; }
+}
+
+function formatPeso(a) { return '₱' + Number(a).toLocaleString('en-PH', { minimumFractionDigits: 2 }); }
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadBrands();
+    loadPreOrders();
+    loadJustForYou();
+});
+</script>
+}

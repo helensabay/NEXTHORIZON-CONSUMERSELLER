@@ -1,0 +1,637 @@
+@{
+    var showConsumerMessengerLink = ViewData["ShowConsumerMessengerLink"] as bool? ?? false;
+    var consumerMessengerHref = ViewData["ConsumerMessengerHref"]?.ToString() ?? "/consumer/messenger/";
+    var bodyClass = ViewData["BodyClass"]?.ToString();
+    var hasConsumerMessengerLayout = !string.IsNullOrWhiteSpace(bodyClass) && bodyClass.Contains("consumer-messenger-layout");
+    var isEmbeddedMessenger = !string.IsNullOrWhiteSpace(bodyClass) && bodyClass.Contains("consumer-messenger-embed");
+    var isLoggedIn = Context.Session.GetInt32("UserId") != null
+        || !string.IsNullOrWhiteSpace(Context.Request.Cookies["NextHorizon.SharedUserId"]);
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="NEXT HORIZON - Premium Running Gear. Engineered for Performance. Built for Runners.">
+    <meta name="theme-color" content="#000000">
+    <title>@ViewData["Title"] - NEXT HORIZON</title>
+    
+    <!-- Preconnect for Performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="//localhost">
+    
+    <!-- Premium Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="~/css/style.css" asp-append-version="true">
+    <link rel="stylesheet" href="~/css/header.css" asp-append-version="true">
+    <link rel="stylesheet" href="~/css/product-details.css" asp-append-version="true">
+    <link rel="stylesheet" href="~/css/products.css" asp-append-version="true">
+    <link rel="stylesheet" href="~/css/loading.css" asp-append-version="true">
+    @if (hasConsumerMessengerLayout)
+    {
+        <link rel="stylesheet" href="~/css/consumer-messenger.css" asp-append-version="true">
+    }
+    @if (isEmbeddedMessenger)
+    {
+        <style>
+            html, body.consumer-messenger-embed {
+                height: 100%;
+                overflow: hidden;
+                background: #f6f7fa;
+            }
+
+            body.consumer-messenger-embed .loading-overlay,
+            body.consumer-messenger-embed #main-header,
+            body.consumer-messenger-embed #search-dropdown,
+            body.consumer-messenger-embed .site-footer-dark,
+            body.consumer-messenger-embed #reviews-modal,
+            body.consumer-messenger-embed #login-modal,
+            body.consumer-messenger-embed #toast-container {
+                display: none !important;
+            }
+
+            body.consumer-messenger-embed .main-content {
+                min-height: 100vh;
+                height: 100vh;
+                padding: 0;
+                margin: 0;
+            }
+        </style>
+    }
+    @await RenderSectionAsync("Styles", required: false)
+    <script>
+        (() => {
+            const warmedOrigins = new Set();
+            const warmNavigation = href => {
+                if (!href) {
+                    return;
+                }
+
+                try {
+                    const url = new URL(href, window.location.origin);
+                    if (url.origin === window.location.origin || warmedOrigins.has(url.origin)) {
+                        return;
+                    }
+
+                    warmedOrigins.add(url.origin);
+
+                    const preconnect = document.createElement('link');
+                    preconnect.rel = 'preconnect';
+                    preconnect.href = url.origin;
+                    document.head.appendChild(preconnect);
+
+                    const prefetch = document.createElement('link');
+                    prefetch.rel = 'prefetch';
+                    prefetch.as = 'document';
+                    prefetch.href = url.href;
+                    document.head.appendChild(prefetch);
+                } catch {
+                }
+            };
+
+            const handleWarmEvent = event => {
+                const anchor = event.target.closest?.('a[href]');
+                if (anchor) {
+                    warmNavigation(anchor.href);
+                }
+            };
+
+            document.addEventListener('pointerenter', handleWarmEvent, true);
+            document.addEventListener('focusin', handleWarmEvent, true);
+            document.addEventListener('touchstart', handleWarmEvent, true);
+        })();
+    </script>
+</head>
+<body class="@bodyClass">
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-mark" aria-hidden="true">
+            <div class="loading-ring"></div>
+            <i class="fas fa-running loading-icon" aria-hidden="true"></i>
+        </div>
+        <div class="loading-text">Next Horizon</div>
+        <div class="loading-bar-shell" aria-hidden="true">
+            <div class="loading-bar"></div>
+        </div>
+        <div class="loading-tagline">Engineered for performance</div>
+    </div>
+    <!-- â”€â”€ Main Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+    <header id="main-header">
+        <!-- Top Row: Logo â€” Search â€” Icons -->
+        <div class="header-inner">
+            <div class="header-top">
+                <div class="logo">
+                    <a href="/"><img src="/logo.png" alt="NEXT HORIZON" class="header-logo-img"></a>
+                </div>
+
+                <div class="hdr-search-wrap" id="hdr-search-wrap">
+                    <button class="hdr-search-bar" id="search-toggle-btn" onclick="openSearchOverlay()" aria-label="Search">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        <span>Search</span>
+                    </button>
+                    <div class="hdr-search-active" id="hdr-search-active">
+                        <svg class="hdr-sa-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        <input type="search" id="search-overlay-input" class="hdr-sa-input" placeholder="Search" autocomplete="off" spellcheck="false" oninput="handleSearchInput(this.value)">
+                        <button class="hdr-sa-clear" onclick="clearOrCloseSearch()" aria-label="Close search">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="header-actions">
+                    @if (isLoggedIn)
+                    {
+                    <a class="hdr-icon-btn"
+                       id="header-consumer-messenger-link"
+                       aria-label="Messages"
+                       title="Messages"
+                       href="@consumerMessengerHref">
+                        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                        </svg>
+                    </a>
+                    }
+                    <a href="/Home/Cart" class="hdr-icon-btn" aria-label="Shopping Cart">
+                        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                        <span id="cart-count" class="hdr-badge">0</span>
+                    </a>
+                    <div class="notif-wrap" id="notif-wrap">
+                        <button class="hdr-icon-btn notif-btn" id="notif-btn" onclick="toggleNotifDropdown()" aria-label="Notifications">
+                            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                            <span class="notif-dot" id="notif-dot"></span>
+                        </button>
+                        <div class="notif-dropdown" id="notif-dropdown">
+                            <div class="notif-header">
+                                <span>Notifications</span>
+                                <button class="notif-clear-btn" onclick="clearNotifications()">Clear all</button>
+                            </div>
+                            <ul class="notif-list" id="notif-list"></ul>
+                        </div>
+                    </div>
+                    @if (isLoggedIn)
+                    {
+                        <div class="profile-dropdown-wrap">
+                            <button class="hdr-icon-btn" aria-label="Account">
+                                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            </button>
+                            <div class="profile-dropdown">
+                                <a asp-controller="Home" asp-action="MyProfile" class="profile-dropdown-item">View Profile</a>
+                                <a asp-controller="Home" asp-action="Logout" class="profile-dropdown-item">Logout</a>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Row: Navigation -->
+        <div class="header-nav-bar">
+            <div class="header-inner">
+                <nav class="mega-nav" id="main-nav" aria-label="Main navigation">
+                    <div class="mega-item">
+                        <a href="/Home/Challenges" class="mega-link">Challenges</a>
+                    </div>
+                    <div class="mega-item">
+                        <a href="/Home/Shop?q=sale" class="mega-link mega-link--sale">Sale</a>
+                    </div>
+                    <div class="mega-item">
+                        <a href="/Home/Shop?q=next+horizon+products" class="mega-link">Next Horizon Products</a>
+                    </div>
+                    <div class="mega-item">
+                        <a href="/Home/Shop?gender=men" class="mega-link">Men</a>
+                        <div class="mega-panel mega-panel--3col">
+                            <div class="mega-col">
+                                <h4 class="mega-col-title">Shoes</h4>
+                                <a href="/Home/Shop?gender=men&cat=road-running">Road Running</a>
+                                <a href="/Home/Shop?gender=men&cat=trail-running">Trail Running</a>
+                                <a href="/Home/Shop?gender=men&cat=racing">Racing</a>
+                            </div>
+                            <div class="mega-col">
+                                <h4 class="mega-col-title">Apparel</h4>
+                                <a href="/Home/Shop?gender=men&cat=shirts">Shirts</a>
+                                <a href="/Home/Shop?gender=men&cat=singlets">Singlets</a>
+                                <a href="/Home/Shop?gender=men&cat=shorts">Shorts</a>
+                                <a href="/Home/Shop?gender=men&cat=tights">Tights</a>
+                            </div>
+                            <div class="mega-col">
+                                <h4 class="mega-col-title">Accessories</h4>
+                                <a href="/Home/Shop?gender=men&cat=socks">Socks</a>
+                                <a href="/Home/Shop?gender=men&cat=caps">Caps</a>
+                                <a href="/Home/Shop?gender=men&cat=sunglasses">Sunglasses</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mega-item">
+                        <a href="/Home/Shop?gender=women" class="mega-link">Women</a>
+                        <div class="mega-panel mega-panel--3col">
+                            <div class="mega-col">
+                                <h4 class="mega-col-title">Shoes</h4>
+                                <a href="/Home/Shop?gender=women&cat=road-running">Road Running</a>
+                                <a href="/Home/Shop?gender=women&cat=trail-running">Trail Running</a>
+                                <a href="/Home/Shop?gender=women&cat=racing">Racing</a>
+                            </div>
+                            <div class="mega-col">
+                                <h4 class="mega-col-title">Apparel</h4>
+                                <a href="/Home/Shop?gender=women&cat=shirts">Shirts</a>
+                                <a href="/Home/Shop?gender=women&cat=singlets">Singlets</a>
+                                <a href="/Home/Shop?gender=women&cat=shorts">Shorts</a>
+                                <a href="/Home/Shop?gender=women&cat=tights">Tights &amp; Leggings</a>
+                                <a href="/Home/Shop?gender=women&cat=sports-bras">Sports Bras</a>
+                            </div>
+                            <div class="mega-col">
+                                <h4 class="mega-col-title">Accessories</h4>
+                                <a href="/Home/Shop?gender=women&cat=socks">Socks</a>
+                                <a href="/Home/Shop?gender=women&cat=caps">Caps</a>
+                                <a href="/Home/Shop?gender=women&cat=sunglasses">Sunglasses</a>
+                                <a href="/Home/Shop?gender=women&cat=hair-accessories">Hair Accessories</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mega-item">
+                        <a href="/Home/Shop?q=flash+deals" class="mega-link">Flash Deals</a>
+                    </div>
+                    <div class="mega-item">
+                        <a href="/Home/Shop?q=free+shipping" class="mega-link">Free Shipping</a>
+                    </div>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- â”€â”€ Adidas-style Search Dropdown â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+    <div id="search-dropdown" class="search-dropdown" role="dialog" aria-label="Search">
+        <div class="search-dropdown-panel">
+            <!-- Popular chips â€” shown when no query -->
+            <div class="search-popular-wrap" id="search-popular-wrap">
+                <p class="search-popular-label">Popular Search Terms</p>
+                <div class="search-chips">
+                    <a href="/Home/Shop?q=running+shoes" class="search-chip">Running Shoes</a>
+                    <a href="/Home/Shop?q=trail" class="search-chip">Trail</a>
+                    <a href="/Home/Shop?q=carbon+racer" class="search-chip">Carbon Racer</a>
+                    <a href="/Home/Shop?q=new+arrivals" class="search-chip">New Arrivals</a>
+                    <a href="/Home/Shop?q=puma" class="search-chip">Puma</a>
+                    <a href="/Home/Shop?q=sale" class="search-chip">Sale</a>
+                    <a href="/Home/Shop?q=lightweight" class="search-chip">Lightweight</a>
+                    <a href="/Home/Shop?q=basketball" class="search-chip">Basketball Shoes</a>
+                </div>
+            </div>
+            <!-- Two-column results â€” shown when query exists -->
+            <div class="search-results-cols" id="search-results-cols">
+                <div class="search-sug-col">
+                    <h3 class="search-col-title">Suggestions</h3>
+                    <ul class="search-sug-list" id="search-sug-list"></ul>
+                    <a class="search-see-all" id="search-see-all" href="/Home/Shop">See all &quot;&quot;</a>
+                </div>
+                <div class="search-prod-col">
+                    <h3 class="search-col-title">Products</h3>
+                    <div class="search-prod-list" id="search-prod-list"></div>
+                </div>
+            </div>
+        </div>
+        <div class="search-dropdown-backdrop" onclick="closeSearchOverlay()"></div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        @RenderBody()
+    </main>
+
+    <!-- Reviews Modal -->
+    <div id="reviews-modal" class="modal" role="dialog" aria-labelledby="reviews-title" aria-modal="true">
+        <div class="modal-content reviews-modal-content">
+            <div class="modal-header">
+                <h2 id="reviews-title">Customer Reviews</h2>
+                <button class="close-btn" onclick="closeReviewsModal()" aria-label="Close reviews">&times;</button>
+            </div>
+            <div class="reviews-modal-body">
+                <div class="reviews-grid" id="all-reviews-grid"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="login-modal" class="modal" role="dialog" aria-labelledby="login-title" aria-modal="true">
+        <div class="modal-content login-modal">
+            <button class="modal-close-floating" onclick="closeLoginModal()" aria-label="Close">&times;</button>
+            <div class="login-content">
+                <h2 id="login-title">Welcome Back</h2>
+                <p class="login-subtitle">Sign in to your account</p>
+                <form class="login-form" onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" placeholder="Enter your email" autocomplete="username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" placeholder="Enter your password" autocomplete="current-password" required>
+                    </div>
+                    <button type="submit" class="login-submit">Sign In</button>
+                </form>
+                <p class="login-footer">Don't have an account? <a href="#" onclick="toggleRegister()">Sign Up</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.nextHorizonLoginAppUrl = "/Account/Login";
+    </script>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+    <footer class="site-footer-dark">
+        <div class="footer-inner">
+            <div class="footer-col brand">
+                <a class="logo" href="/" aria-label="NEXT HORIZON">
+                    <span class="logo-box" aria-hidden="true"></span>
+                </a>
+                <p class="muted">Engineered for Performance.<br>Built for Runners.</p>
+            </div>
+
+            <div class="footer-col">
+                <h6 class="col-title">SHOP</h6>
+                <ul>
+                    <li><a href="/Home/Shop">All Products</a></li>
+                    <li><a href="/Home/Shop?cat=men">Men</a></li>
+                    <li><a href="/Home/Shop?cat=women">Women</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-col">
+                <h6 class="col-title">COMPANY</h6>
+                <ul>
+                    <li><a href="/Home/About">About Us</a></li>
+                    <li><a href="/Help/Contact">Contact</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-col">
+                <h6 class="col-title">SUPPORT</h6>
+                <ul>
+                    <li><a href="/Help">Help Center</a></li>
+                    <li><a href="/Home/Returns">Returns</a></li>
+                    <li><a href="/Home/Shipping">Shipping</a></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="footer-divider"></div>
+
+        <div class="footer-bottom">
+            <div class="copyright">Â© 2026 NEXT HORIZON. All rights reserved.</div>
+        </div>
+
+        <style>
+                .site-footer-dark {
+                    background: #000;
+                    color: #bfbfbf;
+                    padding: 44px 20px 18px;
+                    border-top: 0;
+                    position: relative;
+                }
+
+                /* thin blue accent line at very bottom (matches screenshot) */
+                .site-footer-dark::after {
+                    content: '';
+                    display: block;
+                    height: 6px;
+                    background: #0f4a87;
+                    position: absolute;
+                    left: 0;
+                    right: 0;
+                    bottom: -6px;
+                }
+
+                .footer-inner {
+                    max-width: 1200px;
+                    margin: 0 auto;
+                    display: flex;
+                    gap: 40px;
+                    align-items: flex-start;
+                }
+
+                .footer-col {
+                    flex: 1;
+                    min-width: 120px;
+                }
+
+                .footer-col.brand {
+                    flex: 2;
+                }
+
+                .logo-box {
+                    display: inline-block;
+                    width: 80px;
+                    height: 28px;
+                    background: #fff;
+                    border-radius: 2px;
+                    margin-bottom: 12px;
+                }
+
+                .muted {
+                    color: #9b9b9b;
+                    margin: 8px 0 0;
+                    font-size: 13px;
+                    line-height: 1.5;
+                }
+
+                .col-title {
+                    color: #6b6b6b;
+                    font-size: 12px;
+                    letter-spacing: 2px;
+                    margin: 4px 0 10px;
+                    font-weight: 700;
+                }
+
+                .footer-col ul {
+                    list-style: none;
+                    padding: 0;
+                    margin: 0;
+                }
+
+                .footer-col ul li {
+                    margin: 8px 0;
+                }
+
+                .footer-col a {
+                    color: #bfbfbf;
+                    text-decoration: none;
+                    font-size: 14px;
+                }
+
+                .footer-col a:hover {
+                    color: #fff;
+                    text-decoration: underline;
+                }
+
+                .footer-divider {
+                    border-top: 1px solid rgba(255, 255, 255, 0.06);
+                    margin: 22px 0;
+                    max-width: 1200px;
+                    margin-left: auto;
+                    margin-right: auto;
+                }
+
+                .footer-bottom {
+                    max-width: 1200px;
+                    margin: 0 auto;
+                    text-align: center;
+                    padding-top: 12px;
+                    color: #6b6b6b;
+                    font-size: 13px;
+                }
+
+                @@media (max-width:900px) {
+                    .footer-inner {
+                        flex-direction: column;
+                        gap: 18px;
+                    }
+
+                    .footer-col.brand {
+                        order: -1;
+                    }
+                }
+
+                /* QUICK ACTIONS STYLE */
+                .quick-actions-group {
+                    margin-bottom: 16px;
+                }
+
+                .quick-actions-label {
+                    font-size: 12px;
+                    font-weight: 600;
+                    color: #888;
+                    letter-spacing: 1px;
+                    text-transform: uppercase;
+                    margin-bottom: 8px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                }
+
+                .quick-actions-label span {
+                    display: flex;
+                    align-items: center;
+                }
+
+                .quick-actions-toggle {
+                    background: none;
+                    border: none;
+                    color: #0066cc;
+                    font-size: 12px;
+                    cursor: pointer;
+                    padding: 0;
+                    text-decoration: underline;
+                }
+
+                .quick-actions-toggle:hover {
+                    color: #0052a3;
+                }
+
+                .quick-actions-container {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 8px;
+                    margin-bottom: 12px;
+                }
+
+                .quick-action-btn {
+                    padding: 6px 14px;
+                    background: #1a1a1a;
+                    border: 1px solid #333;
+                    border-radius: 4px;
+                    color: #fff;
+                    font-size: 12px;
+                    font-weight: 500;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                    white-space: nowrap;
+                }
+
+                .quick-action-btn:hover {
+                    background: #0f4a87;
+                    border-color: #0f4a87;
+                    box-shadow: 0 2px 8px rgba(15, 74, 135, 0.3);
+                }
+
+                .quick-action-btn:active {
+                    transform: scale(0.98);
+                }
+
+                .form-input-wrapper {
+                    position: relative;
+                }
+
+                .form-input-wrapper input,
+                .form-input-wrapper textarea,
+                .form-input-wrapper select {
+                    width: 100%;
+                    padding: 10px 12px;
+                    border: 1px solid #ddd;
+                    border-radius: 6px;
+                    font-size: 14px;
+                    font-family: inherit;
+                }
+
+                .form-input-wrapper input:focus,
+                .form-input-wrapper textarea:focus,
+                .form-input-wrapper select:focus {
+                    outline: none;
+                    border-color: #0f4a87;
+                    box-shadow: 0 0 0 3px rgba(15, 74, 135, 0.1);
+                }
+
+                @@media (max-width: 600px) {
+                    .quick-actions-container {
+                        gap: 6px;
+                    }
+
+                    .quick-action-btn {
+                        padding: 5px 10px;
+                        font-size: 11px;
+                    }
+                }
+        </style>
+    </footer>
+
+    <script src="~/js/app.js" asp-append-version="true"></script>
+    <script src="~/js/loading.js" asp-append-version="true"></script>
+    <script>
+        window.setConsumerMessengerHeaderLink = function (href) {
+            const link = document.getElementById('header-consumer-messenger-link');
+            if (!link) return;
+
+            if (!href) {
+                link.style.display = 'none';
+                link.removeAttribute('href');
+                return;
+            }
+
+            link.href = href;
+            link.style.display = 'inline-flex';
+        };
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+
+    <!-- Review Image Slideshow Lightbox -->
+    <div class="rv-lightbox" id="rv-lightbox">
+        <div class="rv-lightbox-backdrop" onclick="closeReviewSlideshow()"></div>
+        <button class="rv-lightbox-close" onclick="closeReviewSlideshow()" aria-label="Close">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+        <button class="rv-slide-arrow rv-slide-prev" onclick="slideshowNav(-1)" aria-label="Previous">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <div class="rv-lightbox-stage">
+            <img class="rv-lightbox-img" id="rv-lightbox-img" src="" alt="Review photo">
+        </div>
+        <button class="rv-slide-arrow rv-slide-next" onclick="slideshowNav(1)" aria-label="Next">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+        <div class="rv-slide-counter" id="rv-slide-counter"></div>
+    </div>
+</body>
+</html>

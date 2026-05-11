@@ -1,0 +1,42 @@
+@{
+    var suppressGlobalHelpCenter = ViewData["SuppressGlobalHelpCenter"] as bool? ?? false;
+    var isAuthenticated = User?.Identity?.IsAuthenticated ?? false;
+    var helpCenterDrawerUrl = Url.Action("HelpCenterDrawer", "Dashboard") ?? "/Dashboard/HelpCenterDrawer";
+    var helpCenterPageUrl = Url.Action("HelpCenter", "Dashboard") ?? "/Dashboard/HelpCenter";
+}
+@if (!suppressGlobalHelpCenter && isAuthenticated)
+{
+    <div class="global-help-center" data-help-center-root data-help-center-src="@helpCenterDrawerUrl" data-help-center-page="@helpCenterPageUrl">
+        <button type="button" class="global-help-center__trigger" data-help-center-open aria-label="Open Help Center" aria-haspopup="dialog" aria-expanded="false">
+            <span class="global-help-center__icon">
+                <i class="fas fa-headset" aria-hidden="true"></i>
+            </span>
+            <span class="global-help-center__label">Help Center</span>
+        </button>
+
+        <div class="global-help-center__overlay" data-help-center-overlay hidden></div>
+
+        <section class="global-help-center__panel" data-help-center-panel role="dialog" aria-modal="true" aria-labelledby="globalHelpCenterTitle" hidden>
+            <header class="global-help-center__header">
+                <div>
+                    <p class="global-help-center__eyebrow">Support</p>
+                    <h2 id="globalHelpCenterTitle">Help Center</h2>
+                </div>
+                <div class="global-help-center__actions">
+                    <a class="global-help-center__link" href="@helpCenterPageUrl" target="_blank" rel="noopener">Open page</a>
+                    <button type="button" class="global-help-center__close" data-help-center-close aria-label="Close Help Center">
+                        <i class="fas fa-xmark" aria-hidden="true"></i>
+                    </button>
+                </div>
+            </header>
+
+            <div class="global-help-center__body">
+                <div class="global-help-center__loading" data-help-center-loading>
+                    <span class="global-help-center__spinner" aria-hidden="true"></span>
+                    <span>Loading Help Center...</span>
+                </div>
+                <iframe class="global-help-center__frame" data-help-center-frame title="Help Center" loading="lazy"></iframe>
+            </div>
+        </section>
+    </div>
+}

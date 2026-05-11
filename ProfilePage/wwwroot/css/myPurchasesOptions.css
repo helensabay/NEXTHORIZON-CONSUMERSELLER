@@ -1,0 +1,352 @@
+﻿/*myPurchaseOptions.css Import Poppins */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+
+* {
+    font-family: 'Poppins', sans-serif !important;
+}
+
+/* --- CORE LAYOUT --- */
+.profile-layout-container {
+    display: flex;
+    width: 100%;
+    min-height: 100vh;
+    background-color: #f5f5f5;
+    font-family: 'Poppins', sans-serif;
+}
+
+.sidebar-wrapper {
+    width: 280px;
+    flex-shrink: 0;
+    background-color: #fff;
+    border-right: 1px solid #eee;
+}
+
+.main-content-wrapper {
+    flex: 1;
+    padding: 20px 40px; /* Adjust side padding as you like */
+    display: block; /* Changed from 'flex' to 'block' to stop centering */
+}
+
+.account-details-full-width {
+    width: 100%;
+    max-width: none; /* Removed the 1100px restriction */
+}
+
+/* --- VIEW ALL HISTORY LINK --- */
+.purchase-history-link {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 15px;
+}
+
+    .purchase-history-link a {
+        text-decoration: none;
+        color: #555;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        transition: color 0.2s;
+    }
+
+        .purchase-history-link a:hover {
+            color: #000;
+        }
+
+/* --- UPDATED TAB NAVBAR --- */
+.order-status-navbar {
+    background-color: #fff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0;
+    margin-bottom: 20px;
+    border-radius: 4px;
+    box-shadow: 0 1px 1px rgba(0,0,0,0.05);
+    /* Keep horizontal scroll for mobile */
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    border-bottom: 1px solid #eee;
+}
+
+    .order-status-navbar::-webkit-scrollbar {
+        display: none;
+    }
+
+/* Changed to handle <a> tags correctly */
+.status-item {
+    flex: 1;
+    min-width: 120px;
+    text-align: center;
+    padding: 16px 10px;
+    cursor: pointer;
+    position: relative;
+    color: #555; /* Neutral grey for inactive */
+    font-size: 0.95rem;
+    text-decoration: none; /* Removes <a> underline */
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+    .status-item:hover {
+        color: #000;
+    }
+
+    /* The active state logic */
+    .status-item.active {
+        color: #000; /* Text turns black */
+        font-weight: 600;
+    }
+
+        /* The black underline indicator */
+        .status-item.active::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 3px; /* Slightly thicker for better visibility */
+            background-color: #000;
+        }
+
+/* --- MOBILE RESPONSIVENESS --- */
+@media (max-width: 992px) {
+    .profile-layout-container {
+        flex-direction: column;
+    }
+
+    .sidebar-wrapper {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid #eee;
+    }
+
+    .main-content-wrapper {
+        padding: 15px;
+    }
+
+    .order-status-navbar {
+        border-radius: 0;
+    }
+
+    .status-item {
+        min-width: 100px; /* Snugger fit for mobile screens */
+        padding: 14px 5px;
+        font-size: 0.85rem;
+    }
+}
+
+
+/* --- OVERLAY & MODAL STRUCTURE --- */
+.custom-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: none; /* Hidden by default */
+    z-index: 1050;
+    align-items: center;
+    justify-content: center;
+}
+
+    .custom-overlay.active {
+        display: flex; /* Show when active class is added */
+    }
+
+.overlay-backdrop {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(2px);
+}
+
+.custom-modal-content {
+    position: relative;
+    background: #fff;
+    width: 100%;
+    max-width: 480px;
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    animation: modalPop 0.25s ease-out;
+}
+
+@keyframes modalPop {
+    from {
+        transform: scale(0.95);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* --- BANNER & SECTIONS --- */
+.mono-status-banner {
+    background: #000;
+    color: #fff;
+    padding: 25px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+    .mono-status-banner i {
+        font-size: 2.2rem;
+        opacity: 0.8;
+    }
+
+.app-modal-scrollable {
+    padding: 20px 30px;
+    max-height: 75vh;
+    overflow-y: auto;
+}
+
+.section-title {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #888;
+    margin-bottom: 15px;
+}
+
+/* --- PAYMENT & SUMMARY --- */
+.payment-display-box {
+    background: #f8f9fa;
+    padding: 12px;
+    border-left: 4px solid #000;
+    margin: 15px 0;
+}
+
+.app-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.total-price-mono {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #000;
+}
+
+/* --- BUTTONS & INPUTS --- */
+.mono-copy-btn {
+    background: #eee;
+    border: none;
+    padding: 2px 10px;
+    font-size: 0.7rem;
+    border-radius: 4px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-mono-close {
+    background: #fff;
+    color: #000;
+    border: none;
+    width: 100%;
+    padding: 18px;
+    font-weight: 700;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+.mono-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-top: 10px;
+    display: block;
+}
+
+.mono-input, .mono-select {
+    width: 100%;
+    border: 1px solid #ddd;
+    padding: 8px;
+    font-size: 0.9rem;
+    border-radius: 2px;
+}
+
+.d-none {
+    display: none !important;
+}
+
+
+/* Edit Button Styling */
+.mono-edit-link {
+    background: #f0f0f0;
+    border: 1px solid #ddd;
+    color: #333;
+    padding: 2px 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 4px;
+    cursor: pointer;
+    text-transform: none;
+    transition: all 0.2s;
+}
+
+    .mono-edit-link:hover {
+        background: #000;
+        color: #fff;
+        border-color: #000;
+    }
+
+/* Modal Content Container */
+.custom-modal-content {
+    position: relative;
+    background: #fff;
+    width: 95%;
+    max-width: 450px;
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh; /* Prevents modal from going off-screen */
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+/* Ensure the scrollable area doesn't swallow the footer */
+.app-modal-scrollable {
+    padding: 20px 25px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+/* Fixed Footer for the Close Button */
+.app-modal-footer {
+    padding: 15px 25px;
+    background: #fff;
+    border-top: 1px solid #eee;
+    z-index: 10;
+}
+
+.btn-mono-close {
+    background: #000;
+    color: #fff;
+    border: none;
+    width: 100%;
+    padding: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    display: block;
+}
+
+/* Payment Box from your screenshot */
+.payment-display-box {
+    background: #f9f9f9;
+    padding: 12px;
+    border-left: 3px solid #000;
+    margin: 15px 0;
+}

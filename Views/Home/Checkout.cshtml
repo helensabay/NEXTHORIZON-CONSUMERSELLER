@@ -1,0 +1,596 @@
+@model MyAspNetApp.Models.CheckoutViewModel
+
+@{
+    ViewData["Title"] = "Checkout";
+}
+
+@section Styles {
+<style>
+    .checkout-page { max-width: 900px; margin: 0 auto; padding: 40px 24px 80px; }
+    .checkout-title {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 30px; font-weight: 700; letter-spacing: 2px;
+        text-align: center; margin-bottom: 8px; text-transform: uppercase;
+    }
+
+    /* ── Steps ── */
+    .steps {
+        display: flex; align-items: center; justify-content: center;
+        gap: 0; margin-bottom: 40px;
+    }
+    .step { font-size: 13px; color: #aaa; font-weight: 500; }
+    .step.done   { color: #0a0a0a; font-weight: 600; }
+    .step.active { color: #0a0a0a; font-weight: 700; }
+    .step-sep { width: 56px; height: 1.5px; background: #d4d4d4; margin: 0 10px; }
+    .step-sep.done { background: #0a0a0a; }
+
+    /* ── Layout ── */
+    .checkout-layout { display: flex; gap: 28px; align-items: flex-start; }
+    .checkout-form-col { flex: 1; min-width: 0; }
+
+    /* ── Form Sections ── */
+    .form-section { margin-bottom: 28px; }
+    .form-section-title { font-size: 15px; font-weight: 700; margin-bottom: 16px; letter-spacing: .3px; }
+    .form-section-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+    .address-picker-btn {
+        border: 1.5px solid #0a0a0a;
+        background: #fff;
+        color: #0a0a0a;
+        padding: 8px 14px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: .5px;
+        cursor: pointer;
+    }
+    .form-row { display: flex; gap: 12px; margin-bottom: 12px; }
+    .form-group { display: flex; flex-direction: column; gap: 5px; flex: 1; }
+    .form-label {
+        font-size: 11px; font-weight: 700; color: #3a3a3a;
+        letter-spacing: .6px; text-transform: uppercase;
+    }
+    .form-input {
+        border: 1.5px solid #d4d4d4; border-radius: 6px;
+        padding: 11px 13px; font-size: 13px;
+        font-family: 'Inter', sans-serif; outline: none;
+        transition: border-color .15s;
+    }
+    .form-input:focus { border-color: #0a0a0a; }
+    .form-input.is-invalid { border-color: #ef4444; }
+    .field-error { font-size: 11px; color: #ef4444; margin-top: 2px; }
+
+    /* ── Delivery Options ── */
+    .delivery-grid { display: flex; gap: 12px; }
+    .delivery-option {
+        flex: 1; border: 1.5px solid #d4d4d4; border-radius: 8px;
+        padding: 14px; cursor: pointer; transition: border-color .15s;
+        display: flex; align-items: flex-start; gap: 10px;
+    }
+    .delivery-option:has(input:checked) { border-color: #0a0a0a; }
+    .delivery-option input[type="radio"] { accent-color: #0a0a0a; margin-top: 2px; flex-shrink: 0; }
+    .delivery-label { font-size: 13px; font-weight: 700; }
+    .delivery-meta { font-size: 12px; color: #888; margin-top: 2px; }
+    .delivery-price { font-size: 13px; font-weight: 600; margin-top: 4px; }
+
+    /* ── Summary Sidebar ── */
+    .checkout-summary {
+        width: 280px; flex-shrink: 0;
+        border: 1.5px solid #e8e8e8; border-radius: 10px;
+        padding: 22px; height: fit-content;
+        position: sticky; top: 100px;
+    }
+    .summary-title { font-weight: 700; font-size: 15px; margin-bottom: 18px; }
+    .summary-item { display: flex; gap: 10px; margin-bottom: 14px; align-items: flex-start; }
+    .summary-item-img {
+        width: 48px; height: 48px; border-radius: 6px;
+        object-fit: cover; background: #f5f5f5; flex-shrink: 0;
+    }
+    .summary-item-info { flex: 1; min-width: 0; }
+    .summary-item-name { font-size: 13px; font-weight: 600; }
+    .summary-item-sub  { font-size: 11px; color: #888; margin-top: 2px; }
+    .summary-item-qty {
+        display: inline-flex; align-items: center; justify-content: center;
+        background: #f0f0f0; border-radius: 4px;
+        padding: 1px 7px; font-size: 12px; font-weight: 700;
+        color: #0a0a0a; margin-top: 5px;
+    }
+    .summary-item-price { margin-left: auto; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+    .summary-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 8px; }
+    .summary-row.discount-row { color: #15803d; font-weight: 700; }
+    .summary-divider { border: none; border-top: 1px solid #e8e8e8; margin: 12px 0; }
+    .summary-total { display: flex; justify-content: space-between; font-size: 16px; font-weight: 700; margin-bottom: 18px; }
+    .summary-section-title {
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: .4px;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+    }
+    .summary-vouchers { margin: 14px 0; }
+    .checkout-summary .voucher-card {
+        padding: 10px 12px;
+        margin-bottom: 8px;
+    }
+    .checkout-summary .voucher-card:last-child { margin-bottom: 0; }
+
+    /* ── Payment Method ── */
+    .payment-option {
+        border: 1.5px solid #d4d4d4; border-radius: 6px;
+        padding: 14px; margin-bottom: 10px; cursor: pointer;
+        transition: border-color .15s;
+    }
+    .payment-option:has(input:checked) { border-color: #0a0a0a; }
+    .payment-option-header { display: flex; align-items: center; gap: 10px; }
+    .payment-option-header input[type="radio"] { accent-color: #0a0a0a; }
+    .payment-option-label { font-size: 13px; font-weight: 600; }
+    .card-icons { margin-left: auto; display: flex; gap: 6px; }
+    .card-icon {
+        width: 34px; height: 22px; background: #d4d4d4;
+        border-radius: 3px; display: flex; align-items: center; justify-content: center;
+        font-size: 8px; font-weight: 700; color: #3a3a3a;
+    }
+    .card-fields { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+    .card-row { display: flex; gap: 10px; }
+    .voucher-card {
+        border: 1.5px solid #d4d4d4;
+        border-radius: 8px;
+        padding: 12px 14px;
+        margin-bottom: 10px;
+    }
+    .voucher-card label {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        cursor: pointer;
+    }
+    .voucher-name { font-size: 13px; font-weight: 700; }
+    .voucher-meta { font-size: 12px; color: #666; margin-top: 3px; }
+    .voucher-discount { font-size: 12px; font-weight: 700; color: #15803d; margin-top: 5px; }
+    .address-modal {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: rgba(10,10,10,.45);
+        z-index: 1050;
+        padding: 20px;
+    }
+    .address-modal.show { display: flex; }
+    .address-modal-card {
+        width: min(100%, 620px);
+        max-height: 85vh;
+        overflow: auto;
+        background: #fff;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 24px 60px rgba(0,0,0,.18);
+    }
+    .address-modal-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 18px;
+    }
+    .address-modal-title { font-size: 18px; font-weight: 700; }
+    .address-modal-close {
+        border: none;
+        background: none;
+        font-size: 24px;
+        line-height: 1;
+        cursor: pointer;
+        color: #555;
+    }
+    .address-option-card {
+        border: 1.5px solid #d4d4d4;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 12px;
+        cursor: pointer;
+        transition: border-color .15s, transform .15s;
+    }
+    .address-option-card:hover {
+        border-color: #0a0a0a;
+        transform: translateY(-1px);
+    }
+    .address-option-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 8px;
+    }
+    .address-option-label { font-size: 12px; font-weight: 700; letter-spacing: .5px; }
+    .address-option-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 8px;
+        border-radius: 999px;
+        background: #0a0a0a;
+        color: #fff;
+        font-size: 10px;
+        font-weight: 700;
+    }
+    .address-option-name { font-size: 14px; font-weight: 700; margin-bottom: 3px; }
+    .address-option-phone,
+    .address-option-line { font-size: 12px; color: #666; }
+
+    .place-order-btn {
+        width: 100%; background: #0a0a0a; color: #fff;
+        border: none; padding: 14px; font-size: 14px; font-weight: 700;
+        border-radius: 7px; cursor: pointer; font-family: 'Inter', sans-serif;
+        transition: background .2s; letter-spacing: .5px;
+    }
+    .place-order-btn:hover { background: #333; }
+    .secure-note { text-align: center; font-size: 11px; color: #888; margin-top: 8px; }
+
+    @@media (max-width: 700px) {
+        .checkout-layout { flex-direction: column; }
+        .checkout-summary { width: 100%; position: static; }
+        .delivery-grid { flex-direction: column; }
+    }
+</style>
+}
+
+<div class="checkout-page">
+    <div class="checkout-title">Checkout</div>
+
+    <!-- Breadcrumb Steps -->
+    <div class="steps">
+        <span class="step done">Cart</span>
+        <div class="step-sep done"></div>
+        <span class="step active">Checkout</span>
+        <div class="step-sep"></div>
+        <span class="step">Confirmation</span>
+    </div>
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div style="background:#fef2f2;border:1px solid #fca5a5;color:#b91c1c;padding:12px 16px;border-radius:7px;margin-bottom:20px;font-size:13px;">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <form method="post" asp-controller="Home" asp-action="PlaceOrder">
+        @Html.AntiForgeryToken()
+
+        <div class="checkout-layout">
+
+            <!-- ── FORM COLUMN ── -->
+            <div class="checkout-form-col">
+
+                <!-- Shipping Info -->
+                <div class="form-section">
+                    <div class="form-section-head">
+                        <div class="form-section-title" style="margin-bottom:0;">Shipping Information</div>
+                        <button type="button" class="address-picker-btn" onclick="openAddressPicker()">DEFAULT ADDRESS</button>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group" style="flex:1 1 100%;">
+                            <label class="form-label" asp-for="FullName">Full Name</label>
+                            <input class="form-input @(ViewData.ModelState["FullName"]?.Errors.Any() == true ? "is-invalid" : "")"
+                                   asp-for="FullName" placeholder="Juan dela Cruz" />
+                            <span class="field-error">@Html.ValidationMessageFor(m => m.FullName)</span>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" asp-for="Email">Email Address</label>
+                            <input class="form-input @(ViewData.ModelState["Email"]?.Errors.Any() == true ? "is-invalid" : "")"
+                                   asp-for="Email" placeholder="juan@example.com" />
+                            <span class="field-error">@Html.ValidationMessageFor(m => m.Email)</span>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" asp-for="Phone">Phone Number</label>
+                            <input class="form-input @(ViewData.ModelState["Phone"]?.Errors.Any() == true ? "is-invalid" : "")"
+                                   asp-for="Phone" placeholder="+63 900 000 0000" />
+                            <span class="field-error">@Html.ValidationMessageFor(m => m.Phone)</span>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group" style="flex:1 1 100%;">
+                            <label class="form-label" asp-for="Address">Address</label>
+                            <input class="form-input @(ViewData.ModelState["Address"]?.Errors.Any() == true ? "is-invalid" : "")"
+                                   asp-for="Address" placeholder="123 Rizal St, Apt 4B" />
+                            <span class="field-error">@Html.ValidationMessageFor(m => m.Address)</span>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" asp-for="City">City</label>
+                            <input class="form-input @(ViewData.ModelState["City"]?.Errors.Any() == true ? "is-invalid" : "")"
+                                   asp-for="City" placeholder="Manila" />
+                            <span class="field-error">@Html.ValidationMessageFor(m => m.City)</span>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" asp-for="PostalCode">Postal Code</label>
+                            <input class="form-input @(ViewData.ModelState["PostalCode"]?.Errors.Any() == true ? "is-invalid" : "")"
+                                   asp-for="PostalCode" placeholder="1000" />
+                            <span class="field-error">@Html.ValidationMessageFor(m => m.PostalCode)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Delivery Options -->
+                <div class="form-section">
+                    <div class="form-section-title">Delivery Options</div>
+                    <div class="delivery-grid">
+                        <label class="delivery-option">
+                            <input type="radio" name="DeliveryOption" value="Standard"
+                                   @(Model.DeliveryOption == "Standard" || string.IsNullOrEmpty(Model.DeliveryOption) ? "checked" : "")
+                                   onchange="updateShipping(150)" />
+                            <div>
+                                <div class="delivery-label">Standard Delivery</div>
+                                <div class="delivery-meta">3–5 business days</div>
+                                <div class="delivery-price">₱150.00</div>
+                            </div>
+                        </label>
+                        <label class="delivery-option">
+                            <input type="radio" name="DeliveryOption" value="Express"
+                                   @(Model.DeliveryOption == "Express" ? "checked" : "")
+                                   onchange="updateShipping(300)" />
+                            <div>
+                                <div class="delivery-label">Express Delivery</div>
+                                <div class="delivery-meta">1–2 business days</div>
+                                <div class="delivery-price">₱300.00</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Payment Method -->
+                <div class="form-section">
+                    <div class="form-section-title">Payment Method</div>
+
+                    <div class="payment-option">
+                        <div class="payment-option-header">
+                            <input type="radio" name="PaymentMethod" value="Card"
+                                   id="pay-card"
+                                   @(Model.PaymentMethod == "Card" || string.IsNullOrEmpty(Model.PaymentMethod) ? "checked" : "")
+                                   onchange="toggleCardFields()" />
+                            <label class="payment-option-label" for="pay-card">Credit / Debit Card</label>
+                            <div class="card-icons">
+                                <div class="card-icon">VISA</div>
+                                <div class="card-icon">MC</div>
+                            </div>
+                        </div>
+                        <div class="card-fields" id="card-fields">
+                            <input class="form-input" type="text" name="CardNumber"
+                                   placeholder="Card Number" maxlength="19" />
+                            <div class="card-row">
+                                <input class="form-input" style="flex:1" type="text"
+                                       name="CardExpiry" placeholder="MM / YY" maxlength="7" />
+                                <input class="form-input" style="flex:1" type="text"
+                                       name="CardCvv" placeholder="CVV" maxlength="4" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="payment-option">
+                        <div class="payment-option-header">
+                            <input type="radio" name="PaymentMethod" value="PayPal"
+                                   id="pay-paypal"
+                                   @(Model.PaymentMethod == "PayPal" ? "checked" : "")
+                                   onchange="toggleCardFields()" />
+                            <label class="payment-option-label" for="pay-paypal">PayPal</label>
+                        </div>
+                    </div>
+
+                    <div class="payment-option">
+                        <div class="payment-option-header">
+                            <input type="radio" name="PaymentMethod" value="COD"
+                                   id="pay-cod"
+                                   @(Model.PaymentMethod == "COD" ? "checked" : "")
+                                   onchange="toggleCardFields()" />
+                            <label class="payment-option-label" for="pay-cod">Cash on Delivery (COD)</label>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ── ORDER SUMMARY SIDEBAR ── -->
+            <div class="checkout-summary">
+                <div class="summary-title">Order Summary</div>
+
+                @foreach (var item in Model.CartItems)
+                {
+                    <div class="summary-item">
+                        <img class="summary-item-img"
+                             src="@item.Image" alt="@item.Name"
+                             onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27200%27 height=%27200%27%3E%3Crect width=%27200%27 height=%27200%27 fill=%27%23f5f5f5%27/%3E%3C/svg%3E'" />
+                        <div class="summary-item-info">
+                            <div class="summary-item-name">@item.Name</div>
+                            <div class="summary-item-sub">@item.Size</div>
+                            <div class="summary-item-qty">Qty: @item.Quantity</div>
+                        </div>
+                        <div class="summary-item-price">₱@((item.Price * item.Quantity).ToString("N0"))</div>
+                    </div>
+                }
+
+                <hr class="summary-divider" />
+                <div class="summary-section-title">Vouchers</div>
+                <div class="summary-vouchers">
+                    <div class="voucher-card">
+                        <label>
+                            <input type="radio"
+                                   name="SelectedVoucherId"
+                                   value=""
+                                   @(!Model.SelectedVoucherId.HasValue ? "checked" : "")
+                                   onchange="updateVoucher(0)" />
+                            <span>
+                                <span class="voucher-name">No voucher</span>
+                                <span class="voucher-meta d-block">Use the standard checkout total.</span>
+                            </span>
+                        </label>
+                    </div>
+
+                    @if (Model.AvailableVouchers.Any())
+                    {
+                        @foreach (var voucher in Model.AvailableVouchers)
+                        {
+                            <div class="voucher-card">
+                                <label>
+                                    <input type="radio"
+                                           name="SelectedVoucherId"
+                                           value="@voucher.Id"
+                                           data-discount="@voucher.DiscountAmount.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)"
+                                           @(Model.SelectedVoucherId == voucher.Id ? "checked" : "")
+                                           onchange="updateVoucher(@voucher.DiscountAmount.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))" />
+                                    <span>
+                                        <span class="voucher-name">@voucher.Name</span>
+                                        <span class="voucher-meta d-block">@voucher.Description</span>
+                                        <span class="voucher-discount">Save ₱@voucher.DiscountAmount.ToString("N2")</span>
+                                    </span>
+                                </label>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="voucher-card">
+                            <div class="voucher-meta">No approved vouchers are available for the current items.</div>
+                        </div>
+                    }
+                </div>
+
+                <hr class="summary-divider" />
+                <div class="summary-row"><span>Subtotal</span><span>₱@Model.Subtotal.ToString("N0")</span></div>
+                <div class="summary-row">
+                    <span>Shipping</span>
+                    <span id="shipping-display">₱@Model.ShippingFee.ToString("N0")</span>
+                </div>
+                <hr class="summary-divider" />
+                <div class="summary-row discount-row">
+                    <span>Voucher</span>
+                    <span id="voucher-display">-₱@Model.VoucherDiscount.ToString("N0")</span>
+                </div>
+                <div class="summary-total">
+                    <span>Total</span>
+                    <span id="total-display">₱@Model.Total.ToString("N0")</span>
+                </div>
+
+                <button type="submit" class="place-order-btn">Place Order</button>
+                <div class="secure-note">🔒 Secure checkout &bull; SSL encrypted</div>
+            </div>
+
+        </div>
+    </form>
+</div>
+
+<div id="addressPickerModal" class="address-modal" onclick="handleAddressModalBackdrop(event)">
+    <div class="address-modal-card">
+        <div class="address-modal-head">
+            <div class="address-modal-title">Select Default Address</div>
+            <button type="button" class="address-modal-close" onclick="closeAddressPicker()">&times;</button>
+        </div>
+
+        @if (Model.SavedAddresses.Any())
+        {
+            @foreach (var address in Model.SavedAddresses)
+            {
+                <div class="address-option-card"
+                     onclick="applyCheckoutAddress(this)"
+                     data-full-name="@address.FullName"
+                     data-phone="@address.Phone"
+                     data-address="@address.Address"
+                     data-city="@address.City"
+                     data-postal-code="@address.PostalCode">
+                    <div class="address-option-top">
+                        <div class="address-option-label">@address.Label</div>
+                        @if (address.IsDefault)
+                        {
+                            <span class="address-option-badge">DEFAULT</span>
+                        }
+                    </div>
+                    <div class="address-option-name">@address.FullName</div>
+                    <div class="address-option-phone">@address.Phone</div>
+                    <div class="address-option-line">@address.Address</div>
+                    <div class="address-option-line">@address.City @address.PostalCode</div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="address-option-card" style="cursor:default;">
+                <div class="address-option-name">No saved addresses yet</div>
+                <div class="address-option-line">Add a consumer profile address first, then it will appear here.</div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    function toggleCardFields() {
+        const isCard = document.getElementById('pay-card').checked;
+        document.getElementById('card-fields').style.display = isCard ? 'flex' : 'none';
+    }
+    // Card number formatter
+    document.addEventListener('DOMContentLoaded', function() {
+        toggleCardFields();
+        document.querySelector('input[name="CardNumber"]')?.addEventListener('input', function () {
+            this.value = this.value.replace(/\D/g, '').replace(/(\d{4})(?=\d)/g, '$1 ').trim().slice(0, 19);
+        });
+        document.querySelector('input[name="CardExpiry"]')?.addEventListener('input', function () {
+            let v = this.value.replace(/\D/g, '');
+            if (v.length >= 2) v = v.slice(0, 2) + ' / ' + v.slice(2);
+            this.value = v.slice(0, 7);
+        });
+    });
+
+    const subtotal = @Model.Subtotal;
+    let selectedShippingFee = @Model.ShippingFee;
+    let selectedVoucherDiscount = @Model.VoucherDiscount;
+
+    function renderTotals() {
+        document.getElementById('shipping-display').textContent = '₱' + selectedShippingFee.toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+        document.getElementById('voucher-display').textContent = '-₱' + selectedVoucherDiscount.toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+        document.getElementById('total-display').textContent = '₱' + Math.max(0, subtotal + selectedShippingFee - selectedVoucherDiscount).toLocaleString('en-PH', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+    }
+
+    function updateShipping(fee) {
+        document.getElementById('shipping-display').textContent = '₱' + fee.toLocaleString('en-PH', { minimumFractionDigits: 0 });
+        document.getElementById('total-display').textContent = '₱' + (subtotal + fee).toLocaleString('en-PH', { minimumFractionDigits: 0 });
+    }
+    function updateShipping(fee) {
+        selectedShippingFee = fee;
+        renderTotals();
+    }
+
+    function updateVoucher(discount) {
+        selectedVoucherDiscount = discount;
+        renderTotals();
+    }
+
+    function openAddressPicker() {
+        document.getElementById('addressPickerModal').classList.add('show');
+    }
+
+    function closeAddressPicker() {
+        document.getElementById('addressPickerModal').classList.remove('show');
+    }
+
+    function handleAddressModalBackdrop(event) {
+        if (event.target.id === 'addressPickerModal') {
+            closeAddressPicker();
+        }
+    }
+
+    function applyCheckoutAddress(element) {
+        document.getElementById('FullName').value = element.dataset.fullName || '';
+        document.getElementById('Phone').value = element.dataset.phone || '';
+        document.getElementById('Address').value = element.dataset.address || '';
+        document.getElementById('City').value = element.dataset.city || '';
+        document.getElementById('PostalCode').value = element.dataset.postalCode || '';
+        closeAddressPicker();
+    }
+
+    renderTotals();
+</script>
+}

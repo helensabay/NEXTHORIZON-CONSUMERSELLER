@@ -1,0 +1,597 @@
+.analytics-page {
+    display: grid;
+    gap: 22px;
+    width: min(1200px, 100%);
+    margin: 0 auto;
+}
+
+.analytics-breadcrumb {
+    color: #767676;
+    font-size: 17px;
+    margin: 0;
+}
+
+.analytics-welcome h2 {
+    margin: 0;
+    font-size: 40px;
+    line-height: 1.05;
+    color: #111111;
+}
+
+.analytics-panel {
+    background: #ffffff;
+    border: 1px solid #d8dadd;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+}
+
+.revenue-panel {
+    padding: 18px;
+}
+
+.revenue-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 14px;
+}
+
+.revenue-heading {
+    margin: 0;
+    color: #161616;
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+}
+
+.revenue-subtext {
+    margin: 4px 0 0;
+    color: #777777;
+    font-size: 13px;
+}
+
+.revenue-year-filter {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.revenue-year-filter label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #444444;
+}
+
+.revenue-year-select {
+    border: 1px solid #cfd3d8;
+    border-radius: 8px;
+    padding: 7px 12px;
+    min-width: 94px;
+    background: #ffffff;
+    color: #1f2937;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.revenue-chart-shell {
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 12px 12px 10px;
+    background: linear-gradient(180deg, #fcfcfd 0%, #ffffff 100%);
+}
+
+.revenue-chart-svg {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.revenue-grid-line {
+    stroke: #e8eaed;
+    stroke-width: 1;
+}
+
+.revenue-axis-label {
+    fill: #6b7280;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.revenue-area {
+    fill: rgba(107, 114, 128, 0.24);
+}
+
+.revenue-line {
+    fill: none;
+    stroke: #111111;
+    stroke-width: 3;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+}
+
+.revenue-point {
+    fill: #d1d5db;
+    stroke: #111111;
+    stroke-width: 2.5;
+}
+
+.revenue-value-label {
+    font-size: 11px;
+    font-weight: 700;
+    fill: #1e293b;
+    text-anchor: middle;
+    dominant-baseline: auto;
+    paint-order: stroke fill;
+    stroke: #ffffff;
+    stroke-width: 4px;
+    stroke-linejoin: round;
+    pointer-events: none;
+    user-select: none;
+}
+
+.revenue-months {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 0;
+    margin-top: 8px;
+}
+
+.revenue-months span {
+    text-align: center;
+    color: #666666;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.analytics-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 18px 8px;
+}
+
+.analytics-panel-header h3 {
+    margin: 0;
+    color: #161616;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    font-size: 24px;
+    font-weight: 800;
+}
+
+.analytics-panel-subtext {
+    margin: 4px 0 0;
+    color: #6b7280;
+    font-size: 13px;
+}
+
+.analytics-range-toggle {
+    display: flex;
+    gap: 10px;
+}
+
+.analytics-range-toggle button {
+    border: none;
+    background: transparent;
+    color: #909090;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+.analytics-range-toggle button.active {
+    color: #222222;
+}
+
+.analytics-table-wrap {
+    overflow-x: auto;
+}
+
+.analytics-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.analytics-table th,
+.analytics-table td {
+    border-top: 1px solid #e3e4e6;
+    border-bottom: 1px solid #e3e4e6;
+    padding: 14px 18px;
+    text-align: left;
+    color: #232323;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.analytics-table tbody tr {
+    height: 74px;
+}
+
+.analytics-table th {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.35px;
+    color: #444444;
+    background: #fafafa;
+}
+
+.analytics-product-cell {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 12px;
+}
+
+.analytics-product-cell img {
+    width: 62px;
+    height: 44px;
+    border-radius: 8px;
+    object-fit: cover;
+    background: #f0f1f3;
+    display: block;
+    flex: 0 0 auto;
+}
+
+.analytics-product-cell span {
+    display: inline-block;
+    white-space: nowrap;
+}
+
+.analytics-empty-row td {
+    text-align: center;
+    padding: 40px 16px;
+    border: none;
+}
+
+.analytics-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    color: #9ca3af;
+}
+
+.analytics-empty-state i {
+    font-size: 36px;
+    opacity: 0.55;
+}
+
+.analytics-empty-state p {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.analytics-pagination {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 18px 14px;
+    color: #535353;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.analytics-pagination button {
+    border: none;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+    font-size: inherit;
+    font-weight: inherit;
+    padding: 0;
+}
+
+.analytics-pagination button.active {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+    background: #64686d;
+    color: #ffffff;
+    border-radius: 4px;
+    padding: 0 7px;
+}
+
+.analytics-next-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+}
+
+.analytics-next-btn i {
+    font-size: 12px;
+}
+
+.analytics-pagination button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.section {
+    margin-bottom: 32px;
+}
+
+.section-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0 0 20px;
+}
+
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+}
+
+.performance-grid {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.analytics-kpi-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.analytics-kpi-grid-secondary,
+.analytics-quality-grid {
+    margin-top: 18px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.analytics-insights-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr);
+    gap: 22px;
+    align-items: start;
+}
+
+.card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e2e8f0;
+}
+
+.performance-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.card-header {
+    margin-bottom: 12px;
+}
+
+.card-label {
+    font-size: 14px;
+    color: #64748b;
+    font-weight: 500;
+}
+
+.card-body {
+    margin-bottom: 16px;
+}
+
+.metric-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 4px;
+}
+
+.metric-growth {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.metric-growth.positive {
+    color: #10b981;
+}
+
+.metric-growth.negative {
+    color: #ef4444;
+}
+
+.metric-growth i {
+    font-size: 12px;
+}
+
+.metric-note {
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.analytics-stat-card {
+    padding: 20px 22px;
+}
+
+.analytics-stat-card .card-value {
+    margin-top: 10px;
+    font-size: 28px;
+    font-weight: 800;
+    color: #111827;
+}
+
+.analytics-year-snapshot {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 14px;
+}
+
+.analytics-year-card {
+    padding: 14px 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    background: #f9fafb;
+}
+
+.analytics-year-label {
+    display: block;
+    color: #6b7280;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.analytics-year-card strong {
+    display: block;
+    margin-top: 8px;
+    color: #111827;
+    font-size: 24px;
+    font-weight: 800;
+}
+
+.analytics-categories-panel {
+    min-height: 100%;
+}
+
+.analytics-category-list {
+    display: grid;
+    gap: 12px;
+    padding: 0 18px 18px;
+}
+
+.analytics-category-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px 0;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.analytics-category-row:last-child {
+    border-bottom: none;
+}
+
+.analytics-category-row strong,
+.analytics-category-metrics strong {
+    display: block;
+    color: #111827;
+    font-size: 15px;
+}
+
+.analytics-category-row span,
+.analytics-category-metrics span {
+    display: block;
+    margin-top: 4px;
+    color: #6b7280;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.analytics-category-metrics {
+    text-align: right;
+}
+
+.card-chart {
+    position: absolute;
+    right: 24px;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0.1;
+}
+
+.card-chart i {
+    font-size: 64px;
+    color: #10b981;
+}
+
+@media (max-width: 1200px) {
+    .revenue-heading {
+        font-size: 20px;
+    }
+
+    .analytics-panel-header h3 {
+        font-size: 24px;
+    }
+}
+
+@media (max-width: 1024px) {
+    .performance-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .analytics-kpi-grid,
+    .analytics-kpi-grid-secondary,
+    .analytics-quality-grid,
+    .analytics-year-snapshot,
+    .analytics-insights-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .analytics-welcome h2 {
+        font-size: 30px;
+    }
+
+    .revenue-panel {
+        padding: 14px;
+    }
+
+    .revenue-panel-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .revenue-heading {
+        font-size: 17px;
+    }
+
+    .revenue-months span {
+        font-size: 11px;
+    }
+
+    .analytics-panel-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    .analytics-panel-header h3 {
+        font-size: 18px;
+    }
+
+    .analytics-year-card strong {
+        font-size: 20px;
+    }
+
+    .analytics-table th,
+    .analytics-table td {
+        padding: 10px;
+    }
+
+    .analytics-pagination {
+        font-size: 13px;
+        gap: 8px;
+    }
+
+    .section-title {
+        font-size: 18px;
+    }
+
+    .metric-value {
+        font-size: 28px;
+    }
+
+    .card-chart i {
+        font-size: 48px;
+    }
+}

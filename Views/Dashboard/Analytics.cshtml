@@ -1,0 +1,378 @@
+@using System.Linq
+@using System.Text.Json
+@model NextHorizon.Models.SellerDashboardViewModel
+@{
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+@{
+    ViewData["Title"] = "Analytics";
+    ViewData["DashboardHeading"] = "Analytics";
+    ViewData["SellerName"] = Model.SellerName;
+
+    var monthLabels = new[] { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+    var topProducts = Model.TopProducts.Take(10).ToList();
+    var monthlyRevenueByYear = Model.MonthlyRevenueByYear
+        .Where(entry => entry.Value != null && entry.Value.Any(v => v > 0))
+        .OrderByDescending(entry => entry.Key)
+        .ToList();
+    var yearlyAnalyticsJson = JsonSerializer.Serialize(
+        monthlyRevenueByYear.ToDictionary(
+            entry => entry.Key.ToString(),
+            entry => new
+            {
+                revenue = entry.Value,
+                orders = Model.MonthlyOrdersByYear.TryGetValue(entry.Key, out var orders) ? orders : Enumerable.Repeat(0, 12).ToList(),
+                units = Model.MonthlyUnitsByYear.TryGetValue(entry.Key, out var units) ? units : Enumerable.Repeat(0, 12).ToList()
+            }));
+    var yearlySnapshotJson = JsonSerializer.Serialize(
+        monthlyRevenueByYear.ToDictionary(
+            entry => entry.Key.ToString(),
+            entry =>
+            {
+                var orders = Model.MonthlyOrdersByYear.TryGetValue(entry.Key, out var monthlyOrders)
+                    ? monthlyOrders.Sum()
+                    : 0;
+                var units = Model.MonthlyUnitsByYear.TryGetValue(entry.Key, out var monthlyUnits)
+                    ? monthlyUnits.Sum()
+                    : 0;
+                var revenue = entry.Value.Sum();
+                var aov = orders > 0 ? decimal.Round(revenue / orders, 2) : 0m;
+                return new
+                {
+                    revenue,
+                    orders,
+                    units,
+                    averageOrderValue = aov
+                };
+            }));
+    var topProductsJson = JsonSerializer.Serialize(
+        topProducts.Select(product => new
+        {
+            productName = product.ProductName,
+            imageUrl = product.ImageUrl,
+            sku = product.Sku,
+            category = product.Category,
+            unitsSold = product.UnitsSold,
+            revenueGenerated = product.RevenueGenerated
+        }));
+    var topProductsByRangeJson = JsonSerializer.Serialize(
+        Model.TopProductsByRange.ToDictionary(
+            kvp => kvp.Key,
+            kvp => kvp.Value.Select(p => new
+            {
+                productName = p.ProductName,
+                imageUrl = p.ImageUrl,
+                sku = p.Sku,
+                category = p.Category,
+                unitsSold = p.UnitsSold,
+                revenueGenerated = p.RevenueGenerated
+            }).ToList()));
+    var initialYear = monthlyRevenueByYear.FirstOrDefault().Key;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/analytics.css" asp-append-version="true" />
+}
+
+<section class="analytics-page">
+    <div class="analytics-welcome">
+        <h2>Welcome<br />@Model.SellerName!</h2>
+    </div>
+
+    <section class="section">
+        <h2 class="analytics-section-title">Performance</h2>
+        <div class="cards-grid analytics-kpi-grid">
+            <div class="card performance-card">
+                <div class="card-header">
+                    <span class="card-label">Today's Order Value</span>
+                </div>
+                <div class="card-body">
+                    <div class="metric-value">&#8369;@Model.TodayOrderValue.ToString("N2")</div>
+                    @if (Model.TodayOrderValue > 0)
+                    {
+                        if (Model.YesterdayOrderValue > 0)
+                        {
+                            var intakeGrowth = decimal.Round(((Model.TodayOrderValue - Model.YesterdayOrderValue) / Model.YesterdayOrderValue) * 100m, 2);
+                            <div class="metric-growth @(intakeGrowth >= 0 ? "positive" : "negative")">
+                                <i class="fas @(intakeGrowth >= 0 ? "fa-arrow-up" : "fa-arrow-down")"></i>
+                                <span>@intakeGrowth.ToString("N2")% vs yesterday</span>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="metric-growth positive">
+                                <i class="fas fa-arrow-up"></i>
+                                <span>Up &#8369;@Model.TodayOrderValue.ToString("N2") from yesterday</span>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="metric-note">No new orders today</div>
+                    }
+                </div>
+                <div class="card-chart">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+            </div>
+
+            <div class="card performance-card">
+                <div class="card-header">
+                    <span class="card-label">Today's Orders</span>
+                </div>
+                <div class="card-body">
+                    <div class="metric-value">@Model.TodayOrderCount</div>
+                    <div class="metric-note">New non-cancelled orders placed today</div>
+                </div>
+            </div>
+
+            <div class="card performance-card">
+                <div class="card-header">
+                    <span class="card-label">Today's Units</span>
+                </div>
+                <div class="card-body">
+                    <div class="metric-value">@Model.TodayUnitsSold</div>
+                    <div class="metric-note">Units from today's new orders</div>
+                </div>
+            </div>
+
+            <div class="card performance-card">
+                <div class="card-header">
+                    <span class="card-label">Shipped Today</span>
+                </div>
+                <div class="card-body">
+                    <div class="metric-value">@Model.ShippedTodayCount</div>
+                    <div class="metric-note">Orders marked shipped today</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="cards-grid analytics-kpi-grid analytics-kpi-grid-secondary">
+            <div class="card analytics-stat-card">
+                <span class="card-label">All-Time Gross Revenue</span>
+                <div class="card-value">&#8369;@Model.TotalRevenue.ToString("N2")</div>
+                <div class="metric-note">Lifetime recognized revenue from completed/delivered orders</div>
+            </div>
+            <div class="card analytics-stat-card">
+                <span class="card-label">All-Time Net Revenue</span>
+                <div class="card-value">&#8369;@Model.NetRevenue.ToString("N2")</div>
+                <div class="metric-note">Gross revenue minus refunded revenue</div>
+            </div>
+            <div class="card analytics-stat-card">
+                <span class="card-label">All-Time Orders</span>
+                <div class="card-value">@Model.TotalOrders</div>
+                <div class="metric-note">All non-cancelled orders</div>
+            </div>
+            <div class="card analytics-stat-card">
+                <span class="card-label">All-Time Units</span>
+                <div class="card-value">@Model.TotalUnitsSold</div>
+                <div class="metric-note">Units from all non-cancelled orders</div>
+            </div>
+            <div class="card analytics-stat-card">
+                <span class="card-label">Open Order Value</span>
+                <div class="card-value">&#8369;@Model.PipelineRevenue.ToString("N2")</div>
+                <div class="metric-note">@Model.OpenOrderCount open orders not booked yet</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="analytics-panel revenue-panel">
+        <div class="revenue-panel-header">
+            <div>
+                <h3 class="revenue-heading">Revenue Trend</h3>
+                <p class="revenue-subtext">Monthly revenue with year-specific order and unit totals.</p>
+            </div>
+            <div class="revenue-year-filter">
+                <label for="revenueYearSelect">Year</label>
+                <select id="revenueYearSelect" class="revenue-year-select" aria-label="Revenue year selector">
+                    @foreach (var yearlyRevenue in monthlyRevenueByYear)
+                    {
+                        <option value="@yearlyRevenue.Key">@yearlyRevenue.Key</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div class="analytics-year-snapshot" data-year-snapshot='@yearlySnapshotJson'>
+            <div class="analytics-year-card">
+                <span class="analytics-year-label">Revenue</span>
+                <strong id="yearRevenueValue">&#8369;@(initialYear != 0 && Model.MonthlyRevenueByYear.TryGetValue(initialYear, out var initialRevenue) ? initialRevenue.Sum().ToString("N2") : "0.00")</strong>
+            </div>
+            <div class="analytics-year-card">
+                <span class="analytics-year-label">Orders</span>
+                <strong id="yearOrdersValue">@(initialYear != 0 && Model.MonthlyOrdersByYear.TryGetValue(initialYear, out var initialOrders) ? initialOrders.Sum() : 0)</strong>
+            </div>
+            <div class="analytics-year-card">
+                <span class="analytics-year-label">Units</span>
+                <strong id="yearUnitsValue">@(initialYear != 0 && Model.MonthlyUnitsByYear.TryGetValue(initialYear, out var initialUnits) ? initialUnits.Sum() : 0)</strong>
+            </div>
+            <div class="analytics-year-card">
+                <span class="analytics-year-label">AOV</span>
+                <strong id="yearAovValue">
+                    &#8369;@(
+                        initialYear != 0
+                        && Model.MonthlyRevenueByYear.TryGetValue(initialYear, out var initialRevenueForAov)
+                        && Model.MonthlyOrdersByYear.TryGetValue(initialYear, out var initialOrdersForAov)
+                        && initialOrdersForAov.Sum() > 0
+                            ? decimal.Round(initialRevenueForAov.Sum() / initialOrdersForAov.Sum(), 2).ToString("N2")
+                            : "0.00")
+                </strong>
+            </div>
+        </div>
+
+        <div class="revenue-chart-shell" data-chart-data='@yearlyAnalyticsJson'>
+            <svg id="revenueLineGraph" class="revenue-chart-svg" viewBox="0 0 1080 320" role="img" aria-label="Total monthly revenue line graph">
+                <g id="revenueGridLines"></g>
+                <path id="revenueAreaPath" class="revenue-area"></path>
+                <path id="revenueLinePath" class="revenue-line"></path>
+                <g id="revenuePointGroup"></g>
+                <g id="revenueLabelsGroup"></g>
+            </svg>
+            <div class="revenue-months" aria-hidden="true">
+                @foreach (var month in monthLabels)
+                {
+                    <span>@month</span>
+                }
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <h2 class="analytics-section-title">Revenue Quality</h2>
+        <div class="cards-grid analytics-quality-grid">
+            <div class="card analytics-stat-card">
+                <span class="card-label">Refunded Amount</span>
+                <div class="card-value">&#8369;@Model.RefundedRevenue.ToString("N2")</div>
+            </div>
+            <div class="card analytics-stat-card">
+                <span class="card-label">Refunded Orders</span>
+                <div class="card-value">@Model.RefundedOrders</div>
+            </div>
+            <div class="card analytics-stat-card">
+                <span class="card-label">Cancelled Orders</span>
+                <div class="card-value">@Model.CancelledOrders</div>
+            </div>
+            <div class="card analytics-stat-card">
+                <span class="card-label">Active Return Requests</span>
+                <div class="card-value">@Model.ActiveReturnRequests</div>
+            </div>
+        </div>
+    </section>
+
+    <section class="analytics-insights-grid">
+        <section class="analytics-panel">
+            <div class="analytics-panel-header">
+                <div>
+                    <h3>Top Performing Products</h3>
+                    <p class="analytics-panel-subtext">Switch ranges to compare what products drive revenue.</p>
+                </div>
+                <div class="analytics-range-toggle" role="group" aria-label="Analytics date range">
+                    <button type="button" class="active" data-range="TODAY">Today</button>
+                    <button type="button" data-range="7D">7D</button>
+                    <button type="button" data-range="30D">30D</button>
+                    <button type="button" data-range="ALL">All Time</button>
+                </div>
+            </div>
+
+            <div class="analytics-table-wrap" data-products='@topProductsJson' data-products-by-range='@topProductsByRangeJson'>
+                <table class="analytics-table">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Product Name</th>
+                            <th>SKU</th>
+                            <th>Category</th>
+                            <th>Units Sold</th>
+                            <th>Revenue Generated</th>
+                            <th>Revenue Share</th>
+                        </tr>
+                    </thead>
+                    <tbody data-analytics-products>
+                        @if (topProducts.Count == 0)
+                        {
+                            <tr class="analytics-empty-row">
+                                <td colspan="7">
+                                    <div class="analytics-empty-state">
+                                        <i class="fas fa-box-open"></i>
+                                        <p>No product sales data found for your store yet.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            var initialTopRevenue = Math.Max(topProducts.Sum(product => product.RevenueGenerated), 1m);
+                            foreach (var product in topProducts)
+                            {
+                                var revenueShare = decimal.Round((product.RevenueGenerated / initialTopRevenue) * 100m, 2);
+                                <tr>
+                                    <td>@product.Rank</td>
+                                    <td>
+                                        <div class="analytics-product-cell">
+                                            <img src="@product.ImageUrl" alt="@product.ProductName" onerror="this.style.visibility='hidden'" />
+                                            <span>@product.ProductName</span>
+                                        </div>
+                                    </td>
+                                    <td>@product.Sku</td>
+                                    <td>@product.Category</td>
+                                    <td>@product.UnitsSold</td>
+                                    <td>&#8369;@product.RevenueGenerated.ToString("N0")</td>
+                                    <td>@revenueShare.ToString("N2")%</td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="analytics-pagination" aria-label="Analytics table pages">
+                <button type="button" class="analytics-page-btn active" data-page="1" aria-label="Page 1">1</button>
+                <button type="button" class="analytics-page-btn" data-page="2" aria-label="Page 2">2</button>
+                <button type="button" class="analytics-page-btn" data-page="3" aria-label="Page 3">3</button>
+                <button type="button" class="analytics-page-btn" data-page="4" aria-label="Page 4">4</button>
+                <button type="button" class="analytics-next-btn" id="analyticsNextPage" aria-label="Next page">Next</button>
+            </div>
+        </section>
+
+        <section class="analytics-panel analytics-categories-panel">
+            <div class="analytics-panel-header">
+                <div>
+                    <h3>Top Categories</h3>
+                    <p class="analytics-panel-subtext">Category mix based on completed revenue-generating orders.</p>
+                </div>
+            </div>
+
+            @if (!Model.TopCategories.Any())
+            {
+                <div class="analytics-empty-row">
+                    <div class="analytics-empty-state">
+                        <i class="fas fa-tags"></i>
+                        <p>No category data available yet.</p>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="analytics-category-list">
+                    @foreach (var category in Model.TopCategories)
+                    {
+                        <div class="analytics-category-row">
+                            <div>
+                                <strong>@category.Category</strong>
+                                <span>@category.UnitsSold units sold</span>
+                            </div>
+                            <div class="analytics-category-metrics">
+                                <strong>&#8369;@category.RevenueGenerated.ToString("N2")</strong>
+                                <span>@category.RevenueShare.ToString("N2")% share</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </section>
+    </section>
+</section>
+
+@section Scripts {
+<script src="~/js/analytics.js" asp-append-version="true"></script>
+}

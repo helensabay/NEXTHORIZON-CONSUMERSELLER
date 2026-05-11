@@ -1,0 +1,175 @@
+﻿@{
+    ViewData["Title"] = "Profile Page";
+    Layout = "_ProfileLayout";
+}
+
+@* Note: We removed <partial name="_ProfileSideBar" /> and the outer wrapper 
+   because they are now handled by the Layout file. 
+*@
+
+<div class="user-dashboard-header">
+    <div class="header-content">
+        <div class="profile-avatar">
+            <div class="avatar-circle">
+                <i class="bi bi-person-fill"></i>
+                <div class="camera-icon-badge" id="changeAvatarBtn">
+                    <i class="bi bi-camera"></i>
+                </div>
+            </div>
+        </div>
+        <div class="user-details">
+            <div class="username-row">
+                <h1 id="displayUsername">USERNAME01</h1>
+                
+                <i class="bi bi-pencil edit-icon" id="editUsernameBtn"></i>
+            </div>
+            <p class="user-motto">Be the change you wish to see in the world.</p>
+        </div>
+    </div>
+</div>
+
+<div class="content-body">
+    <div class="overview-box">
+        <div class="rank-section">
+            <p class="section-label">Your Global Rank</p>
+            <div class="rank-pill">
+                <div class="rank-icon-circle">
+                    <i class="bi bi-award"></i>
+                </div>
+                <div class="rank-info">
+                    <span class="rank-number">1st</span>
+                    <a href="#" class="lb-link">See LeaderBoard</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <a asp-controller="FitnessOverview" asp-action="DailyFitnessOverview" class="stat-card-link">
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <span><i class="bi bi-geo-alt-fill"></i> Distance</span>
+                        <i class="bi bi-chevron-right"></i>
+                    </div>
+                    <div class="stat-card-body">
+                        <small>Today</small>
+                        <p>42.2 KM</p>
+                    </div>
+                </div>
+            </a>
+
+            <a asp-controller="FitnessOverview" asp-action="DailyFitnessOverview" class="stat-card-link">
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <span><i class="bi bi-clock-fill"></i> Time</span>
+                        <i class="bi bi-chevron-right"></i>
+                    </div>
+                    <div class="stat-card-body">
+                        <small>Today</small>
+                        <p>04:35:20</p>
+                    </div>
+                </div>
+            </a>
+
+            <a asp-controller="FitnessOverview" asp-action="DailyFitnessOverview" class="stat-card-link">
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <span><i class="bi bi-lightning-fill"></i> Steps</span>
+                        <i class="bi bi-chevron-right"></i>
+                    </div>
+                    <div class="stat-card-body">
+                        <small>Today</small>
+                        <p>3,581</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <div class="activity-section">
+        <div class="section-title-row">
+            <h3>RECENT UPLOADED ACTIVITY</h3>
+            <a href="#" class="see-all">SEE ALL</a>
+        </div>
+
+        <div class="activity-grid">
+            <div class="activity-card">
+                <div class="activity-main">
+                    <div class="img-placeholder">
+                        <i class="bi bi-image"></i>
+                    </div>
+                    <div class="activity-info">
+                        <p><i class="bi bi-geo-alt-fill"></i> 40 KM</p>
+                        <p><i class="bi bi-clock-fill"></i> 03:40:07 HR/S</p>
+                        <p><i class="bi bi-lightning-fill"></i> 1,539 Steps</p>
+                    </div>
+                </div>
+                <div class="activity-pill-footer">
+                    <i class="bi bi-star-fill"></i> Rank 14 || January 12, 2026
+                </div>
+            </div>
+
+            <div class="activity-card">
+                <div class="activity-main">
+                    <div class="img-placeholder">
+                        <i class="bi bi-image"></i>
+                    </div>
+                    <div class="activity-info">
+                        <p><i class="bi bi-geo-alt-fill"></i> 40 KM</p>
+                        <p><i class="bi bi-clock-fill"></i> 03:40:07 HR/S</p>
+                        <p><i class="bi bi-lightning-fill"></i> 1,539 Steps</p>
+                    </div>
+                </div>
+                <div class="activity-pill-footer">
+                    <i class="bi bi-star-fill"></i> Rank 12 || January 02, 2026
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@* Modals *@
+<div id="usernameModal" class="custom-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Update Username</h3>
+            <button class="close-btn" onclick="closeModal('usernameModal')"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <input type="text" id="newUsernameInput" placeholder="Enter new username" class="modal-input">
+        <div class="modal-actions">
+            <button class="modal-btn cancel" onclick="closeModal('usernameModal')">CANCEL</button>
+            <button class="modal-btn save" onclick="saveUsername()">SAVE</button>
+        </div>
+    </div>
+</div>
+
+<div id="avatarModal" class="custom-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Change Profile Picture</h3>
+            <button class="close-btn" onclick="closeModal('avatarModal')"><i class="bi bi-x-lg"></i></button>
+        </div>
+        <div class="upload-area" onclick="document.getElementById('avatarInput').click();">
+            <i class="bi bi-cloud-arrow-up"></i>
+            <span id="uploadText">Click to upload or drag and drop</span>
+            <input type="file" id="avatarInput" hidden accept="image/*">
+            <div id="avatarPreview" style="display:none; margin-top: 15px;">
+                <img id="previewImg" src="" style="width:80px; height:80px; border-radius:50%; object-fit:cover; border: 2px solid #000;">
+            </div>
+        </div>
+        <p id="uploadErrorMessage" style="color: #000; font-size: 0.8rem; margin-top: -15px; margin-bottom: 15px; display: none;">
+            Please select an image first.
+        </p>
+        <div class="modal-actions">
+            <button class="modal-btn cancel" onclick="closeModal('avatarModal')">CANCEL</button>
+            <button class="modal-btn save" id="confirmUploadBtn">UPLOAD</button>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/profile.css" asp-append-version="true" />
+}
+
+@section Scripts {
+    <script src="~/js/profile.js" asp-append-version="true"></script>
+}

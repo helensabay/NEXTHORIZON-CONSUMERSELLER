@@ -1,0 +1,808 @@
+@model NextHorizon.Models.SellerRatingsViewModel
+@{
+    ViewData["Title"] = "View Ratings";
+    ViewData["DashboardHeading"] = "Reviews";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+
+    var totalReviews = Model.Reviews.Count;
+    var avgRating = totalReviews > 0 ? Model.Reviews.Average(r => r.Review.Rating) : 0m;
+    var fullStars = (int)Math.Round(avgRating, MidpointRounding.AwayFromZero);
+    fullStars = Math.Clamp(fullStars, 0, 5);
+
+    string Slugify(string value)
+    {
+        var safe = new string((value ?? string.Empty).Trim().ToLowerInvariant()
+            .Select(ch => char.IsLetterOrDigit(ch) ? ch : '-')
+            .ToArray());
+        while (safe.Contains("--")) safe = safe.Replace("--", "-");
+        return safe.Trim('-');
+    }
+
+    var variationLabels = Model.Reviews
+        .Select(r => string.IsNullOrWhiteSpace(r.Review.ShortReview) ? "Standard" : r.Review.ShortReview.Trim())
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .ToList();
+}
+
+@section Styles {
+    <style>
+        :root {
+            --sidebar-bg: #000000;
+            --main-bg: #ffffff;
+            --text-dark: #111111;
+            --text-gray: #555555;
+            --filter-bg: #B0B3B8;
+            --filter-hover: #9CA0A5;
+            --border-color: #E0E0E0;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--main-bg);
+            display: flex;
+            min-height: 100vh;
+            color: var(--text-dark);
+        }
+
+        .sidebar {
+            width: 260px;
+            background-color: var(--sidebar-bg);
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            padding: 30px 20px;
+            position: fixed;
+            height: 100vh;
+            z-index: 100;
+        }
+
+        .logo {
+            font-weight: 800;
+            font-style: italic;
+            font-size: 1.4rem;
+            margin-bottom: 40px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 14px 15px;
+            color: #999;
+            text-decoration: none;
+            transition: 0.3s;
+            font-weight: 500;
+            font-size: 1.1rem;
+        }
+
+        .nav-item i {
+            margin-right: 15px;
+            width: 24px;
+            font-size: 1.2rem;
+        }
+
+        .nav-item:hover { color: #fff; }
+
+        .nav-item.active {
+            background-color: #333;
+            color: #fff;
+            border-radius: 10px;
+        }
+
+        .main-wrapper {
+            flex: 1;
+            margin-left: 300px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            height: 70px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            padding: 0 50px;
+            gap: 30px;
+        }
+
+        .content-container {
+            padding: 40px 80px;
+            max-width: 1000px;
+        }
+
+        .page-title-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 40px;
+        }
+
+        .back-btn {
+            font-size: 1.5rem;
+            color: #000;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .page-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .product-summary {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+
+        .product-info-wrap {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex: 1;
+        }
+
+        .product-img {
+            width: 110px;
+            height: 110px;
+            border-radius: 12px;
+            object-fit: cover;
+            background: #ddd;
+        }
+
+        .product-text h2 {
+            margin: 0;
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+
+        .product-text p {
+            margin: 5px 0 15px 0;
+            font-size: 0.95rem;
+            color: var(--text-dark);
+        }
+
+        .price-wrap {
+            display: flex;
+            gap: 6px;
+            font-size: 0.9rem;
+        }
+
+        .price-wrap .current-price {
+            font-weight: 700;
+            color: #000;
+        }
+
+        .price-wrap .old-price {
+            color: #888;
+            text-decoration: line-through;
+        }
+
+        .stats-wrap {
+            display: flex;
+            gap: 70px;
+            text-align: center;
+            padding-right: 20px;
+        }
+
+        .stat-box h3 {
+            margin: 0;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #000;
+        }
+
+        .stat-box .stat-value {
+            font-size: 3.5rem;
+            font-weight: 700;
+            margin: 5px 0;
+            line-height: 1;
+        }
+
+        .stat-box p {
+            margin: 0;
+            font-size: 0.9rem;
+            color: var(--text-gray);
+        }
+
+        .stat-stars {
+            color: #000;
+            font-size: 1rem;
+        }
+
+        .filter-bar {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 60px;
+        }
+
+        .filter-btn, .filter-select {
+            background-color: var(--filter-bg);
+            color: #111;
+            border: none;
+            border-radius: 10px;
+            padding: 14px 20px;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex: 1;
+            text-align: center;
+            outline: none;
+        }
+
+        .filter-btn:hover, .filter-select:hover {
+            background-color: var(--filter-hover);
+        }
+
+        .filter-select {
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20320%20512%22%3E%3Cpath%20fill%3D%22%23FFFFFF%22%20d%3D%22M137.4%20374.6c12.5%2012.5%2032.8%2012.5%2045.3%200l128-128c9.2-9.2%2011.9-22.9%206.9-34.9s-16.6-19.8-29.6-19.8L32%20192c-12.9%200-24.6%207.8-29.6%2019.8s-2.2%2025.7%206.9%2034.9l128%20128z%22%2F%3E%3C%2Fsvg%3E');
+            background-repeat: no-repeat;
+            background-position: right 20px center;
+            background-size: 12px auto;
+        }
+
+        .filter-btn.active {
+            background-color: #FFFFFF;
+            box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.15), 0px 1px 3px rgba(0, 0, 0, 0.1);
+            color: #000;
+        }
+
+        .review-list {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .review-card {
+            display: flex;
+            flex-direction: column;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 35px;
+            margin-bottom: 35px;
+        }
+
+        .review-card:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .review-top-row {
+            display: flex;
+            gap: 30px;
+        }
+
+        .reviewer-meta {
+            width: 250px;
+            display: flex;
+            flex-direction: row;
+            gap: 30px;
+        }
+
+        .reviewer-avatar {
+            width: 75px;
+            height: 75px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: #ddd;
+        }
+
+        .reviewer-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .reviewer-name {
+            font-weight: 700;
+            font-size: 1.05rem;
+            margin: 0 0 2px 0;
+            color: #000;
+        }
+
+        .reviewer-date {
+            color: var(--text-gray);
+            font-size: 0.85rem;
+            margin: 0 0 10px 0;
+        }
+
+        .reviewer-variation {
+            font-size: 0.85rem;
+            color: var(--text-dark);
+            margin: 0;
+        }
+
+        .review-content {
+            flex: 1;
+            padding-top: 5px;
+            margin-left: 50px;
+        }
+
+        .review-stars {
+            font-size: 1rem;
+            color: #000;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+        }
+
+        .review-text {
+            font-size: 0.95rem;
+            line-height: 1.5;
+            color: #111;
+            margin: 0;
+            max-width: 650px;
+        }
+
+        .review-actions-row {
+            display: flex;
+            gap: 30px;
+            margin-top: 15px;
+            align-items: center;
+        }
+
+        .action-left { width: 250px; }
+
+        .btn-view-photos {
+            background-color: #E2E3E5;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: #000;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-view-photos:hover { background-color: #D1D3D6; }
+
+        .action-right {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            max-width: 650px;
+            margin-left: 50px;
+        }
+
+        .reply-input {
+            flex: 1;
+            padding: 14px 20px;
+            border: 1px solid #CCC;
+            border-radius: 12px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border 0.2s;
+        }
+
+        .reply-input:focus { border-color: #888; }
+
+        .btn-send {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #000;
+            cursor: pointer;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s;
+        }
+
+        .btn-send:hover { transform: scale(1.1); }
+
+        .seller-reply-box {
+            margin-top: 12px;
+            background: #f5f6f8;
+            border-left: 3px solid #111;
+            border-radius: 8px;
+            padding: 10px 12px;
+            font-size: 0.9rem;
+            color: #222;
+        }
+
+        .seller-reply-meta {
+            font-size: 0.78rem;
+            color: #666;
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+
+        .empty-state {
+            border: 1px dashed #b9bdc2;
+            border-radius: 12px;
+            padding: 24px;
+            color: #555;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.85);
+            backdrop-filter: blur(4px);
+        }
+
+        .modal-content {
+            position: relative;
+            margin: 5% auto;
+            width: 80%;
+            max-width: 700px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 80vh;
+        }
+
+        #modalImage {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 12px;
+            object-fit: contain;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 40px;
+            color: white;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .close-modal:hover { color: #bbb; }
+
+        .modal-controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .modal-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: 0.3s;
+        }
+
+        .modal-btn:hover { background: rgba(255,255,255,0.4); }
+
+        #imageCounter {
+            color: white;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+}
+
+        <div class="content-container" data-product-id="@Model.Product.ProductId">
+
+            <div class="page-title-row">
+                <a asp-controller="Seller" asp-action="ViewProduct" asp-route-id="@Model.Product.ProductId" asp-route-state="active" class="back-btn"><i class="fa-solid fa-arrow-left"></i></a>
+                <h1 class="page-title">Reviews</h1>
+            </div>
+
+            <div class="product-summary">
+                <div class="product-info-wrap">
+                    <img src="@(string.IsNullOrWhiteSpace(Model.Product.ImagePath) ? "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='110' height='110'%3E%3Crect width='110' height='110' fill='%23dcdcdc'/%3E%3C/svg%3E" : Model.Product.ImagePath)" alt="Product" class="product-img">
+                    <div class="product-text">
+                        <h2>@Model.Product.ProductName</h2>
+                        <p>@(string.IsNullOrWhiteSpace(Model.Product.Category) ? "Product" : Model.Product.Category)</p>
+                        <div class="price-wrap">
+                            <span class="current-price">P @Model.Product.Price.ToString("N2")</span>
+                            @if (Model.Product.Discount > 0)
+                            {
+                                var discountValue = Model.Product.Discount.GetValueOrDefault();
+                                var originalPrice = discountValue >= 100m
+                                    ? Model.Product.Price
+                                    : Model.Product.Price / (1 - (discountValue / 100m));
+                                <span class="old-price">P @originalPrice.ToString("N2")</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stats-wrap">
+                    <div class="stat-box">
+                        <h3>Total Review</h3>
+                        <div class="stat-value">@totalReviews</div>
+                        <p>Collected from customers</p>
+                    </div>
+                    <div class="stat-box">
+                        <h3>Average Rating</h3>
+                        <div class="stat-value">@avgRating.ToString("0.0")</div>
+                        <div class="stat-stars">
+                            @for (var i = 1; i <= 5; i++)
+                            {
+                                if (i <= fullStars)
+                                {
+                                    <i class="fa-solid fa-star"></i>
+                                }
+                                else
+                                {
+                                    <i class="fa-regular fa-star"></i>
+                                }
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-bar">
+                <button class="filter-btn active" id="btnFilterAll" onclick="setActiveFilter(this)">All</button>
+                <button class="filter-btn" id="btnFilterMedia" onclick="setActiveFilter(this)">With Media</button>
+
+                <select class="filter-select" id="starFilter" onchange="applyFilters()">
+                    <option value="all">Star (All)</option>
+                    <option value="5">5 Stars</option>
+                    <option value="4">4 Stars</option>
+                    <option value="3">3 Stars</option>
+                    <option value="2">2 Stars</option>
+                    <option value="1">1 Star</option>
+                </select>
+
+                <select class="filter-select" id="variationFilter" onchange="applyFilters()">
+                    <option value="all">Variation</option>
+                    @foreach (var variation in variationLabels)
+                    {
+                        <option value="@Slugify(variation)">@variation</option>
+                    }
+                </select>
+            </div>
+
+            @if (totalReviews == 0)
+            {
+                <div class="empty-state">No reviews yet for this product.</div>
+            }
+            else
+            {
+                <div class="review-list">
+                    @foreach (var item in Model.Reviews)
+                    {
+                        var rating = (int)Math.Round(item.Review.Rating, MidpointRounding.AwayFromZero);
+                        rating = Math.Clamp(rating, 1, 5);
+                        var variation = string.IsNullOrWhiteSpace(item.Review.ShortReview) ? "Standard" : item.Review.ShortReview.Trim();
+                        var variationSlug = Slugify(variation);
+                        var hasMedia = item.Images.Count > 0;
+
+                        <div class="review-card" data-rating="@rating" data-media="@(hasMedia ? "true" : "false")" data-variation="@variationSlug">
+                            <div class="review-top-row">
+                                <div class="reviewer-meta">
+                                    <img src="https://ui-avatars.com/api/?name=@Uri.EscapeDataString(item.Review.UserName)&background=e5e5e5&color=111&bold=true" alt="User" class="reviewer-avatar">
+                                    <div class="reviewer-details">
+                                        <p class="reviewer-name">@item.Review.UserName</p>
+                                        <p class="reviewer-date">@item.Review.Date.ToString("yyyy-MM-dd")</p>
+                                        <p class="reviewer-variation">@variation</p>
+                                    </div>
+                                </div>
+                                <div class="review-content">
+                                    <div class="review-stars">
+                                        @for (var i = 1; i <= 5; i++)
+                                        {
+                                            if (i <= rating)
+                                            {
+                                                <i class="fa-solid fa-star"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="fa-regular fa-star"></i>
+                                            }
+                                        }
+                                    </div>
+                                    <p class="review-text">
+                                        @(string.IsNullOrWhiteSpace(item.Review.Comment) ? "No comment provided." : item.Review.Comment)
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="review-actions-row">
+                                <div class="action-left">
+                                    @if (hasMedia)
+                                    {
+                                        <button class="btn-view-photos" onclick='openPhotoModal(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(item.Images)))'>
+                                            View @item.Images.Count Photo@(item.Images.Count > 1 ? "s" : "")
+                                        </button>
+                                    }
+                                </div>
+                                <div class="action-right">
+                                    <input type="text" class="reply-input" placeholder="Write a reply..." value="@item.Review.SellerReply" />
+                                    <button class="btn-send" type="button" data-review-id="@item.Review.Id"><i class="fa-solid fa-paper-plane"></i></button>
+                                </div>
+                            </div>
+                            <div class="review-content" style="margin-left: 330px;">
+                                @if (!string.IsNullOrWhiteSpace(item.Review.SellerReply))
+                                {
+                                    <div class="seller-reply-box">
+                                        <div class="seller-reply-meta">
+                                            Seller reply
+                                            @if (item.Review.SellerReplyDate.HasValue)
+                                            {
+                                                <text> · @item.Review.SellerReplyDate.Value.ToString("yyyy-MM-dd")</text>
+                                            }
+                                        </div>
+                                        <div class="seller-reply-text">@item.Review.SellerReply</div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+    <div id="photoModal" class="modal">
+        <span class="close-modal" onclick="closeModal()">&times;</span>
+        <div class="modal-content">
+            <img id="modalImage" src="" alt="Review photo">
+            <div class="modal-controls">
+                <button class="modal-btn" onclick="changePhoto(-1)"><i class="fa-solid fa-chevron-left"></i></button>
+                <span id="imageCounter">1 / 1</span>
+                <button class="modal-btn" onclick="changePhoto(1)"><i class="fa-solid fa-chevron-right"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function applyFilters() {
+            const starValue = document.getElementById('starFilter').value;
+            const variationValue = document.getElementById('variationFilter').value;
+            const isMediaActive = document.getElementById('btnFilterMedia').classList.contains('active');
+
+            const reviews = document.querySelectorAll('.review-card');
+
+            reviews.forEach(card => {
+                const cardRating = card.getAttribute('data-rating');
+                const cardMedia = card.getAttribute('data-media') === 'true';
+                const cardVariation = card.getAttribute('data-variation');
+
+                let shouldShow = true;
+
+                if (isMediaActive && !cardMedia) {
+                    shouldShow = false;
+                }
+
+                if (starValue !== 'all' && cardRating !== starValue) {
+                    shouldShow = false;
+                }
+
+                if (variationValue !== 'all' && cardVariation !== variationValue) {
+                    shouldShow = false;
+                }
+
+                card.style.display = shouldShow ? 'flex' : 'none';
+            });
+        }
+
+        function setActiveFilter(clickedBtn) {
+            document.getElementById('btnFilterAll').classList.remove('active');
+            document.getElementById('btnFilterMedia').classList.remove('active');
+            clickedBtn.classList.add('active');
+            applyFilters();
+        }
+
+        let currentImageArray = [];
+        let currentImageIndex = 0;
+
+        function openPhotoModal(imageUrls) {
+            currentImageArray = Array.isArray(imageUrls) ? imageUrls : [];
+            if (currentImageArray.length === 0) return;
+            currentImageIndex = 0;
+            updateModalView();
+            document.getElementById('photoModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('photoModal').style.display = 'none';
+        }
+
+        function changePhoto(direction) {
+            if (currentImageArray.length === 0) return;
+
+            currentImageIndex += direction;
+            if (currentImageIndex >= currentImageArray.length) currentImageIndex = 0;
+            else if (currentImageIndex < 0) currentImageIndex = currentImageArray.length - 1;
+
+            updateModalView();
+        }
+
+        function updateModalView() {
+            document.getElementById('modalImage').src = currentImageArray[currentImageIndex];
+            document.getElementById('imageCounter').innerText = (currentImageIndex + 1) + ' / ' + currentImageArray.length;
+
+            const controls = document.querySelector('.modal-controls');
+            controls.style.display = currentImageArray.length <= 1 ? 'none' : 'flex';
+        }
+
+        window.onclick = function (event) {
+            const modal = document.getElementById('photoModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const root = document.querySelector('.content-container[data-product-id]');
+            if (!root) return;
+            const productId = root.getAttribute('data-product-id');
+
+            document.querySelectorAll('.btn-send[data-review-id]').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const reviewId = btn.getAttribute('data-review-id');
+                    const row = btn.closest('.action-right');
+                    if (!row) return;
+                    const input = row.querySelector('.reply-input');
+                    if (!input) return;
+
+                    const reply = (input.value || '').trim();
+                    if (!reply) return;
+
+                    btn.disabled = true;
+                    const icon = btn.querySelector('i');
+                    const prevClass = icon ? icon.className : '';
+                    if (icon) icon.className = 'fa-solid fa-spinner fa-spin';
+
+                    try {
+                        const res = await fetch(`/api/products/${productId}/reviews/${reviewId}/reply`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ reply })
+                        });
+
+                        if (!res.ok) throw new Error('Failed to save reply.');
+
+                        const data = await res.json();
+                        const card = btn.closest('.review-card');
+                        if (!card) return;
+
+                        let replyBox = card.querySelector('.seller-reply-box');
+                        if (!replyBox) {
+                            const contentBlocks = card.querySelectorAll('.review-content');
+                            const target = contentBlocks.length > 1 ? contentBlocks[1] : null;
+                            if (!target) return;
+                            replyBox = document.createElement('div');
+                            replyBox.className = 'seller-reply-box';
+                            target.appendChild(replyBox);
+                        }
+
+                        const dateText = data.sellerReplyDate
+                            ? new Date(data.sellerReplyDate).toLocaleDateString('en-PH')
+                            : '';
+
+                        replyBox.innerHTML =
+                            `<div class="seller-reply-meta">Seller reply${dateText ? ` · ${dateText}` : ''}</div>` +
+                            `<div class="seller-reply-text"></div>`;
+                        const textEl = replyBox.querySelector('.seller-reply-text');
+                        if (textEl) textEl.textContent = data.sellerReply || reply;
+                    } catch (err) {
+                        alert('Could not save reply. Please try again.');
+                    } finally {
+                        btn.disabled = false;
+                        if (icon) icon.className = prevClass || 'fa-solid fa-paper-plane';
+                    }
+                });
+            });
+        });
+    </script>

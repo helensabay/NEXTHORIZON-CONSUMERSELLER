@@ -1,0 +1,80 @@
+@model MyAspNetApp.Models.HelpCenter.HelpTopicPageViewModel
+
+@{
+    ViewData["Title"] = "Contact Support";
+}
+
+@section Styles {
+    <link href="~/HelpCenter/faq-pages.css" rel="stylesheet" asp-append-version="true" />
+}
+
+<div class="help-center-page" data-help-view="contact" data-help-slug="@Model.CategorySlug">
+    <a href="/Help" class="help-back-btn">
+        <i class="fas fa-arrow-left"></i> Back to Help Center
+    </a>
+
+    <div class="help-page-header">
+        <div class="help-page-icon">
+            <i class="fa-solid fa-life-ring" data-help-topic-icon></i>
+        </div>
+        <h1 data-help-topic-title>Loading contact support...</h1>
+        <p data-help-topic-description>Loading support channels and FAQs.</p>
+    </div>
+
+    <section class="help-contact-grid" data-help-contact-channels>
+        <div class="help-loading-state">Loading support channels...</div>
+    </section>
+
+    <section class="help-ticket-panel">
+        <div class="help-ticket-header">
+            <h2>Submit a support ticket</h2>
+            <p>Signed-in users can send a support request directly to the backend support queue.</p>
+        </div>
+
+        <form class="help-ticket-form" data-help-ticket-form novalidate>
+            <label class="help-ticket-field">
+                <span>Topic</span>
+                <select name="categorySlug" data-help-ticket-category>
+                    <option value="">Choose a topic (optional)</option>
+                </select>
+            </label>
+
+            <label class="help-ticket-field">
+                <span>Subject</span>
+                <input
+                    type="text"
+                    name="subject"
+                    maxlength="160"
+                    minlength="5"
+                    placeholder="Short summary of your issue"
+                    required />
+            </label>
+
+            <label class="help-ticket-field">
+                <span>Details</span>
+                <textarea
+                    name="body"
+                    rows="6"
+                    maxlength="4000"
+                    minlength="20"
+                    placeholder="Describe the issue, what you expected, and any order or account context."
+                    required></textarea>
+            </label>
+
+            <div class="help-ticket-actions">
+                <button type="submit" class="help-ticket-submit">Send ticket</button>
+                <p class="help-ticket-note">Ticket submission requires an authenticated user session.</p>
+            </div>
+
+            <div class="help-ticket-message" data-help-ticket-message hidden></div>
+        </form>
+    </section>
+
+    <div class="help-page-faq" data-help-topic-faqs>
+        <div class="help-loading-state">Loading contact FAQs...</div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/help-center.js" asp-append-version="true"></script>
+}

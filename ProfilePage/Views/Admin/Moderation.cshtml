@@ -1,0 +1,228 @@
+﻿@{
+    ViewData["Title"] = "Moderation Queue";
+    Layout = "_AdminLayout";
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold mb-0">Moderation Queue</h3>
+            <p class="text-muted small">Review flagged activities and maintain leaderboard integrity.</p>
+        </div>
+        <span class="badge bg-danger rounded-pill px-3 py-2 shadow-sm" id="pendingCount">3 Pending Reviews</span>
+    </div>
+
+    <ul class="nav nav-tabs border-0 mb-4 gap-2" id="modTabs">
+        <li class="nav-item">
+            <a class="nav-link active rounded-pill border shadow-sm px-4" href="#" onclick="filterQueue('all')">All Flags</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link rounded-pill border shadow-sm px-4 text-dark bg-white" href="#" onclick="filterQueue('speed')">Speed Violations</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link rounded-pill border shadow-sm px-4 text-dark bg-white" href="#" onclick="filterQueue('manual')">Manual Reports</a>
+        </li>
+        <li class="nav-item ms-auto">
+            <a class="nav-link rounded-pill border shadow-sm px-4 text-white bg-dark"
+               href="javascript:void(0)"
+               onclick="filterQueue('disqualified_list')">
+                <i class="bi bi-archive me-1"></i> Disqualified List
+            </a>
+        </li>
+    </ul>
+
+    <div id="pendingSection" class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="table-responsive">
+            <table class="table align-middle mb-0" id="moderationTable">
+                <thead class="bg-light text-center">
+                    <tr>
+                        <th class="text-start ps-4">Athlete</th>
+                        <th>Challenge</th>
+                        <th>Violation Type</th>
+                        <th>Flagged Date</th>
+                        <th>Evidence</th>
+                        <th class="text-end pe-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="text-center">
+                    <tr data-type="speed">
+                        <td class="text-start ps-4">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="rounded-circle bg-dark text-white d-flex align-items-center justify-content-center" style="width: 35px; height: 35px; font-size: 0.8rem;">JD</div>
+                                <div>
+                                    <div class="fw-bold">Jane Doe</div>
+                                    <small class="text-muted">ID: #8821</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td><span class="badge bg-light text-dark border">Morning 5K Streak</span></td>
+                        <td>
+                            <div class="text-danger fw-600 small">
+                                <i class="bi bi-speedometer2 me-1"></i> Speed Threshold (42km/h)
+                            </div>
+                        </td>
+                        <td class="small text-muted">Mar 06, 2026</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-dark rounded-pill" onclick="viewActivityLog('Jane Doe', 'Speed Violation', '42km/h detected on a running activity.')">
+                                <i class="bi bi-eye"></i> View Log
+                            </button>
+                        </td>
+                        <td class="text-end pe-4">
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-success rounded-pill me-2 px-3" onclick="handleModeration(this, 'Jane Doe', 'approved')">Dismiss</button>
+                                <button class="btn btn-sm btn-outline-danger rounded-pill px-3" onclick="openDQModal(this, 'Jane Doe')">DQ</button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr data-type="manual">
+                        <td class="text-start ps-4">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width: 35px; height: 35px; font-size: 0.8rem;">MK</div>
+                                <div>
+                                    <div class="fw-bold">Mike Knight</div>
+                                    <small class="text-muted">ID: #4412</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td><span class="badge bg-light text-dark border">Cebu Marathon Prep</span></td>
+                        <td>
+                            <div class="text-warning fw-600 small">
+                                <i class="bi bi-person-exclamation me-1"></i> Reported by Peer
+                            </div>
+                        </td>
+                        <td class="small text-muted">Mar 07, 2026</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-dark rounded-pill" onclick="viewActivityLog('Mike Knight', 'Manual Report', 'User reported for using a bicycle in a running challenge.')">
+                                <i class="bi bi-eye"></i> View Log
+                            </button>
+                        </td>
+                        <td class="text-end pe-4">
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-success rounded-pill me-2 px-3" onclick="handleModeration(this, 'Mike Knight', 'approved')">Dismiss</button>
+                                <button class="btn btn-sm btn-outline-danger rounded-pill px-3" onclick="openDQModal(this, 'Mike Knight')">DQ</button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="disqualifiedSection" class="card border-0 shadow-sm rounded-4 overflow-hidden d-none">
+        <div class="card-header bg-dark text-white py-3 px-4 d-flex justify-content-between align-items-center">
+            <h6 class="mb-0 fw-bold">Disqualified Athletes Archive</h6>
+            <button class="btn btn-sm btn-outline-light rounded-pill px-3" onclick="toggleArchive(false)">Back to Queue</button>
+        </div>
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead class="bg-light text-center">
+                    <tr>
+                        <th class="text-start ps-4">Athlete</th>
+                        <th>Challenge</th>
+                        <th>Reason for DQ</th>
+                        <th>Date Banned</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="text-center" id="dqTableBody">
+                    <tr>
+                        <td class="text-start ps-4">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="rounded-circle bg-danger text-white d-flex align-items-center justify-content-center" style="width: 35px; height: 35px; font-size: 0.8rem;">BS</div>
+                                <div><div class="fw-bold">Bob Smith</div><small class="text-muted">ID: #1209</small></div>
+                            </div>
+                        </td>
+                        <td><span class="badge bg-light text-muted border">Morning 5K Streak</span></td>
+                        <td><span class="text-danger small fw-bold">GPS Spoofing</span></td>
+                        <td class="small text-muted">Mar 01, 2026</td>
+                        <td class="text-end pe-4">
+                            <div class="d-grid d-md-flex justify-content-md-end gap-2">
+                                <button class="btn btn-sm btn-outline-success rounded-pill px-3 fw-bold shadow-sm w-100 w-md-auto"
+                                        onclick="reinstateAthlete(this, 'Bob Smith')">
+                                    <i class="bi bi-arrow-counterclockwise me-1"></i>
+                                    <span class="d-inline">Reinstate</span>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="logDetailsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow rounded-4">
+            <div class="modal-header border-0 pt-4 px-4">
+                <h5 class="fw-bold mb-0 text-poppins">Activity Evidence</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body px-4 pb-4">
+                <div class="bg-light p-3 rounded-4 mb-3">
+                    <div class="row text-center">
+                        <div class="col-6 border-end">
+                            <small class="text-muted d-block text-poppins">Athlete</small>
+                            <span class="fw-bold" id="logAthleteName">-</span>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted d-block text-poppins">Flag Reason</small>
+                            <span class="fw-bold text-danger" id="logFlagReason">-</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="border rounded-4 p-3 mb-3">
+                    <h6 class="fw-bold small mb-2"><i class="bi bi-info-circle me-1"></i> Admin Notes:</h6>
+                    <p class="small text-muted mb-0" id="logAdminNotes">No additional details provided.</p>
+                </div>
+                <div class="d-grid">
+                    <button class="btn btn-dark rounded-pill" data-bs-dismiss="modal">Close Evidence</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="dqModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-body p-4 text-center">
+                <div class="text-danger mb-3"><i class="bi bi-exclamation-octagon fs-1"></i></div>
+                <h5 class="fw-bold text-poppins">Confirm DQ?</h5>
+                <p class="text-muted small">You are about to disqualify <span id="dqTargetName" class="fw-bold text-dark"></span>. This will remove their stats from the leaderboard.</p>
+
+                <select id="dqReasonSelect" class="form-select form-select-sm mb-3 rounded-3">
+                    <option value="GPS Spoofing">GPS Spoofing</option>
+                    <option value="Vehicle Use">Vehicle Use</option>
+                    <option value="Duplicate Data">Duplicate Data</option>
+                    <option value="Other">Other Policy Violation</option>
+                </select>
+
+                <div class="d-flex gap-2">
+                    <button class="btn btn-light rounded-pill flex-grow-1" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-danger rounded-pill flex-grow-1 text-poppins" onclick="confirmDQ()">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="moderationToast" class="toast border-0 shadow rounded-4" role="alert">
+        <div class="d-flex align-items-center bg-dark text-white rounded-4 p-2">
+            <div class="toast-body d-flex align-items-center gap-2">
+                <i id="modToastIcon" class="bi bi-check-circle-fill text-success fs-5"></i>
+                <span id="modToastMsg">Action processed.</span>
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin_css/moderation.css" asp-append-version="true" />
+}
+
+@section Scripts {
+    <script src="~/js/admin_js/moderation.js" asp-append-version="true"></script>
+}

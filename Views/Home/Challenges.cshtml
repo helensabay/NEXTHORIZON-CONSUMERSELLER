@@ -1,0 +1,1200 @@
+@model MyAspNetApp.Models.ChallengesPageViewModel
+@{
+    var featured = Model.FeaturedChallenge;
+    var hasFeatured = featured is not null;
+    var joinPrefill = Model.JoinChallengePrefill;
+    var allVouchers = Model.Vouchers ?? new();
+    var activeVouchers = allVouchers.Where(v => !v.IsUsed && !v.IsExpired).ToList();
+    var usedVouchers = allVouchers.Where(v => v.IsUsed).ToList();
+    var expiredVouchers = allVouchers.Where(v => v.IsExpired && !v.IsUsed).ToList();
+    var myActivities = Model.MyActivities ?? new();
+    var uploadedActivities = Model.UploadedActivities ?? new();
+    var totalSavedDisplay = string.IsNullOrWhiteSpace(Model.TotalSavedDisplay) ? "₱0" : Model.TotalSavedDisplay;
+}
+<style>
+@@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap');
+.pg,.pg *{box-sizing:border-box;margin:0;padding:0}
+.pg{font-family:'DM Sans',sans-serif;background:#fff;color:#000;padding:2.5rem 2rem 4rem}
+.pg .pg-header{border-bottom:1.5px solid #000;padding-bottom:1rem;margin-bottom:2rem;display:flex;align-items:baseline;justify-content:space-between}
+.pg .pg-header h1{font-family:'Bebas Neue',sans-serif;font-size:52px;letter-spacing:0.04em;line-height:1;color:#000}
+.pg .pg-header-sub{font-size:13px;letter-spacing:0.12em;text-transform:uppercase;color:#999;font-weight:400}
+.pg .pg-tabs{display:flex;gap:0;border-bottom:1.5px solid #e8e8e8;margin-bottom:3rem}
+.pg .pg-tab{font-size:13px;letter-spacing:0.1em;text-transform:uppercase;font-weight:500;padding:0.65rem 1.4rem 0.65rem 0;border:none;background:none;color:#aaa;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1.5px;transition:color .15s}
+.pg .pg-tab:hover{color:#555}
+.pg .pg-tab.active{color:#000;border-bottom:2px solid #000}
+.pg .tab-panel{display:none}
+.pg .tab-panel.active{display:block}
+.pg .hero{display:grid;grid-template-columns:1fr 1px 1fr 1px 1fr;gap:0;border:1px solid #e8e8e8;margin-bottom:3rem;background:#fff;padding:0 !important;height:auto !important;min-height:0 !important}
+.pg .hero-4{grid-template-columns:1fr 1px 1fr 1px 1fr 1px 1fr}
+.pg .hero-stat{padding:1.5rem 1.25rem;text-align:center;min-height:0 !important}
+.pg button.hero-stat{width:100%;border:none;background:#fff;font:inherit}
+.pg .hero-stat.is-clickable{cursor:pointer;transition:background .15s ease,color .15s ease}
+.pg .hero-stat.is-clickable:hover{background:#f7f7f7}
+.pg .hero-stat.is-active{background:#111}
+.pg .hero-stat.is-active .hero-stat-num,.pg .hero-stat.is-active .hero-stat-label{color:#fff}
+.pg .hero-divider{background:#e8e8e8}
+.pg .hero-stat-num{font-family:'Bebas Neue',sans-serif;font-size:48px;letter-spacing:0.02em;line-height:1;color:#000}
+.pg .hero-stat-label{font-size:13px;letter-spacing:0.11em;text-transform:uppercase;color:#aaa;margin-top:6px;font-weight:400}
+.pg .section-row{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:1.25rem}
+.pg .section-label{font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:#aaa;font-weight:400}
+.pg .section-tag{font-size:12px;letter-spacing:0.1em;text-transform:uppercase;color:#000;font-weight:500;border-bottom:1px solid #000;padding-bottom:1px}
+.pg .section-row.upcoming-head .section-label,.pg .section-row.leaderboard-head .section-label{font-size:16px;letter-spacing:0.08em;color:#111;font-weight:700}
+.pg .section-row.upcoming-head .section-tag,.pg .section-row.leaderboard-head .section-tag{font-size:14px;letter-spacing:0.08em;color:#111;font-weight:700}
+.pg .featured{display:grid;grid-template-columns:1.35fr 1fr;gap:1px;background:#e8e8e8;margin-bottom:1px}
+.pg .feat-main{background:#000;padding:2.5rem 2rem;position:relative;overflow:hidden}
+.pg .feat-main.has-banner{background-size:cover;background-position:center;background-repeat:no-repeat}
+.pg .feat-main-ghost{position:absolute;bottom:-10px;right:-8px;font-family:'Bebas Neue',sans-serif;font-size:120px;color:rgba(255,255,255,0.05);line-height:1;user-select:none;pointer-events:none}
+.pg .feat-badge{display:inline-block;background:#fff;color:#000;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;padding:4px 10px;font-weight:500;margin-bottom:1.25rem}
+.pg .feat-main h2{font-family:'Bebas Neue',sans-serif;font-size:38px;letter-spacing:0.03em;line-height:1.05;color:#fff;margin-bottom:1rem}
+.pg .feat-main p{font-size:15px;color:rgba(255,255,255,0.68);line-height:1.65;font-weight:300;max-width:320px;margin-bottom:1.75rem}
+.pg .feat-meta{display:flex;gap:1.5rem}
+.pg .feat-meta-item{display:flex;flex-direction:column;gap:3px}
+.pg .feat-meta-val{font-size:14px;font-weight:500;color:#fff}
+.pg .feat-meta-key{font-size:12px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.48);font-weight:400}
+.pg .join-challenge-btn{display:inline-flex;align-items:center;justify-content:center;margin-top:1.35rem;padding:0.68rem 1.1rem;border:1px solid #fff;background:#fff;color:#000;text-transform:uppercase;letter-spacing:0.09em;font-size:11px;font-weight:700;text-decoration:none;transition:all .18s ease}
+.pg .join-challenge-btn:hover{background:transparent;color:#fff}
+.pg .card-join-btn{display:inline-flex;align-items:center;justify-content:center;margin-top:0.9rem;padding:0.62rem 0.95rem;border:1px solid #111;background:#111;color:#fff;text-transform:uppercase;letter-spacing:0.08em;font-size:10px;font-weight:700;text-decoration:none;transition:all .18s ease}
+.pg .card-join-btn:hover{background:#2d2d2d;color:#fff}
+.pg .feat-side{background:#fff;display:flex;flex-direction:column}
+.pg .feat-side-top{padding:1.75rem 1.5rem;border-bottom:1px solid #e8e8e8;flex:1}
+.pg .feat-side-top h3{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:0.03em;margin-bottom:0.5rem;color:#000}
+.pg .feat-side-top p{font-size:14px;color:#666;line-height:1.65;font-weight:300}
+.pg .feat-side-stat{padding:1.25rem 1.5rem;background:#f9f9f9;border-bottom:1px solid #e8e8e8}
+.pg .feat-side-stat-row{display:flex;justify-content:space-between;align-items:center}
+.pg .feat-side-stat span:first-child{font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#999;font-weight:400}
+.pg .feat-side-stat span:last-child{font-size:14px;font-weight:500;color:#000}
+.pg .feat-progress{padding:1.25rem 1.5rem}
+.pg .feat-progress-label{display:flex;justify-content:space-between;margin-bottom:8px}
+.pg .feat-progress-label span{font-size:12px;color:#999;font-weight:400}
+.pg .feat-progress-bar{height:3px;background:#e8e8e8;width:100%}
+.pg .feat-progress-fill{height:3px;background:#000;width:38%}
+.pg .challenge-mini-leaderboard{padding:1.1rem 1.5rem 1.35rem;border-top:1px solid #e8e8e8;background:#fff}
+.pg .challenge-mini-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:.8rem}
+.pg .challenge-mini-head span:first-child{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#888;font-weight:700}
+.pg .challenge-mini-head span:last-child{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#bbb}
+.pg .challenge-mini-list{display:flex;flex-direction:column;gap:.65rem}
+.pg .challenge-mini-row{display:grid;grid-template-columns:34px 1fr auto;align-items:center;gap:.65rem}
+.pg .challenge-mini-rank{font-family:'Bebas Neue',sans-serif;font-size:24px;color:#000;line-height:1;text-align:center}
+.pg .challenge-mini-user{display:flex;align-items:center;gap:.6rem;min-width:0}
+.pg .challenge-mini-avatar{width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0}
+.pg .challenge-mini-name{font-size:13px;font-weight:600;color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pg .challenge-mini-meta{font-size:11px;color:#888}
+.pg .challenge-mini-stat{text-align:right}
+.pg .challenge-mini-distance{font-size:12px;font-weight:700;color:#000}
+.pg .challenge-mini-time{font-size:10px;color:#999}
+.pg .challenge-mini-empty{font-size:12px;color:#999;padding:.3rem 0}
+.pg .grid3,.pg .voucher-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:#e8e8e8;margin-bottom:3rem}
+.pg .card{background:#fff;padding:1.75rem 1.5rem;position:relative;transition:background 0.15s;cursor:default}
+.pg .card:hover{background:#f7f7f7}
+.pg .card-banner{margin:-1.75rem -1.5rem 1rem;height:120px;overflow:hidden;background:#111}
+.pg .card-banner img{width:100%;height:100%;object-fit:cover;display:block}
+.pg .card-accent{position:absolute;top:0;left:0;width:2px;height:100%;background:#000}
+.pg .card-meta-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
+.pg .card-badge{font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#aaa;font-weight:500}
+.pg .upcoming-grid .card-badge{font-size:13px;letter-spacing:0.08em;color:#6f6f6f;font-weight:700}
+.pg .card-diff{font-size:11px;letter-spacing:0.1em;text-transform:uppercase;padding:3px 8px;font-weight:500}
+.pg .diff-easy{background:#f0f0f0;color:#888}
+.pg .diff-med{background:#e0e0e0;color:#555}
+.pg .diff-hard{background:#111;color:#fff}
+.pg .card h3{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:0.04em;margin-bottom:0.6rem;color:#000;line-height:1.1}
+.pg .card p{font-size:14px;color:#666;line-height:1.65;font-weight:300;margin-bottom:1.25rem}
+.pg .card-footer{display:flex;justify-content:space-between;align-items:center;border-top:1px solid #f0f0f0;padding-top:1rem}
+.pg .card-footer-stat{font-size:12px;color:#999;font-weight:400}
+.pg .card-footer-stat strong{color:#000;font-weight:500}
+.pg .card-num{font-family:'Bebas Neue',sans-serif;font-size:36px;color:#f2f2f2;line-height:1;user-select:none}
+.pg .leaderboard,.pg .history-table{border:1px solid #e8e8e8}
+.pg .lb-row{display:grid;grid-template-columns:40px 1fr repeat(3,80px);align-items:center;padding:0.9rem 1.25rem;border-bottom:1px solid #f0f0f0;transition:background 0.1s}
+.pg .lb-row:last-child{border-bottom:none}
+.pg .lb-row:hover{background:#fafafa}
+.pg .lb-rank{font-family:'Bebas Neue',sans-serif;font-size:20px;color:#ccc;text-align:center}
+.pg .lb-rank.top{color:#000}
+.pg .lb-name{font-size:15px;font-weight:500;color:#000}
+.pg .lb-handle{font-size:13px;color:#999;font-weight:400;margin-top:1px}
+.pg .lb-val{font-size:14px;color:#555;text-align:right;font-weight:400}
+.pg .lb-val.bold{font-weight:500;color:#000}
+.pg .lb-header .lb-rank,.pg .lb-header .lb-val,.pg .lb-header .lb-name{font-size:11px;letter-spacing:0.11em;text-transform:uppercase;color:#aaa;font-weight:400;font-family:'DM Sans',sans-serif}
+.pg .lb-header{background:#fafafa;border-bottom:1px solid #e8e8e8}
+.pg .lb-header:hover{background:#fafafa}
+.pg .lb-avatar{width:30px;height:30px;border-radius:50%;background:#000;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:#fff;margin-right:10px;flex-shrink:0}
+.pg .lb-name-wrap{display:flex;align-items:center}
+.pg .empty-state{border:1px solid #e8e8e8;padding:1.5rem;color:#777;font-size:14px;background:#fff}
+.challenge-join-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:1.5rem;background:rgba(0,0,0,.52);z-index:1200}
+.challenge-join-modal.is-open{display:flex}
+.challenge-join-panel{width:min(100%,560px);background:#fff;border:1px solid #e7e7e7;padding:1.6rem;box-shadow:0 24px 64px rgba(0,0,0,.18)}
+.challenge-join-head{display:flex;justify-content:space-between;gap:1rem;align-items:flex-start;margin-bottom:1.25rem}
+.challenge-join-title{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:.04em;line-height:1;color:#000}
+.challenge-join-sub{font-size:13px;color:#777;line-height:1.6;margin-top:.3rem}
+.challenge-join-close{border:none;background:none;font-size:22px;line-height:1;color:#444;cursor:pointer}
+.challenge-join-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.95rem}
+.challenge-join-field{display:flex;flex-direction:column;gap:0.45rem}
+.challenge-join-field--full{grid-column:1 / -1}
+.challenge-join-label{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#666;font-weight:700}
+.challenge-join-input,.challenge-join-textarea{width:100%;border:1px solid #d9d9d9;background:#fff;padding:.88rem .95rem;font-size:14px;color:#111;outline:none}
+.challenge-join-input:focus,.challenge-join-textarea:focus{border-color:#111}
+.challenge-join-textarea{min-height:98px;resize:vertical}
+.challenge-join-error{font-size:12px;color:#b91c1c;min-height:16px}
+.challenge-join-actions{display:flex;justify-content:flex-end;gap:.75rem;margin-top:1.25rem}
+.challenge-join-btn-secondary,.challenge-join-btn-primary{border:1px solid #111;padding:.78rem 1rem;font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;cursor:pointer}
+.challenge-join-btn-secondary{background:#fff;color:#111}
+.challenge-join-btn-primary{background:#111;color:#fff}
+.challenge-join-status{margin-top:1rem;padding:.8rem .9rem;border:1px solid #d6e7d8;background:#f6fbf6;color:#1f5130;font-size:13px;display:none}
+.challenge-join-status.is-visible{display:block}
+.pg .voucher-card{background:#fff;position:relative;overflow:hidden;transition:background 0.15s;cursor:default;display:flex;flex-direction:column}
+.pg .voucher-card:hover{background:#f7f7f7}
+.pg .voucher-card::before,.pg .voucher-card::after{content:'';position:absolute;width:16px;height:16px;border-radius:50%;background:#e8e8e8;top:50%;transform:translateY(-50%);z-index:2}
+.pg .voucher-card::before{left:-8px}
+.pg .voucher-card::after{right:-8px}
+.pg .voucher-stub{width:4px;position:absolute;top:0;left:0;bottom:0}
+.pg .stub-active{background:#000}
+.pg .stub-used{background:#bbb}
+.pg .stub-expired{background:#e0e0e0}
+.pg .voucher-body{padding:1.75rem 1.5rem 1.5rem 1.75rem;flex:1;display:flex;flex-direction:column}
+.pg .voucher-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
+.pg .voucher-type{font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#aaa;font-weight:500}
+.pg .status-pill{font-size:10px;letter-spacing:0.12em;text-transform:uppercase;font-weight:600;padding:3px 9px}
+.pg .pill-active{background:#000;color:#fff}
+.pg .pill-used{background:#f0f0f0;color:#888}
+.pg .pill-expired{background:#f5f5f5;color:#bbb}
+.pg .voucher-value{font-family:'Bebas Neue',sans-serif;font-size:44px;letter-spacing:0.03em;line-height:1;color:#000;margin-bottom:4px}
+.pg .voucher-card.is-used .voucher-value,.pg .voucher-card.is-expired .voucher-value{color:#ccc}
+.pg .voucher-title{font-size:14px;font-weight:500;color:#333;margin-bottom:0.5rem}
+.pg .voucher-card.is-used .voucher-title,.pg .voucher-card.is-expired .voucher-title{color:#aaa}
+.pg .voucher-desc{font-size:13px;color:#888;line-height:1.6;font-weight:300;flex:1;margin-bottom:1.25rem}
+.pg .voucher-tear{border:none;border-top:1.5px dashed #e8e8e8;margin:0 -1.5rem 1rem -1.75rem}
+.pg .voucher-footer{display:flex;justify-content:space-between;align-items:center}
+.pg .voucher-code{font-family:'Bebas Neue',sans-serif;font-size:17px;letter-spacing:0.2em;color:#000}
+.pg .voucher-card.is-used .voucher-code,.pg .voucher-card.is-expired .voucher-code{color:#ccc}
+.pg .voucher-expiry{font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#bbb;font-weight:400}
+.pg .expiry-soon{color:#c00}
+.pg .activity-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:#e8e8e8;margin-bottom:3rem}
+.pg .activity-card{background:#fff;display:flex;flex-direction:column;overflow:hidden;position:relative;transition:background 0.15s}
+.pg .activity-card:hover{background:#f7f7f7}
+.pg .activity-media{aspect-ratio:16 / 10;background:linear-gradient(160deg,#111,#2a2a2a);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.pg .activity-media img{width:100%;height:100%;object-fit:cover;display:block}
+.pg .activity-media-empty{font-family:'Bebas Neue',sans-serif;font-size:48px;letter-spacing:.08em;color:rgba(255,255,255,.28)}
+.pg .activity-body{padding:1.5rem;display:flex;flex-direction:column;gap:.95rem;flex:1}
+.pg .activity-head{display:flex;justify-content:space-between;align-items:flex-start;gap:.75rem}
+.pg .activity-type{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#888;font-weight:700}
+.pg .activity-badge{font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;padding:4px 8px}
+.pg .activity-badge.ok{background:#111;color:#fff}
+.pg .activity-badge.pending{background:#f3f4f6;color:#6b7280}
+.pg .activity-title{font-family:'Bebas Neue',sans-serif;font-size:25px;letter-spacing:.04em;line-height:1;color:#000}
+.pg .activity-date{font-size:13px;color:#777}
+.pg .activity-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.pg .activity-metric{border:1px solid #efefef;background:#fafafa;padding:.85rem}
+.pg .activity-metric-label{font-size:10px;letter-spacing:.11em;text-transform:uppercase;color:#999;font-weight:700;margin-bottom:4px}
+.pg .activity-metric-value{font-size:14px;color:#111;font-weight:600}
+.pg .activity-notes{font-size:13px;color:#777;line-height:1.6}
+.pg .activity-actions{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:auto;padding-top:.25rem}
+.pg .activity-proof-link,.pg .activity-upload-btn{display:inline-flex;align-items:center;justify-content:center;padding:.72rem .95rem;border:1px solid #111;text-transform:uppercase;letter-spacing:.08em;font-size:10px;font-weight:700;text-decoration:none}
+.pg .activity-proof-link{background:#fff;color:#111}
+.pg .activity-upload-btn{background:#111;color:#fff}
+.pg .activity-proof-link:hover{background:#f3f4f6}
+.pg .activity-upload-btn:hover{background:#2d2d2d;color:#fff}
+.pg .proof-preview-modal .challenge-join-panel{width:min(100%,760px);border:1px solid #d7d7d7;box-shadow:0 28px 70px rgba(0,0,0,.2)}
+.pg .proof-preview-stage{display:flex;align-items:center;justify-content:center;min-height:180px;max-height:min(60vh,520px);padding:12px;background:linear-gradient(180deg,#fafafa 0%,#f1f1f1 100%);border:1px solid #d8d8d8;overflow:hidden}
+.pg .proof-preview-stage img{max-width:100%;max-height:min(58vh,480px);display:block;object-fit:contain;background:#fff;border:1px solid #cfcfcf;box-shadow:0 8px 24px rgba(0,0,0,.12)}
+.pg .proof-preview-caption{margin-top:0.85rem;font-size:13px;color:#666;word-break:break-word;text-align:center}
+.pg .activity-summary-note{font-size:13px;color:#888;margin-top:-1rem;margin-bottom:2rem}
+.pg .activity-filter-row{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:-.5rem 0 1.5rem}
+.pg .activity-filter-reset{border:none;background:none;color:#666;font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;cursor:pointer;padding:0}
+.pg .activity-filter-reset:hover{color:#000}
+.pg .activity-time-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.75rem}
+.pg .ht-row{display:grid;grid-template-columns:1fr 100px 140px 110px;align-items:center;padding:0.9rem 1.25rem;border-bottom:1px solid #f0f0f0;transition:background 0.1s}
+.pg .ht-row:last-child{border-bottom:none}
+.pg .ht-row:hover{background:#fafafa}
+.pg .ht-header{background:#fafafa;border-bottom:1px solid #e8e8e8}
+.pg .ht-header:hover{background:#fafafa}
+.pg .ht-header span{font-size:11px;letter-spacing:0.11em;text-transform:uppercase;color:#aaa;font-weight:400}
+.pg .ht-name{font-size:14px;font-weight:500;color:#000}
+.pg .ht-sub{font-size:12px;color:#bbb;margin-top:2px;font-weight:300}
+.pg .ht-code{font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:0.15em;color:#999}
+.pg .ht-date{font-size:13px;color:#999;text-align:right}
+.pg .ht-badge{font-size:10px;letter-spacing:0.1em;text-transform:uppercase;font-weight:600;padding:3px 8px;text-align:center;justify-self:end}
+.pg .badge-used{background:#f0f0f0;color:#888}
+.pg .badge-expired{background:#f5f5f5;color:#bbb}
+.pg .empty-state-center{border:1px solid #e8e8e8;padding:2.5rem 1.5rem;color:#aaa;font-size:14px;background:#fff;text-align:center;margin-bottom:3rem}
+.pg .empty-icon{font-family:'Bebas Neue',sans-serif;font-size:56px;letter-spacing:0.04em;color:#e8e8e8;display:block;margin-bottom:0.5rem}
+@@media (max-width: 900px){
+  .pg .grid3,.pg .voucher-grid,.pg .featured,.pg .activity-grid{grid-template-columns:1fr}
+  .pg .hero,.pg .hero-4{grid-template-columns:1fr}
+  .pg .hero-divider{display:none}
+  .pg .lb-row{grid-template-columns:30px 1fr repeat(3,70px);padding:0.8rem}
+  .pg .ht-row{grid-template-columns:1fr;gap:8px}
+}
+</style>
+
+<div class="pg">
+  @if (TempData["ChallengeJoinSuccess"] is string challengeJoinSuccess)
+  {
+    <div class="challenge-join-status is-visible" style="margin-bottom:1rem">@challengeJoinSuccess</div>
+  }
+  @if (TempData["ChallengeJoinError"] is string challengeJoinError)
+  {
+    <div class="challenge-join-status is-visible" style="margin-bottom:1rem;border-color:#f1c5c5;background:#fff6f6;color:#8f1d1d">@challengeJoinError</div>
+  }
+  @if (TempData["ChallengeActivitySuccess"] is string challengeActivitySuccess)
+  {
+    <div class="challenge-join-status is-visible" style="margin-bottom:1rem">@challengeActivitySuccess</div>
+  }
+  @if (TempData["ChallengeActivityError"] is string challengeActivityError)
+  {
+    <div class="challenge-join-status is-visible" style="margin-bottom:1rem;border-color:#f1c5c5;background:#fff6f6;color:#8f1d1d">@challengeActivityError</div>
+  }
+
+  <div class="pg-header">
+    <h1 id="pg-title">Challenges</h1>
+    <span class="pg-header-sub" id="pg-sub">@Model.SeasonLabel &nbsp;·&nbsp; @Model.ActiveCount Active</span>
+  </div>
+
+  <div class="pg-tabs">
+    <button class="pg-tab active" type="button" onclick="switchTab('challenges', this)">Challenges</button>
+    <button class="pg-tab" type="button" onclick="switchTab('vouchers', this)">MY REWARDS</button>
+    <button class="pg-tab" type="button" onclick="switchTab('activities', this)">Challenge Participation</button>
+  </div>
+
+  <div class="tab-panel active" id="tab-challenges">
+    <div class="hero">
+      <div class="hero-stat">
+        <div class="hero-stat-num">@Model.TotalParticipants.ToString("N0")</div>
+        <div class="hero-stat-label">Runners Competing</div>
+      </div>
+      <div class="hero-divider"></div>
+      <div class="hero-stat">
+        <div class="hero-stat-num">@Model.TotalGoalKm.ToString("N1")</div>
+        <div class="hero-stat-label">Total Goal KM</div>
+      </div>
+      <div class="hero-divider"></div>
+      <div class="hero-stat">
+        <div class="hero-stat-num">@Model.DaysUntilNextDrop</div>
+        <div class="hero-stat-label">Days Until Next Drop</div>
+      </div>
+    </div>
+
+    <div class="section-row">
+      <span class="section-label">Featured challenge</span>
+      <span class="section-tag">Live now</span>
+    </div>
+
+    @if (hasFeatured)
+    {
+      <div class="featured" style="margin-bottom:3rem">
+        <div class="feat-main @(featured!.HasBannerImage ? "has-banner" : string.Empty)" style="@(featured.HasBannerImage ? $"background-image:linear-gradient(rgba(0,0,0,.56),rgba(0,0,0,.56)),url('/Home/ChallengeBanner/{featured.ChallengeId}')" : string.Empty)">
+          <div class="feat-main-ghost">RUN</div>
+          <span class="feat-badge">&#9679; Live</span>
+          <h2>@featured.Title</h2>
+          <p>@featured.Description</p>
+          <div class="feat-meta">
+            <div class="feat-meta-item">
+              <span class="feat-meta-val">@featured.DurationDays days</span>
+              <span class="feat-meta-key">Duration</span>
+            </div>
+            <div class="feat-meta-item">
+              <span class="feat-meta-val">@featured.GoalKm.ToString("N1") km</span>
+              <span class="feat-meta-key">Goal</span>
+            </div>
+            <div class="feat-meta-item">
+              <span class="feat-meta-val">@featured.TotalParticipants.ToString("N0")</span>
+              <span class="feat-meta-key">Joined</span>
+            </div>
+          </div>
+          <button type="button" class="join-challenge-btn" data-join-challenge data-challenge-id="@featured.ChallengeId" data-challenge-title="@featured.Title">Join Challenge</button>
+        </div>
+        <div class="feat-side">
+          <div class="feat-side-top">
+            <p class="card-badge" style="margin-bottom:8px">Reward</p>
+            <h3>@featured.ActivityType</h3>
+            <p>@featured.Prizes</p>
+          </div>
+          <div class="feat-side-stat">
+            <div class="feat-side-stat-row">
+              <span>Completion rate</span>
+              <span>@featured.CompletionPercent.ToString("N0")%</span>
+            </div>
+          </div>
+          <div class="feat-side-stat" style="border-bottom:none">
+            <div class="feat-side-stat-row">
+              <span>Completed</span>
+              <span>@featured.TotalCompleted.ToString("N0")</span>
+            </div>
+          </div>
+          <div class="feat-progress">
+            <div class="feat-progress-label">
+              <span>Community progress</span>
+              <span>@featured.CompletionPercent.ToString("N0")% avg completion</span>
+            </div>
+            <div class="feat-progress-bar"><div class="feat-progress-fill" style="width:@featured.CompletionPercent%"></div></div>
+          </div>
+          <div class="challenge-mini-leaderboard">
+            <div class="challenge-mini-head">
+              <span>Challenge Leaderboard</span>
+              <span>Rank</span>
+            </div>
+            @if (featured.LeaderboardEntries.Any())
+            {
+              <div class="challenge-mini-list">
+                @foreach (var entry in featured.LeaderboardEntries)
+                {
+                  <div class="challenge-mini-row">
+                    <div class="challenge-mini-rank">#@entry.Rank</div>
+                    <div class="challenge-mini-user">
+                      <img src="@entry.AvatarUrl" class="challenge-mini-avatar" alt="@entry.AthleteName" />
+                      <div>
+                        <div class="challenge-mini-name">@entry.AthleteName</div>
+                        <div class="challenge-mini-meta">Challenge rank @entry.Rank</div>
+                      </div>
+                    </div>
+                    <div class="challenge-mini-stat">
+                      <div class="challenge-mini-distance">@entry.DistanceDisplay</div>
+                      <div class="challenge-mini-time">@entry.DurationDisplay</div>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+            else
+            {
+              <div class="challenge-mini-empty">No ranked participants yet.</div>
+            }
+          </div>
+        </div>
+      </div>
+    }
+    else
+    {
+      <div class="empty-state" style="margin-bottom:3rem">No challenges found in database yet.</div>
+    }
+
+    <div class="section-row upcoming-head">
+      <span class="section-label">Open and upcoming challenges</span>
+      <span class="section-tag">Join now</span>
+    </div>
+
+    @if (Model.UpcomingChallenges.Any())
+    {
+      <div class="grid3 upcoming-grid">
+        @for (var i = 0; i < Model.UpcomingChallenges.Count; i++)
+        {
+          var item = Model.UpcomingChallenges[i];
+          var isLive =
+            (item.StartDate <= DateTime.Now && item.EndDate >= DateTime.Now) ||
+            string.Equals(item.Status, "live", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(item.Status, "active", StringComparison.OrdinalIgnoreCase);
+          var isUpcoming =
+            item.StartDate > DateTime.Now ||
+            string.Equals(item.Status, "upcoming", StringComparison.OrdinalIgnoreCase);
+          <article class="card">
+            <div class="card-accent"></div>
+            @if (item.HasBannerImage)
+            {
+              <div class="card-banner">
+                <img src="/Home/ChallengeBanner/@item.ChallengeId" alt="@item.Title banner" loading="lazy" />
+              </div>
+            }
+            <div class="card-meta-row">
+              <span class="card-badge">@(isLive ? "Live now" : isUpcoming ? $"Coming {item.StartDate:MMM d}" : $"Ended {item.EndDate:MMM d}")</span>
+              <span class="card-diff @item.DifficultyCssClass">@item.DifficultyLabel</span>
+            </div>
+            <h3>@item.Title</h3>
+            <p>@item.Description</p>
+            <div class="card-footer">
+              <span class="card-footer-stat">Duration <strong>@item.DurationDays days</strong></span>
+              <span class="card-num">@((i + 1).ToString("D2"))</span>
+            </div>
+            <div class="challenge-mini-leaderboard" style="margin:1rem -1.5rem -1.75rem;padding:1rem 1.5rem 1.25rem">
+              <div class="challenge-mini-head">
+                <span>Challenge Leaderboard</span>
+                <span>Rank</span>
+              </div>
+              @if (item.LeaderboardEntries.Any())
+              {
+                <div class="challenge-mini-list">
+                  @foreach (var entry in item.LeaderboardEntries)
+                  {
+                    <div class="challenge-mini-row">
+                      <div class="challenge-mini-rank">#@entry.Rank</div>
+                      <div class="challenge-mini-user">
+                        <img src="@entry.AvatarUrl" class="challenge-mini-avatar" alt="@entry.AthleteName" />
+                        <div>
+                          <div class="challenge-mini-name">@entry.AthleteName</div>
+                          <div class="challenge-mini-meta">Challenge rank @entry.Rank</div>
+                        </div>
+                      </div>
+                      <div class="challenge-mini-stat">
+                        <div class="challenge-mini-distance">@entry.DistanceDisplay</div>
+                        <div class="challenge-mini-time">@entry.DurationDisplay</div>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+              else
+              {
+                <div class="challenge-mini-empty">No ranked participants yet.</div>
+              }
+            </div>
+            <button type="button" class="card-join-btn" data-join-challenge data-challenge-id="@item.ChallengeId" data-challenge-title="@item.Title">Join Challenge</button>
+          </article>
+        }
+      </div>
+    }
+    else
+    {
+      <div class="empty-state" style="margin-bottom:3rem">No live or upcoming challenges right now.</div>
+    }
+
+    <div class="section-row upcoming-head">
+      <span class="section-label">Completed challenges</span>
+      <span class="section-tag">Finished events</span>
+    </div>
+
+    @if (Model.CompletedChallenges.Any())
+    {
+      <div class="grid3 upcoming-grid">
+        @for (var i = 0; i < Model.CompletedChallenges.Count; i++)
+        {
+          var item = Model.CompletedChallenges[i];
+          <article class="card">
+            <div class="card-accent"></div>
+            @if (item.HasBannerImage)
+            {
+              <div class="card-banner">
+                <img src="/Home/ChallengeBanner/@item.ChallengeId" alt="@item.Title banner" loading="lazy" />
+              </div>
+            }
+            <div class="card-meta-row">
+              <span class="card-badge">Ended @item.EndDate.ToString("MMM d")</span>
+              <span class="card-diff @item.DifficultyCssClass">@item.DifficultyLabel</span>
+            </div>
+            <h3>@item.Title</h3>
+            <p>@item.Description</p>
+            <div class="card-footer">
+              <span class="card-footer-stat">Completed <strong>@item.TotalCompleted.ToString("N0")</strong></span>
+              <span class="card-num">@((i + 1).ToString("D2"))</span>
+            </div>
+            <div class="challenge-mini-leaderboard" style="margin:1rem -1.5rem -1.75rem;padding:1rem 1.5rem 1.25rem">
+              <div class="challenge-mini-head">
+                <span>Challenge Leaderboard</span>
+                <span>Rank</span>
+              </div>
+              @if (item.LeaderboardEntries.Any())
+              {
+                <div class="challenge-mini-list">
+                  @foreach (var entry in item.LeaderboardEntries)
+                  {
+                    <div class="challenge-mini-row">
+                      <div class="challenge-mini-rank">#@entry.Rank</div>
+                      <div class="challenge-mini-user">
+                        <img src="@entry.AvatarUrl" class="challenge-mini-avatar" alt="@entry.AthleteName" />
+                        <div>
+                          <div class="challenge-mini-name">@entry.AthleteName</div>
+                          <div class="challenge-mini-meta">Challenge rank @entry.Rank</div>
+                        </div>
+                      </div>
+                      <div class="challenge-mini-stat">
+                        <div class="challenge-mini-distance">@entry.DistanceDisplay</div>
+                        <div class="challenge-mini-time">@entry.DurationDisplay</div>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+              else
+              {
+                <div class="challenge-mini-empty">No ranked participants yet.</div>
+              }
+            </div>
+          </article>
+        }
+      </div>
+    }
+    else
+    {
+      <div class="empty-state" style="margin-bottom:3rem">No completed challenges yet.</div>
+    }
+
+    <div class="section-row leaderboard-head">
+      <span class="section-label">Challenge Performance</span>
+      <span class="section-tag">Top challenges</span>
+    </div>
+
+    @if (Model.TopChallenges.Any())
+    {
+      <div class="leaderboard">
+        <div class="lb-row lb-header">
+          <span class="lb-rank">#</span>
+          <span class="lb-name">Challenge</span>
+          <span class="lb-val">Goal KM</span>
+          <span class="lb-val">Completed</span>
+          <span class="lb-val">Participants</span>
+        </div>
+        @for (var i = 0; i < Model.TopChallenges.Count; i++)
+        {
+          var row = Model.TopChallenges[i];
+          var avatarText = string.IsNullOrWhiteSpace(row.ActivityType) ? "CH" : row.ActivityType[..Math.Min(2, row.ActivityType.Length)].ToUpperInvariant();
+          <div class="lb-row">
+            <span class="lb-rank @(i < 3 ? "top" : string.Empty)">@(i + 1)</span>
+            <div class="lb-name-wrap"><span class="lb-avatar">@avatarText</span><div><div class="lb-name">@row.Title</div><div class="lb-handle">@row.Status</div></div></div>
+            <span class="lb-val bold">@row.GoalKm.ToString("N1") km</span>
+            <span class="lb-val">@row.TotalCompleted.ToString("N0")</span>
+            <span class="lb-val">@row.TotalParticipants.ToString("N0")</span>
+          </div>
+        }
+      </div>
+    }
+    else
+    {
+      <div class="empty-state">No challenge performance data available.</div>
+    }
+  </div>
+
+  <div class="tab-panel" id="tab-vouchers">
+    <div class="hero hero-4">
+      <div class="hero-stat">
+        <div class="hero-stat-num">@activeVouchers.Count</div>
+        <div class="hero-stat-label">Active</div>
+      </div>
+      <div class="hero-divider"></div>
+      <div class="hero-stat">
+        <div class="hero-stat-num">@usedVouchers.Count</div>
+        <div class="hero-stat-label">Redeemed</div>
+      </div>
+      <div class="hero-divider"></div>
+      <div class="hero-stat">
+        <div class="hero-stat-num">@expiredVouchers.Count</div>
+        <div class="hero-stat-label">Expired</div>
+      </div>
+      <div class="hero-divider"></div>
+      <div class="hero-stat">
+        <div class="hero-stat-num">@totalSavedDisplay</div>
+        <div class="hero-stat-label">Total Saved</div>
+      </div>
+    </div>
+
+    <div class="section-row">
+      <span class="section-label" style="font-size:16px;letter-spacing:0.08em;color:#111;font-weight:700;">Active Vouchers</span>
+      <span class="section-tag">Ready to use</span>
+    </div>
+
+    @if (activeVouchers.Any())
+    {
+      <div class="voucher-grid">
+        @foreach (var voucher in activeVouchers)
+        {
+          var expiringSoon = voucher.ExpiryDate <= DateTime.Now.AddDays(7);
+          <div class="voucher-card">
+            <div class="voucher-stub stub-active"></div>
+            <div class="voucher-body">
+              <div class="voucher-top">
+                <span class="voucher-type">@voucher.VoucherType</span>
+                <span class="status-pill pill-active">&#9679; Active</span>
+              </div>
+              <div class="voucher-value">@voucher.DisplayValue</div>
+              <div class="voucher-title">@voucher.Title</div>
+              <div class="voucher-desc">@voucher.Description</div>
+              <hr class="voucher-tear" />
+              <div class="voucher-footer">
+                <span class="voucher-code">@voucher.Code</span>
+                <span class="voucher-expiry @(expiringSoon ? "expiry-soon" : string.Empty)">Exp @voucher.ExpiryDate.ToString("MMM d, yyyy")</span>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+    else
+    {
+      <div class="empty-state-center">
+        <span class="empty-icon">NONE</span>
+        <p>No active vouchers - earn them by completing challenges</p>
+      </div>
+    }
+
+    @if (usedVouchers.Any() || expiredVouchers.Any())
+    {
+      <div class="section-row" style="margin-top:0.5rem">
+        <span class="section-label" style="font-size:16px;letter-spacing:0.08em;color:#111;font-weight:700;">Voucher History</span>
+        <span class="section-tag">Used &amp; Expired</span>
+      </div>
+      <div class="history-table">
+        <div class="ht-row ht-header">
+          <span>Voucher</span>
+          <span>Code</span>
+          <span style="text-align:right">Date</span>
+          <span style="text-align:right">Status</span>
+        </div>
+        @foreach (var voucher in usedVouchers)
+        {
+          <div class="ht-row">
+            <div>
+              <div class="ht-name">@voucher.Title <span style="font-size:12px;color:#bbb;font-weight:300">· @voucher.DisplayValue</span></div>
+              <div class="ht-sub">@voucher.VoucherType</div>
+            </div>
+            <span class="ht-code">@voucher.Code</span>
+            <span class="ht-date">@voucher.RedeemedDate?.ToString("MMM d, yyyy")</span>
+            <span class="ht-badge badge-used">Redeemed</span>
+          </div>
+        }
+        @foreach (var voucher in expiredVouchers)
+        {
+          <div class="ht-row">
+            <div>
+              <div class="ht-name" style="color:#ccc">@voucher.Title <span style="font-size:12px;font-weight:300">· @voucher.DisplayValue</span></div>
+              <div class="ht-sub" style="color:#ddd">@voucher.VoucherType</div>
+            </div>
+            <span class="ht-code" style="color:#ddd">@voucher.Code</span>
+            <span class="ht-date" style="color:#ddd">Exp @voucher.ExpiryDate.ToString("MMM d, yyyy")</span>
+            <span class="ht-badge badge-expired">Expired</span>
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  <div class="tab-panel" id="tab-activities">
+    <div class="hero hero-4">
+      <button type="button" class="hero-stat is-clickable is-active" id="joinedChallengesFilterBtn">
+        <div class="hero-stat-num">@Model.MyActivitiesCount</div>
+        <div class="hero-stat-label">Joined Challenges</div>
+      </button>
+      <div class="hero-divider"></div>
+      <button type="button" class="hero-stat is-clickable" id="approvedChallengesFilterBtn">
+        <div class="hero-stat-num">@Model.ApprovedActivitiesCount</div>
+        <div class="hero-stat-label">Approved</div>
+      </button>
+      <div class="hero-divider"></div>
+      <button type="button" class="hero-stat is-clickable" id="pendingChallengesFilterBtn">
+        <div class="hero-stat-num">@Model.PendingActivitiesCount</div>
+        <div class="hero-stat-label">Pending</div>
+      </button>
+      <div class="hero-divider"></div>
+      <button type="button" class="hero-stat is-clickable" id="withUploadsFilterBtn">
+        <div class="hero-stat-num">@uploadedActivities.Count</div>
+        <div class="hero-stat-label">With Uploads</div>
+      </button>
+    </div>
+
+    <div class="section-row">
+      <span class="section-label" style="font-size:16px;letter-spacing:0.08em;color:#111;font-weight:700;">Challenge Participation</span>
+      <span class="section-tag">Status Driven</span>
+    </div>
+    <div class="activity-summary-note">Each card shows the challenge you joined. Pending participants only see status. Approved participants can open the member-style activity upload form.</div>
+    <div class="activity-filter-row" id="activityFilterRow" style="display:none;">
+      <span class="section-tag" id="activityFilterLabel" style="border-bottom:none;padding-bottom:0">Showing all uploaded activities</span>
+      <button type="button" class="activity-filter-reset" id="resetActivityFilterBtn">Show All</button>
+    </div>
+
+    @if (myActivities.Any())
+    {
+      <div class="activity-grid" id="challengeParticipationGrid">
+        @foreach (var activity in myActivities)
+        {
+          <article class="activity-card" data-total-activities="@activity.TotalActivities" data-status="@activity.Status">
+            <div class="activity-media">
+              <span class="activity-media-empty">@activity.ActivityType</span>
+            </div>
+            <div class="activity-body">
+              <div class="activity-head">
+                <div>
+                  <div class="activity-type">@activity.ActivityType</div>
+                  <div class="activity-title">@activity.ChallengeTitle</div>
+                  <div class="activity-date">@activity.GoalDisplay</div>
+                </div>
+                <span class="activity-badge @(activity.CanUpload ? "ok" : "pending")">@activity.StatusLabel</span>
+              </div>
+
+              <div class="activity-notes">@activity.ChallengeDescription</div>
+
+              <div class="activity-metrics">
+                <div class="activity-metric">
+                  <div class="activity-metric-label">Uploads</div>
+                  <div class="activity-metric-value">@activity.TotalActivities</div>
+                </div>
+                <div class="activity-metric">
+                  <div class="activity-metric-label">Distance</div>
+                  <div class="activity-metric-value">@activity.TotalDistanceDisplay</div>
+                </div>
+                <div class="activity-metric">
+                  <div class="activity-metric-label">Time</div>
+                  <div class="activity-metric-value">@activity.TotalTimeDisplay</div>
+                </div>
+                <div class="activity-metric">
+                  <div class="activity-metric-label">Last Activity</div>
+                  <div class="activity-metric-value">@activity.LastActivityDisplay</div>
+                </div>
+              </div>
+
+              <div class="activity-notes">@activity.Notes</div>
+
+              <div class="activity-actions">
+                @if (activity.CanUpload)
+                {
+                  <button
+                    type="button"
+                    class="activity-upload-btn"
+                    data-open-activity-upload
+                    data-participant-id="@activity.ParticipantId"
+                    data-challenge-id="@activity.ChallengeId"
+                    data-challenge-title="@activity.ChallengeTitle"
+                    data-activity-type="@activity.ActivityType">Upload Activity</button>
+                }
+                else
+                {
+                  <span class="section-tag" style="border-bottom:none;padding-bottom:0">@(activity.IsExpired ? "Closed" : "Awaiting Approval")</span>
+                }
+              </div>
+            </div>
+          </article>
+        }
+      </div>
+    }
+    else
+    {
+      <div class="empty-state-center">
+        <span class="empty-icon">RUN</span>
+        <p>No joined challenges yet. Join a challenge first, then this tab will show whether your participation is pending or approved.</p>
+      </div>
+    }
+
+    <div id="uploadedActivitiesGrid" style="display:none;">
+      @if (uploadedActivities.Any())
+      {
+        <div class="activity-grid">
+          @foreach (var upload in uploadedActivities)
+          {
+            <article class="activity-card">
+              <div class="activity-media">
+                @if (upload.HasProofImage)
+                {
+                  <img src="@upload.ProofImageUrl" alt="@upload.ChallengeTitle proof image" />
+                }
+                else
+                {
+                  <span class="activity-media-empty">@upload.ActivityType</span>
+                }
+              </div>
+              <div class="activity-body">
+                <div class="activity-head">
+                  <div>
+                    <div class="activity-type">@upload.ActivityType</div>
+                    <div class="activity-title">@upload.ChallengeTitle</div>
+                    <div class="activity-date">@upload.ActivityDateDisplay</div>
+                  </div>
+                  <span class="activity-badge @upload.VerificationCssClass">@upload.VerificationLabel</span>
+                </div>
+
+                <div class="activity-notes">@upload.Notes</div>
+
+                <div class="activity-metrics">
+                  <div class="activity-metric">
+                    <div class="activity-metric-label">Distance</div>
+                    <div class="activity-metric-value">@upload.DistanceDisplay</div>
+                  </div>
+                  <div class="activity-metric">
+                    <div class="activity-metric-label">Duration</div>
+                    <div class="activity-metric-value">@upload.DurationDisplay</div>
+                  </div>
+                  <div class="activity-metric">
+                    <div class="activity-metric-label">Average Pace</div>
+                    <div class="activity-metric-value">@upload.AveragePaceDisplay</div>
+                  </div>
+                  <div class="activity-metric">
+                    <div class="activity-metric-label">Status</div>
+                    <div class="activity-metric-value">@upload.VerificationLabel</div>
+                  </div>
+                </div>
+
+                <div class="activity-actions">
+                  @if (upload.HasProofImage)
+                  {
+                    <button
+                      type="button"
+                      class="activity-proof-link"
+                      data-open-proof-preview
+                      data-proof-url="@upload.ProofImageUrl"
+                      data-proof-title="@upload.ChallengeTitle proof image">View Proof</button>
+                  }
+                  else
+                  {
+                    <span class="section-tag" style="border-bottom:none;padding-bottom:0">No Proof Image</span>
+                  }
+                </div>
+              </div>
+            </article>
+          }
+        </div>
+      }
+      else
+      {
+        <div class="empty-state-center">
+          <span class="empty-icon">LOG</span>
+          <p>No uploaded activity records yet. Once you submit an approved challenge activity, it will appear here.</p>
+        </div>
+      }
+    </div>
+  </div>
+</div>
+
+<div class="challenge-join-modal" id="activityUploadModal" aria-hidden="true">
+  <div class="challenge-join-panel" role="dialog" aria-modal="true" aria-labelledby="activityUploadTitle">
+    <div class="challenge-join-head">
+      <div>
+        <div class="challenge-join-title" id="activityUploadTitle">Upload Activity</div>
+        <div class="challenge-join-sub">This form follows the member upload activity flow for approved challenge participants.</div>
+      </div>
+      <button type="button" class="challenge-join-close" id="activityUploadClose" aria-label="Close">&times;</button>
+    </div>
+    <form id="activityUploadForm" method="post" enctype="multipart/form-data" asp-controller="Home" asp-action="UploadChallengeActivity">
+      @Html.AntiForgeryToken()
+      <input type="hidden" name="ParticipantId" id="activityParticipantId" />
+      <input type="hidden" name="ChallengeId" id="activityChallengeId" />
+      <div class="challenge-join-grid">
+        <div class="challenge-join-field challenge-join-field--full">
+          <label class="challenge-join-label" for="activityChallengeName">Challenge</label>
+          <input class="challenge-join-input" id="activityChallengeName" type="text" readonly />
+        </div>
+        <div class="challenge-join-field">
+          <label class="challenge-join-label" for="activityTypeInput">Activity Type</label>
+          <select class="challenge-join-input" id="activityTypeInput" name="ActivityType" required>
+            <option value="Run">Run</option>
+            <option value="Walk">Walk</option>
+            <option value="Ride">Ride</option>
+            <option value="Hike">Hike</option>
+          </select>
+        </div>
+        <div class="challenge-join-field">
+          <label class="challenge-join-label" for="activityDateInput">Activity Date</label>
+          <input class="challenge-join-input" id="activityDateInput" name="ActivityDate" type="date" value="@Model.UploadActivityPrefill.ActivityDate.ToString("yyyy-MM-dd")" required />
+        </div>
+        <div class="challenge-join-field">
+          <label class="challenge-join-label" for="distanceKmInput">Distance (KM)</label>
+          <input class="challenge-join-input" id="distanceKmInput" name="DistanceKm" type="number" min="0.01" step="0.01" placeholder="5.00" required />
+        </div>
+        <div class="challenge-join-field">
+          <label class="challenge-join-label">Moving Time</label>
+          <div class="activity-time-grid">
+            <input class="challenge-join-input" name="Hours" type="number" min="0" max="23" placeholder="hrs" required />
+            <input class="challenge-join-input" name="Minutes" type="number" min="0" max="59" placeholder="min" required />
+            <input class="challenge-join-input" name="Seconds" type="number" min="0" max="59" placeholder="sec" required />
+          </div>
+        </div>
+        <div class="challenge-join-field challenge-join-field--full">
+          <label class="challenge-join-label" for="activityNotesInput">Notes</label>
+          <textarea class="challenge-join-textarea" id="activityNotesInput" name="Notes" maxlength="500" placeholder="Optional activity notes"></textarea>
+        </div>
+        <div class="challenge-join-field challenge-join-field--full">
+          <label class="challenge-join-label" for="proofImageInput">Proof Image</label>
+          <input class="challenge-join-input" id="proofImageInput" name="ProofImage" type="file" accept=".jpg,.jpeg,.png,.webp" />
+        </div>
+      </div>
+      <div class="challenge-join-actions">
+        <button type="button" class="challenge-join-btn-secondary" id="activityUploadCancel">Cancel</button>
+        <button type="submit" class="challenge-join-btn-primary">Submit Activity</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="challenge-join-modal proof-preview-modal" id="proofPreviewModal" aria-hidden="true">
+  <div class="challenge-join-panel" role="dialog" aria-modal="true" aria-labelledby="proofPreviewTitle">
+    <div class="challenge-join-head">
+      <div>
+        <div class="challenge-join-title" id="proofPreviewTitle">Proof Image</div>
+        <div class="challenge-join-sub" id="proofPreviewSubtitle">Challenge activity proof preview</div>
+      </div>
+      <button type="button" class="challenge-join-close" id="proofPreviewClose" aria-label="Close">&times;</button>
+    </div>
+    <div class="proof-preview-stage">
+      <img id="proofPreviewImage" alt="Proof image preview" />
+    </div>
+    <div class="proof-preview-caption" id="proofPreviewCaption"></div>
+  </div>
+</div>
+
+<div class="challenge-join-modal" id="challengeJoinModal" aria-hidden="true">
+  <div class="challenge-join-panel" role="dialog" aria-modal="true" aria-labelledby="challengeJoinTitle">
+    <div class="challenge-join-head">
+      <div>
+        <div class="challenge-join-title" id="challengeJoinTitle">Join Challenge</div>
+        <div class="challenge-join-sub">Submit your registration. Admin approval is required before you can join the challenge.</div>
+      </div>
+      <button type="button" class="challenge-join-close" id="challengeJoinClose" aria-label="Close">&times;</button>
+    </div>
+    <form id="challengeJoinForm" method="post" asp-controller="Home" asp-action="JoinChallengeSubmit">
+      @Html.AntiForgeryToken()
+      <input type="hidden" name="ChallengeId" id="challengeJoinChallengeId" />
+      <div class="challenge-join-grid">
+        <div class="challenge-join-field challenge-join-field--full">
+          <label class="challenge-join-label" for="challengeJoinChallengeName">Challenge</label>
+          <input class="challenge-join-input" id="challengeJoinChallengeName" type="text" readonly />
+        </div>
+        <div class="challenge-join-field">
+          <label class="challenge-join-label" for="challengeJoinFullName">Full Name</label>
+          <input class="challenge-join-input" id="challengeJoinFullName" name="FullName" value="@joinPrefill.FullName" maxlength="200" required />
+          <div class="challenge-join-error" data-valmsg-for="FullName"></div>
+        </div>
+        <div class="challenge-join-field">
+          <label class="challenge-join-label" for="challengeJoinEmail">Email</label>
+          <input class="challenge-join-input" id="challengeJoinEmail" name="Email" type="email" value="@joinPrefill.Email" maxlength="200" required />
+          <div class="challenge-join-error" data-valmsg-for="Email"></div>
+        </div>
+        <div class="challenge-join-field">
+          <label class="challenge-join-label" for="challengeJoinPhoneNumber">Phone Number</label>
+          <input class="challenge-join-input" id="challengeJoinPhoneNumber" name="PhoneNumber" maxlength="50" />
+          <div class="challenge-join-error" data-valmsg-for="PhoneNumber"></div>
+        </div>
+        <div class="challenge-join-field">
+          <label class="challenge-join-label" for="challengeJoinCity">City</label>
+          <input class="challenge-join-input" id="challengeJoinCity" name="City" maxlength="120" />
+          <div class="challenge-join-error" data-valmsg-for="City"></div>
+        </div>
+        <div class="challenge-join-field challenge-join-field--full">
+          <label class="challenge-join-label" for="challengeJoinNotes">Notes</label>
+          <textarea class="challenge-join-textarea" id="challengeJoinNotes" name="Notes" maxlength="500" placeholder="Optional notes for the admin review"></textarea>
+          <div class="challenge-join-error" data-valmsg-for="Notes"></div>
+        </div>
+      </div>
+      <div class="challenge-join-actions">
+        <button type="button" class="challenge-join-btn-secondary" id="challengeJoinCancel">Cancel</button>
+        <button type="submit" class="challenge-join-btn-primary" id="challengeJoinSubmit">Submit Registration</button>
+      </div>
+      <div class="challenge-join-status" id="challengeJoinStatus"></div>
+    </form>
+  </div>
+</div>
+
+<script>
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-panel').forEach(function (panel) { panel.classList.remove('active'); });
+  document.getElementById('tab-' + name).classList.add('active');
+  document.querySelectorAll('.pg-tab').forEach(function (tab) { tab.classList.remove('active'); });
+  btn.classList.add('active');
+
+  var titles = { challenges: 'Challenges', vouchers: 'MY REWARDS', activities: 'Challenge Participation' };
+  var subtitles = {
+    challenges: '@Model.ActiveCount Active',
+    vouchers: '@activeVouchers.Count Active',
+    activities: '@Model.MyActivitiesCount Joined'
+  };
+
+  document.getElementById('pg-title').textContent = titles[name];
+  document.getElementById('pg-sub').textContent = subtitles[name];
+}
+
+(function () {
+  var modal = document.getElementById('challengeJoinModal');
+  var form = document.getElementById('challengeJoinForm');
+  if (!modal || !form) return;
+
+  var challengeIdInput = document.getElementById('challengeJoinChallengeId');
+  var challengeNameInput = document.getElementById('challengeJoinChallengeName');
+  var statusBox = document.getElementById('challengeJoinStatus');
+  var submitBtn = document.getElementById('challengeJoinSubmit');
+  function clearJoinErrors() {
+    form.querySelectorAll('[data-valmsg-for]').forEach(function (el) { el.textContent = ''; });
+    statusBox.textContent = '';
+    statusBox.classList.remove('is-visible');
+  }
+
+  function openJoinModal(challengeId, challengeTitle) {
+    clearJoinErrors();
+    challengeIdInput.value = challengeId || '';
+    challengeNameInput.value = challengeTitle || '';
+    modal.classList.add('is-open');
+    modal.setAttribute('aria-hidden', 'false');
+  }
+
+  function closeJoinModal() {
+    modal.classList.remove('is-open');
+    modal.setAttribute('aria-hidden', 'true');
+  }
+
+  document.querySelectorAll('[data-join-challenge]').forEach(function (button) {
+    button.addEventListener('click', function () {
+      openJoinModal(button.getAttribute('data-challenge-id'), button.getAttribute('data-challenge-title'));
+    });
+  });
+
+  document.getElementById('challengeJoinClose')?.addEventListener('click', closeJoinModal);
+  document.getElementById('challengeJoinCancel')?.addEventListener('click', closeJoinModal);
+  modal.addEventListener('click', function (event) {
+    if (event.target === modal) closeJoinModal();
+  });
+
+  form.addEventListener('submit', function () {
+    clearJoinErrors();
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Submitting...';
+  });
+})();
+
+(function () {
+  var activityModal = document.getElementById('activityUploadModal');
+  var challengeNameInput = document.getElementById('activityChallengeName');
+  var participantIdInput = document.getElementById('activityParticipantId');
+  var challengeIdInput = document.getElementById('activityChallengeId');
+  var activityTypeInput = document.getElementById('activityTypeInput');
+  if (!activityModal) return;
+
+  function openActivityModal(button) {
+    participantIdInput.value = button.getAttribute('data-participant-id') || '';
+    challengeIdInput.value = button.getAttribute('data-challenge-id') || '';
+    challengeNameInput.value = button.getAttribute('data-challenge-title') || '';
+    activityTypeInput.value = button.getAttribute('data-activity-type') || 'Run';
+    activityModal.classList.add('is-open');
+    activityModal.setAttribute('aria-hidden', 'false');
+  }
+
+  function closeActivityModal() {
+    activityModal.classList.remove('is-open');
+    activityModal.setAttribute('aria-hidden', 'true');
+  }
+
+  document.querySelectorAll('[data-open-activity-upload]').forEach(function (button) {
+    button.addEventListener('click', function () {
+      openActivityModal(button);
+    });
+  });
+
+  document.getElementById('activityUploadClose')?.addEventListener('click', closeActivityModal);
+  document.getElementById('activityUploadCancel')?.addEventListener('click', closeActivityModal);
+  activityModal.addEventListener('click', function (event) {
+    if (event.target === activityModal) closeActivityModal();
+  });
+})();
+
+(function () {
+  var proofModal = document.getElementById('proofPreviewModal');
+  var proofImage = document.getElementById('proofPreviewImage');
+  var proofCaption = document.getElementById('proofPreviewCaption');
+  var proofSubtitle = document.getElementById('proofPreviewSubtitle');
+  var closeButton = document.getElementById('proofPreviewClose');
+  if (!proofModal || !proofImage || !proofCaption || !proofSubtitle || !closeButton) return;
+
+  function openProofPreview(url, title) {
+    proofImage.src = url || '';
+    proofImage.alt = title || 'Proof image preview';
+    proofCaption.textContent = title || '';
+    proofSubtitle.textContent = title || 'Challenge activity proof preview';
+    proofModal.classList.add('is-open');
+    proofModal.setAttribute('aria-hidden', 'false');
+  }
+
+  function closeProofPreview() {
+    proofModal.classList.remove('is-open');
+    proofModal.setAttribute('aria-hidden', 'true');
+    proofImage.src = '';
+    proofCaption.textContent = '';
+    proofSubtitle.textContent = 'Challenge activity proof preview';
+  }
+
+  document.querySelectorAll('[data-open-proof-preview]').forEach(function (button) {
+    button.addEventListener('click', function () {
+      openProofPreview(button.getAttribute('data-proof-url'), button.getAttribute('data-proof-title'));
+    });
+  });
+
+  closeButton.addEventListener('click', closeProofPreview);
+  proofModal.addEventListener('click', function (event) {
+    if (event.target === proofModal) closeProofPreview();
+  });
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape' && proofModal.classList.contains('is-open')) {
+      closeProofPreview();
+    }
+  });
+})();
+
+(function () {
+  var currentTab = new URLSearchParams(window.location.search).get('tab');
+  if (!currentTab) return;
+
+  var targetButton = Array.from(document.querySelectorAll('.pg-tab')).find(function (button) {
+    return (button.textContent || '').trim().toLowerCase() === currentTab.toLowerCase().replace('-', ' ');
+  });
+
+  if (currentTab === 'activities') {
+    targetButton = document.querySelector('.pg-tab[onclick*=\"activities\"]');
+  } else if (currentTab === 'vouchers') {
+    targetButton = document.querySelector('.pg-tab[onclick*=\"vouchers\"]');
+  } else if (currentTab === 'challenges') {
+    targetButton = document.querySelector('.pg-tab[onclick*=\"challenges\"]');
+  }
+
+  if (targetButton) {
+    targetButton.click();
+  }
+})();
+
+(function () {
+  var joinedButton = document.getElementById('joinedChallengesFilterBtn');
+  var approvedButton = document.getElementById('approvedChallengesFilterBtn');
+  var pendingButton = document.getElementById('pendingChallengesFilterBtn');
+  var filterButton = document.getElementById('withUploadsFilterBtn');
+  var resetButton = document.getElementById('resetActivityFilterBtn');
+  var filterRow = document.getElementById('activityFilterRow');
+  var filterLabel = document.getElementById('activityFilterLabel');
+  var participationGrid = document.getElementById('challengeParticipationGrid');
+  var uploadsGrid = document.getElementById('uploadedActivitiesGrid');
+  if (!joinedButton || !approvedButton || !pendingButton || !filterButton || !resetButton || !filterRow || !filterLabel || !uploadsGrid) return;
+
+  var statButtons = [joinedButton, approvedButton, pendingButton, filterButton];
+  var cards = participationGrid ? Array.from(participationGrid.querySelectorAll('.activity-card')) : [];
+
+  function setActiveButton(activeButton) {
+    statButtons.forEach(function (button) {
+      button.classList.toggle('is-active', button === activeButton);
+    });
+  }
+
+  function applyView(mode) {
+    setActiveButton(
+      mode === 'approved' ? approvedButton :
+      mode === 'pending' ? pendingButton :
+      mode === 'uploads' ? filterButton :
+      joinedButton
+    );
+
+    if (participationGrid) {
+      participationGrid.style.display = mode === 'uploads' ? 'none' : '';
+    }
+
+    uploadsGrid.style.display = mode === 'uploads' ? 'block' : 'none';
+
+    if (mode === 'joined') {
+      cards.forEach(function (card) { card.style.display = ''; });
+      filterRow.style.display = 'none';
+      return;
+    }
+
+    filterRow.style.display = 'flex';
+
+    if (mode === 'approved') {
+      filterLabel.textContent = 'Showing approved challenge participation';
+      cards.forEach(function (card) {
+        card.style.display = card.getAttribute('data-status') === 'approved' ? '' : 'none';
+      });
+      return;
+    }
+
+    if (mode === 'pending') {
+      filterLabel.textContent = 'Showing pending challenge participation';
+      cards.forEach(function (card) {
+        card.style.display = card.getAttribute('data-status') === 'pending' ? '' : 'none';
+      });
+      return;
+    }
+
+    filterLabel.textContent = 'Showing all uploaded activities';
+  }
+
+  joinedButton.addEventListener('click', function () { applyView('joined'); });
+  approvedButton.addEventListener('click', function () { applyView('approved'); });
+  pendingButton.addEventListener('click', function () { applyView('pending'); });
+  filterButton.addEventListener('click', function () { applyView('uploads'); });
+
+  resetButton.addEventListener('click', function () {
+    applyView('joined');
+  });
+})();
+</script>

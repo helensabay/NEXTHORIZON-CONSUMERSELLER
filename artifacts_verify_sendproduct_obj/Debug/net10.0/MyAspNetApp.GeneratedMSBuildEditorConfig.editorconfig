@@ -1,0 +1,227 @@
+is_global = true
+build_property.TargetFramework = net10.0
+build_property.TargetFramework = net10.0
+build_property.TargetPlatformMinVersion = 
+build_property.TargetPlatformMinVersion = 
+build_property.UsingMicrosoftNETSdkWeb = true
+build_property.UsingMicrosoftNETSdkWeb = true
+build_property.ProjectTypeGuids = 
+build_property.ProjectTypeGuids = 
+build_property.InvariantGlobalization = 
+build_property.InvariantGlobalization = 
+build_property.PlatformNeutralAssembly = 
+build_property.PlatformNeutralAssembly = 
+build_property.EnforceExtendedAnalyzerRules = 
+build_property.EnforceExtendedAnalyzerRules = 
+build_property._SupportedPlatformList = Linux,macOS,Windows
+build_property._SupportedPlatformList = Linux,macOS,Windows
+build_property.TargetFrameworkIdentifier = .NETCoreApp
+build_property.TargetFrameworkVersion = v10.0
+build_property.RootNamespace = MyAspNetApp
+build_property.RootNamespace = MyAspNetApp
+build_property.ProjectDir = C:\Users\helen\BOOSTING SITE\NEXTHORIZON\Products-and-Services-Rhea-Team\
+build_property.EnableComHosting = 
+build_property.EnableGeneratedComInterfaceComImportInterop = 
+build_property.RazorLangVersion = 9.0
+build_property.SupportLocalizedComponentNames = 
+build_property.GenerateRazorMetadataSourceChecksumAttributes = 
+build_property.MSBuildProjectDirectory = C:\Users\helen\BOOSTING SITE\NEXTHORIZON\Products-and-Services-Rhea-Team
+build_property._RazorSourceGeneratorDebug = 
+build_property.EffectiveAnalysisLevelStyle = 10.0
+build_property.EnableCodeStyleSeverity = 
+
+[C:/Users/helen/BOOSTING SITE/NEXTHORIZON/Products-and-Services-Rhea-Team/Horizon Seller/Horizon Seller/Views/Leaderboard/LeaderboardDashboard.cshtml]
+build_metadata.AdditionalFiles.TargetPath = SG9yaXpvbiBTZWxsZXJcSG9yaXpvbiBTZWxsZXJcVmlld3NcTGVhZGVyYm9hcmRcTGVhZGVyYm9hcmREYXNoYm9hcmQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/helen/BOOSTING SITE/NEXTHORIZON/Products-and-Services-Rhea-Team/Imported/ATC/Horizon Seller/Views/Product/Create.cshtml]
+build_metadata.AdditionalFiles.TargetPath = SW1wb3J0ZWRcQVRDXEhvcml6b24gU2VsbGVyXFZpZXdzXFByb2R1Y3RcQ3JlYXRlLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/helen/BOOSTING SITE/NEXTHORIZON/Products-and-Services-Rhea-Team/Imported/ATC/Horizon Seller/Views/Product/sizeguide.cshtml]
+build_metadata.AdditionalFiles.TargetPath = SW1wb3J0ZWRcQVRDXEhvcml6b24gU2VsbGVyXFZpZXdzXFByb2R1Y3Rcc2l6ZWd1aWRlLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/helen/BOOSTING SITE/NEXTHORIZON/Products-and-Services-Rhea-Team/Imported/ATC/Horizon Seller/Views/Product/ViewSizeGuide.cshtml]
+build_metadata.AdditionalFiles.TargetPath = SW1wb3J0ZWRcQVRDXEhvcml6b24gU2VsbGVyXFZpZXdzXFByb2R1Y3RcVmlld1NpemVHdWlkZS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/helen/BOOSTING SITE/NEXTHORIZON/Products-and-Services-Rhea-Team/Views/AccountProfile/MyPurchases.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWNjb3VudFByb2ZpbGVcTXlQdXJjaGFzZXMuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/helen/BOOSTING SITE/NEXTHORIZON/Products-and-Services-Rhea-Team/Views/AccountProfile/PaymentMethods.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWNjb3VudFByb2ZpbGVcUGF5bWVudE1ldGhvZHMuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/helen/BOOSTING SITE/NEXTHORIZON/Products-and-Services-Rhea-Team/Views/AccountProfile/ProfileView.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWNjb3VudFByb2ZpbGVcUHJvZmlsZVZpZXcuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/helen/BOOSTING SITE/NEXTHORIZON/Products-and-Services-Rhea-Team/Views/AccountProfile/ShippingAddress.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWNjb3VudFByb2ZpbGVcU2hpcHBpbmdBZGRyZXNzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/helen/BOOSTING SITE/NEXTHORIZON/Products-and-Services-Rhea-Team/Views/AccountProfile/UpdateProfile.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWNjb3VudFByb2ZpbGVcVXBkYXRlUHJvZmlsZS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/helen/BOOSTING SITE/NEXTHORIZON/Products-and-Services-Rhea-Team/Views/AccountProfile/UploadActivity.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWNjb3VudFByb2ZpbGVcVXBsb2FkQWN0aXZpdHkuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/helen/BOOSTING SITE/NEXTHORIZON/Products-and-Services-Rhea-Team/Views/Admin/ProductApprovals.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cUHJvZHVjdEFwcHJvdmFscy5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/helen/BOOSTING SITE/NEXTHORIZON/Products-and-Services-Rhea-Team/Views/Admin/PromotionApprovals.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQWRtaW5cUHJvbW90aW9uQXBwcm92YWxzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/helen/BOOSTING SITE/NEXTHORIZON/Products-and-Services-Rhea-Team/Views/Home/About.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxBYm91dC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/helen/BOOSTING SITE/NEXTHORIZON/Products-and-Services-Rhea-Team/Views/Home/Cart.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxDYXJ0LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/helen/BOOSTING SITE/NEXTHORIZON/Products-and-Services-Rhea-Team/Views/Home/Challenges.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxDaGFsbGVuZ2VzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/helen/BOOSTING SITE/NEXTHORIZON/Products-and-Services-Rhea-Team/Views/Home/Checkout.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxDaGVja291dC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/helen/BOOSTING SITE/NEXTHORIZON/Products-and-Services-Rhea-Team/Views/Home/ConsumerMessenger.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxDb25zdW1lck1lc3Nlbmdlci5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/helen/BOOSTING SITE/NEXTHORIZON/Products-and-Services-Rhea-Team/Views/Home/Contact.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxDb250YWN0LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/helen/BOOSTING SITE/NEXTHORIZON/Products-and-Services-Rhea-Team/Views/Home/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/helen/BOOSTING SITE/NEXTHORIZON/Products-and-Services-Rhea-Team/Views/Home/MyOrders.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxNeU9yZGVycy5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/helen/BOOSTING SITE/NEXTHORIZON/Products-and-Services-Rhea-Team/Views/Home/OrderConfirmation.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxPcmRlckNvbmZpcm1hdGlvbi5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/helen/BOOSTING SITE/NEXTHORIZON/Products-and-Services-Rhea-Team/Views/Home/OrderDetail.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxPcmRlckRldGFpbC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/helen/BOOSTING SITE/NEXTHORIZON/Products-and-Services-Rhea-Team/Views/Home/Product.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxQcm9kdWN0LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/helen/BOOSTING SITE/NEXTHORIZON/Products-and-Services-Rhea-Team/Views/Home/QuickActionsExample.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxRdWlja0FjdGlvbnNFeGFtcGxlLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/helen/BOOSTING SITE/NEXTHORIZON/Products-and-Services-Rhea-Team/Views/Home/Reviews.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxSZXZpZXdzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/helen/BOOSTING SITE/NEXTHORIZON/Products-and-Services-Rhea-Team/Views/Home/SellerShop.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxTZWxsZXJTaG9wLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/helen/BOOSTING SITE/NEXTHORIZON/Products-and-Services-Rhea-Team/Views/Home/Shop.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxTaG9wLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/helen/BOOSTING SITE/NEXTHORIZON/Products-and-Services-Rhea-Team/Views/Home/Wishlist.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxXaXNobGlzdC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/helen/BOOSTING SITE/NEXTHORIZON/Products-and-Services-Rhea-Team/Views/Home/WriteReview.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcSG9tZVxXcml0ZVJldmlldy5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/helen/BOOSTING SITE/NEXTHORIZON/Products-and-Services-Rhea-Team/Views/Leaderboard/LeaderboardDashboard.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTGVhZGVyYm9hcmRcTGVhZGVyYm9hcmREYXNoYm9hcmQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/helen/BOOSTING SITE/NEXTHORIZON/Products-and-Services-Rhea-Team/Views/Order/MyPurchasesOptions.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcT3JkZXJcTXlQdXJjaGFzZXNPcHRpb25zLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/helen/BOOSTING SITE/NEXTHORIZON/Products-and-Services-Rhea-Team/Views/Promotions/AddPromotion.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUHJvbW90aW9uc1xBZGRQcm9tb3Rpb24uY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/helen/BOOSTING SITE/NEXTHORIZON/Products-and-Services-Rhea-Team/Views/Promotions/Promotion.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUHJvbW90aW9uc1xQcm9tb3Rpb24uY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/helen/BOOSTING SITE/NEXTHORIZON/Products-and-Services-Rhea-Team/Views/Seller/ApprovedProducts.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2VsbGVyXEFwcHJvdmVkUHJvZHVjdHMuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/helen/BOOSTING SITE/NEXTHORIZON/Products-and-Services-Rhea-Team/Views/Seller/CreateProduct.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2VsbGVyXENyZWF0ZVByb2R1Y3QuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/helen/BOOSTING SITE/NEXTHORIZON/Products-and-Services-Rhea-Team/Views/Seller/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2VsbGVyXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/helen/BOOSTING SITE/NEXTHORIZON/Products-and-Services-Rhea-Team/Views/Seller/PendingProducts.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2VsbGVyXFBlbmRpbmdQcm9kdWN0cy5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/helen/BOOSTING SITE/NEXTHORIZON/Products-and-Services-Rhea-Team/Views/Seller/SizeGuide.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2VsbGVyXFNpemVHdWlkZS5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/helen/BOOSTING SITE/NEXTHORIZON/Products-and-Services-Rhea-Team/Views/Seller/ViewProduct.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2VsbGVyXFZpZXdQcm9kdWN0LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/helen/BOOSTING SITE/NEXTHORIZON/Products-and-Services-Rhea-Team/Views/Seller/ViewRatings.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2VsbGVyXFZpZXdSYXRpbmdzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/helen/BOOSTING SITE/NEXTHORIZON/Products-and-Services-Rhea-Team/Views/Seller/ViewSizeGuide.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2VsbGVyXFZpZXdTaXplR3VpZGUuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/helen/BOOSTING SITE/NEXTHORIZON/Products-and-Services-Rhea-Team/Views/Shared/Error.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXEVycm9yLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/helen/BOOSTING SITE/NEXTHORIZON/Products-and-Services-Rhea-Team/Views/Shared/_Layout.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9MYXlvdXQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/helen/BOOSTING SITE/NEXTHORIZON/Products-and-Services-Rhea-Team/Views/Shared/_ProfileHeader.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9Qcm9maWxlSGVhZGVyLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/helen/BOOSTING SITE/NEXTHORIZON/Products-and-Services-Rhea-Team/Views/Shared/_ProfileLayout.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9Qcm9maWxlTGF5b3V0LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/helen/BOOSTING SITE/NEXTHORIZON/Products-and-Services-Rhea-Team/Views/Shared/_ProfileSideBar.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9Qcm9maWxlU2lkZUJhci5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/helen/BOOSTING SITE/NEXTHORIZON/Products-and-Services-Rhea-Team/Views/Shared/_QuickActionsPartial.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9RdWlja0FjdGlvbnNQYXJ0aWFsLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/helen/BOOSTING SITE/NEXTHORIZON/Products-and-Services-Rhea-Team/Views/_ViewImports.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcX1ZpZXdJbXBvcnRzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/helen/BOOSTING SITE/NEXTHORIZON/Products-and-Services-Rhea-Team/Views/_ViewStart.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcX1ZpZXdTdGFydC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 

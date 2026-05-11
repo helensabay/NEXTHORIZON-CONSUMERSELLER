@@ -1,0 +1,244 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="NEXT HORIZON - Premium Running Gear. Engineered for Performance. Built for Runners.">
+    <meta name="theme-color" content="#000000">
+    <title>@ViewData["Title"] - NEXT HORIZON</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <link rel="stylesheet" href="~/css/style.css" asp-append-version="true">
+    <link rel="stylesheet" href="~/css/header.css" asp-append-version="true">
+    @await RenderSectionAsync("Styles", required: false)
+
+    <style>
+        /* 1. LOCK THE VIEWPORT */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        /* The body acts as the main flex container */
+        .fixed-layout-body {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* 2. HEADER */
+        #main-header {
+            flex-shrink: 0;
+            z-index: 1100;
+            background: #fff;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        /* 3. APP CONTAINER (Sidebar + Main) */
+        .app-container {
+            display: flex;
+            flex: 1; /* Fills remaining height */
+            overflow: hidden; /* Contains children */
+            position: relative;
+        }
+
+        /* 4. SIDEBAR (Desktop) */
+        .profile-sidebar {
+            width: 280px;
+            height: 100%;
+            overflow-y: auto;
+            background: #ffffff;
+            border-right: 1px solid #d1d1d1;
+            flex-shrink: 0;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* 5. MAIN CONTENT */
+        .main-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 40px;
+            background-color: #f8f9fa;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* 6. MENU BUTTON (Left of Logo) */
+        .sidebar-trigger-btn {
+            display: none; /* Hidden on Desktop */
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            color: #1a1a1a;
+            margin-right: 10px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 7. MOBILE RESPONSIVENESS */
+        @@media (max-width: 991px) {
+            .sidebar-trigger-btn {
+                display: flex; /* Show on Mobile */
+            }
+
+            .profile-sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                bottom: 0;
+                z-index: 9999;
+                transform: translateX(-100%);
+                box-shadow: 10px 0 30px rgba(0,0,0,0.1);
+            }
+
+                .profile-sidebar.open {
+                    transform: translateX(0);
+                }
+
+            .main-content {
+                padding: 20px;
+            }
+            /* Ensure header items align properly on small screens */
+            .header-top {
+                display: flex;
+                align-items: center;
+            }
+        }
+
+        /* --- MONOCHROME LOADER STYLING --- */
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #ffffff;
+            display: none; /* Controlled by JS */
+            justify-content: center;
+            align-items: center;
+            z-index: 10000; /* Higher than sidebar to prevent flicker */
+        }
+
+        .loader-content {
+            text-align: center;
+        }
+
+        /* Modern Professional Loader Icon */
+        .nh-loader-bars {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 25px;
+            height: 40px;
+        }
+
+            .nh-loader-bars span {
+                width: 5px;
+                height: 20px;
+                background-color: #000;
+                border-radius: 4px;
+                animation: nh-wave 1.2s ease-in-out infinite;
+            }
+
+                /* Staggered wave effect for a premium feel */
+                .nh-loader-bars span:nth-child(2) {
+                    animation-delay: 0.1s;
+                }
+
+                .nh-loader-bars span:nth-child(3) {
+                    animation-delay: 0.2s;
+                }
+
+                .nh-loader-bars span:nth-child(4) {
+                    animation-delay: 0.3s;
+                }
+
+                .nh-loader-bars span:nth-child(5) {
+                    animation-delay: 0.4s;
+                }
+
+        .loader-text {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 800;
+            color: #000;
+            text-transform: uppercase;
+            letter-spacing: 6px;
+            font-size: 0.75rem;
+            opacity: 0.9;
+        }
+
+        @@keyframes nh-wave {
+            0%, 100% {
+                transform: scaleY(1);
+                opacity: 0.3;
+            }
+
+            50% {
+                transform: scaleY(2);
+                opacity: 1;
+            }
+        }
+
+        .hide-global-nav .navbar-toggler,
+        .hide-global-nav .mobile-menu-toggle,
+        .hide-global-nav #menu-icon {
+            display: none !important;
+        }
+    </style>
+</head>
+
+<body class="fixed-layout-body">
+
+    <div id="loading-overlay">
+        <div class="loader-content">
+            <div class="nh-loader-bars">
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <div class="loader-text">Next Horizon</div>
+        </div>
+    </div>
+
+    <partial name="_ProfileHeader" />
+
+    <div class="app-container">
+        <partial name="_ProfileSideBar" />
+
+        <main class="main-content">
+            @RenderBody()
+        </main>
+    </div>
+
+    <div id="sidebar-backdrop"
+         style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:9998;"
+         onclick="closeMobileSidebar()">
+    </div>
+
+    <script src="~/js/app.js" asp-append-version="true"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+
+    <script>
+        // Use logic to show loader during transitions
+        window.addEventListener("beforeunload", function () {
+            document.getElementById("loading-overlay").style.display = "flex";
+        });
+
+        // Hide loader once the new page has fully loaded
+        window.addEventListener("load", function () {
+            document.getElementById("loading-overlay").style.display = "none";
+        });
+    </script>
+</body>
+</html>

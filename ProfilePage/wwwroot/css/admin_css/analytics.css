@@ -1,0 +1,324 @@
+﻿.analytics-container {
+    font-family: 'Poppins', sans-serif;
+    color: #333;
+}
+
+/* Filter Bar styling */
+.filter-bar {
+    background-color: transparent;
+    padding: 0;
+    margin-bottom: 1.5rem;
+}
+
+    .filter-bar input,
+    .filter-bar select {
+        flex: 1 1 auto; /* Allows them to grow/shrink but maintain a base size */
+    }
+
+.btn-apply {
+    background-color: #26C6DA; /* Cyan from wireframe */
+    color: white;
+    border: none;
+    height: 32px;
+    font-size: 0.8rem;
+    padding: 0 16px;
+    border-radius: 4px;
+}
+
+    .btn-apply:hover {
+        background-color: #00acc1;
+        color: white;
+    }
+
+.btn-export {
+    border: 1px solid #ced4da;
+    background-color: white;
+    height: 32px;
+    font-size: 0.8rem;
+    padding: 0 16px;
+    border-radius: 4px;
+}
+
+/* KPI Card Styling */
+.kpi-card {
+    background-color: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    height: 100%;
+}
+
+.kpi-label {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+}
+
+.kpi-value {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #333;
+}
+
+.kpi-trend {
+    font-size: 0.75rem;
+}
+
+    .kpi-trend.positive {
+        color: #4CAF50;
+    }
+
+    .kpi-trend.negative {
+        color: #F44336;
+    }
+
+/* Chart/Table Card Styling */
+.chart-card {
+    background-color: white;
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    margin-bottom: 1.5rem;
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.card-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #333;
+    margin: 0;
+    text-transform: uppercase;
+}
+
+.time-filters .btn {
+    border: 1px solid #ced4da;
+    background-color: white;
+    font-size: 0.7rem;
+    padding: 3px 10px;
+}
+
+    .time-filters .btn.active {
+        background-color: #6c757d;
+        color: white;
+        border-color: #6c757d;
+    }
+
+/* Table Styling */
+.custom-table-container {
+    height: 300px;
+    overflow-y: auto;
+}
+
+.custom-table {
+    width: 100%;
+    font-size: 0.8rem;
+}
+
+    .custom-table th {
+        font-weight: 700;
+        border-bottom: 1px solid #dee2e6;
+        color: #495057;
+    }
+
+    .custom-table th, .custom-table td {
+        padding: 10px 15px;
+        text-align: left;
+    }
+
+    .custom-table tbody tr:hover {
+        background-color: rgba(0,0,0,0.02);
+    }
+
+.status-badge {
+    font-size: 0.7rem;
+    padding: 3px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+    .status-badge.active {
+        background-color: rgba(76, 175, 80, 0.1);
+        color: #4CAF50;
+    }
+
+    .status-badge.inactive {
+        background-color: rgba(108, 117, 125, 0.1);
+        color: #6c757d;
+    }
+
+/* Smaller Sub-cards (Best Selling, Orders) */
+.sub-card {
+    background-color: white;
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    height: 100%;
+}
+
+
+/* Ensures the summary card matches the chart height exactly */
+.chart-row-height {
+    height: 420px; /* Header + Chart Container */
+}
+
+/* Table scrolling for long lists */
+.scrollable-table {
+    max-height: 350px;
+    overflow-y: auto;
+}
+
+@media (max-width: 576px) {
+    .filter-bar {
+        flex-direction: column;
+        align-items: stretch !important;
+    }
+
+        .filter-bar .d-flex {
+            flex-direction: column;
+            align-items: stretch !important;
+            width: 100%;
+        }
+
+        .filter-bar input,
+        .filter-bar select,
+        .filter-bar button {
+            width: 100% !important;
+            margin-bottom: 5px;
+        }
+}
+
+/* Container for the whole component */
+.order-status-container {
+    font-family: sans-serif;
+}
+
+/* Gray header bar */
+.order-status-header {
+    background-color: #efefef;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    border: 1px solid #ddd;
+}
+
+/* The Tables */
+.order-status-table {
+    border-collapse: separate;
+    border-spacing: 0;
+    border: 1px solid #ccc;
+    border-radius: 12px;
+    overflow: hidden;
+    text-align: center;
+}
+
+    /* Header Cells (Pending, Processing, etc.) */
+    .order-status-table th {
+        font-size: 11px;
+        font-weight: normal;
+        padding: 6px 2px;
+        border-bottom: 1px solid #ccc;
+    }
+
+    /* Data Cells (The Numbers) */
+    .order-status-table td {
+        font-size: 13px;
+        font-weight: 500;
+        padding: 10px 2px;
+    }
+
+        /* Vertical dividers between columns */
+        .order-status-table th:not(:last-child),
+        .order-status-table td:not(:last-child) {
+            border-right: 1px solid #ccc;
+        }
+
+    /* Highlight the number color for high-impact status if needed */
+    .order-status-table td {
+        color: #333;
+    }
+
+
+/* Main outer card style */
+.financial-overview-card {
+    border-radius: 12px;
+    border: 1px solid #e0e0e0 !important;
+}
+
+/* Individual small metric boxes */
+.financial-metric-box {
+    background-color: #ffffff;
+    border: 1px solid #eee !important;
+    border-radius: 10px !important;
+    min-height: 90px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.2s ease;
+}
+
+    /* Match the soft shadow from the reference image */
+    .financial-metric-box.shadow-sm {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05) !important;
+    }
+
+    .financial-metric-box h6, .financial-metric-box .h6 {
+        font-size: 0.9rem;
+        margin-bottom: 0;
+    }
+
+
+
+
+/* Ensure the scrollable table stays consistent across tabs */
+.scrollable-table {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+/* Match the grey header look from image_424606.png */
+.table-light th {
+    background-color: #f8f9fa !important;
+    font-weight: 600;
+    border-bottom: 2px solid #dee2e6;
+}
+
+
+/* Card Styling */
+.rounded-4 {
+    border-radius: 15px !important;
+}
+
+.sub-card {
+    border: 1px solid #eef0f2 !important;
+}
+
+/* Table Text Alignment and Spacing */
+.table thead th {
+    font-size: 0.75rem;
+    text-transform: none;
+    padding-bottom: 12px;
+}
+
+.table tbody td {
+    font-size: 0.85rem;
+    padding-top: 15px;
+    padding-bottom: 15px;
+    color: #333;
+}
+
+/* The Blue Underline for 'Units Sold' */
+.border-primary.border-3 {
+    border-bottom-width: 2px !important;
+    display: inline-block;
+}
+
+/* Shadow effect to match your screenshot */
+.shadow-sm {
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.03) !important;
+}

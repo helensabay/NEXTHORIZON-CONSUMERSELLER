@@ -1,0 +1,138 @@
+﻿@* AccountDetails.cshtml *@
+@{
+    ViewData["Title"] = "Account Details";
+    Layout = "_ProfileLayout";
+}
+
+<div class="main-content-wrapper">
+    <div class="content-body update-profile-body">
+        <div class="account-details-full-width">
+            <div class="header-with-action">
+                <h2 class="page-title">Account Details</h2>
+            </div>
+
+            <div class="info-group-card">
+                <div class="info-row" id="name-row">
+                    <span class="info-label">Full Name</span>
+                    <span class="info-value">Consumer Name <i class="bi bi-chevron-right"></i></span>
+                </div>
+                <div class="info-row" id="motto-row">
+                    <span class="info-label">Motto</span>
+                    <span class="info-value text-muted">Set now <i class="bi bi-chevron-right"></i></span>
+                </div>
+            </div>
+
+            <div class="info-group-card">
+                <div class="info-row" id="gender-row">
+                    <span class="info-label">Gender</span>
+                    <span class="info-value text-muted">Set now <i class="bi bi-chevron-right"></i></span>
+                </div>
+                <div class="info-row" id="birthday-row">
+                    <span class="info-label">Birthday</span>
+                    <span class="info-value text-muted">Set now <i class="bi bi-chevron-right"></i></span>
+                </div>
+            </div>
+
+            <div class="info-group-card">
+                <div class="info-row" id="phone-row">
+                    <span class="info-label">Phone</span>
+                    <span class="info-value text-muted">Set now <i class="bi bi-chevron-right"></i></span>
+                </div>
+                <div class="info-row" id="email-row">
+                    <span class="info-label">Email</span>
+                    <span class="info-value text-muted">Set now <i class="bi bi-chevron-right"></i></span>
+                </div>
+                <div class="info-row" id="password-row">
+                    <span class="info-label">Password</span>
+                    <span class="info-value">Update <i class="bi bi-chevron-right"></i></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="universalModal" class="modal-overlay">
+    <div class="modal-card">
+        <div class="modal-header">
+            <span id="modalTitle">FULL NAME</span>
+            <button class="close-btn" onclick="closeModal('universalModal')"><i class="bi bi-x"></i></button>
+        </div>
+        <div class="modal-body">
+            <input type="text" id="modalInput" class="modal-input" />
+            <button class="save-btn">SAVE</button>
+        </div>
+    </div>
+</div>
+
+<div id="genderModal" class="modal-overlay">
+    <div class="modal-card">
+        <div class="modal-header">
+            <span>CHOOSE GENDER</span>
+            <button class="close-btn" onclick="closeModal('genderModal')"><i class="bi bi-x"></i></button>
+        </div>
+        <div class="gender-options">
+            <label><input type="radio" name="gender" value="Male"> Male</label>
+            <label><input type="radio" name="gender" value="Female"> Female</label>
+            <label><input type="radio" name="gender" value="Other"> Prefer Not To Say</label>
+        </div>
+        <button class="save-btn">SAVE</button>
+    </div>
+</div>
+
+<div id="birthdayModal" class="modal-overlay">
+    <div class="modal-card">
+       
+        <div class="modal-header">
+            <span>SET BIRTHDAY</span>
+            <button class="close-btn" onclick="closeModal('birthdayModal')"><i class="bi bi-x"></i></button>
+        </div>
+        <div class="modal-body">
+            <input type="date" class="modal-input" id="birthDateInput" />
+            <button class="save-btn">SAVE</button>
+        </div>
+    </div>
+</div>
+
+<div id="mottoModal" class="modal-overlay">
+    <div class="modal-card">
+        
+        <div class="modal-header">
+            <span>YOUR MOTTO</span>
+            <button class="close-btn" onclick="closeModal('mottoModal')"><i class="bi bi-x"></i></button>
+        </div>
+        <div class="modal-body">
+            <textarea class="modal-input" id="mottoInput" rows="3" placeholder="Enter your motto..."></textarea>
+            <button class="save-btn">SAVE</button>
+        </div>
+    </div>
+</div>
+
+<div id="passwordModal" class="modal-overlay">
+    <div class="modal-card">
+       
+        <div class="modal-header">
+            <span>CHANGE PASSWORD</span>
+            <button class="close-btn" onclick="closeModal('passwordModal')"><i class="bi bi-x"></i></button>
+        </div>
+        <div class="modal-body" style="padding-top: 10px; text-align: left;">
+            <label class="input-sublabel">Current Password</label>
+            <input type="password" class="modal-input" placeholder="••••••••" />
+
+            <label class="input-sublabel">New Password</label>
+            <input type="password" class="modal-input" placeholder="••••••••" />
+
+            <label class="input-sublabel">Confirm New Password</label>
+            <input type="password" class="modal-input" placeholder="••••••••" />
+
+            <button class="save-btn">SAVE</button>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/UpdateProfile.css" asp-append-version="true" />
+}
+
+@section Scripts {
+    <script src="~/js/UpdateProfile.js" asp-append-version="true"></script>
+}

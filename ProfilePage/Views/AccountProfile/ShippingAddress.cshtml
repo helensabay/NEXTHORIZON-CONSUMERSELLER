@@ -1,0 +1,112 @@
+﻿@{
+    ViewData["Title"] = "Shipping Address";
+    Layout = "_ProfileLayout";
+}
+
+<div class="profile-layout-container">
+    <main class="main-content-wrapper">
+        <div class="address-container-centered">
+            <div class="header-with-action">
+                <h2 class="page-title">Shipping Address</h2>
+                <button class="btn-add-new" id="showFormBtn" style="display: none;">
+                    <i class="bi bi-plus-lg"></i> ADD NEW ADDRESS
+                </button>
+            </div>
+
+            <hr class="section-divider">
+
+            <div id="addressList" class="address-list-grid"></div>
+
+            <div id="emptyState" class="empty-address-view">
+                <div class="empty-icon-wrapper">
+                    <i class="bi bi-geo-alt"></i>
+                </div>
+                <p class="empty-text">No shipping addresses saved yet.</p>
+                <p class="empty-subtext">Save your address for a faster checkout experience.</p>
+                <button class="btn-submit-black" id="emptyAddBtn" style="margin-top: 20px; width: auto; padding: 15px 40px;">
+                    + ADD SHIPPING ADDRESS
+                </button>
+            </div>
+
+            <div id="newAddressForm" class="address-form-card" style="display: none;">
+                <div class="form-header">
+                    <button id="cancelBtn" class="back-link">
+                        <i class="bi bi-chevron-left"></i> BACK TO SAVED ADDRESSES
+                    </button>
+                </div>
+
+                <div class="form-body">
+                    <h3 class="form-section-title">SHIPPING DETAILS</h3>
+
+                    <div class="form-grid">
+                        <div class="input-field">
+                            <label>REGION</label>
+                            <input type="text" id="regionInput" list="regionList" class="custom-input" placeholder="Select Region">
+                            <datalist id="regionList"></datalist>
+                        </div>
+
+                        <div class="input-field">
+                            <label>POSTAL CODE</label>
+                            <input type="text" id="postalInput" class="custom-input" placeholder="0000">
+                        </div>
+
+                        <div class="input-field">
+                            <label>PROVINCE</label>
+                            <input type="text" id="provinceInput" list="provinceList" class="custom-input" placeholder="Select Province">
+                            <datalist id="provinceList"></datalist>
+                        </div>
+
+                        <div class="input-field">
+                            <label>CITY / MUNICIPALITY</label>
+                            <input type="text" id="cityInput" list="cityList" class="custom-input" placeholder="Select City">
+                            <datalist id="cityList"></datalist>
+                        </div>
+
+                        <div class="input-field full-row">
+                            <label>BARANGAY</label>
+                            <input type="text" id="barangayInput" list="barangayList" class="custom-input" placeholder="Select Barangay">
+                            <datalist id="barangayList"></datalist>
+                        </div>
+
+                        <div class="input-field">
+                            <label>HOUSE NO. / UNIT / FLOOR</label>
+                            <input type="text" id="houseInput" class="custom-input" placeholder="e.g. House 123">
+                        </div>
+
+                        <div class="input-field">
+                            <label>BUILDING (OPTIONAL)</label>
+                            <input type="text" id="buildingInput" class="custom-input" placeholder="e.g. Grand Tower">
+                        </div>
+
+                        <div class="input-field full-row">
+                            <label>STREET NAME</label>
+                            <input type="text" id="streetNameInput" class="custom-input" placeholder="e.g. Maple Street">
+                        </div>
+                    </div>
+
+                    <div class="toggle-container">
+                        <span class="toggle-label">Set as Default Address</span>
+                        <label class="ios-switch">
+                            <input type="checkbox" id="defaultToggle">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="form-buttons">
+                        <button class="btn-pill btn-black" id="saveBtn">SAVE ADDRESS</button>
+                        <button class="btn-pill btn-gray" id="formCancelBtn">CANCEL</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/shippingAddress.css" asp-append-version="true" />
+}
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="~/js/shippingAddress.js" asp-append-version="true"></script>
+}

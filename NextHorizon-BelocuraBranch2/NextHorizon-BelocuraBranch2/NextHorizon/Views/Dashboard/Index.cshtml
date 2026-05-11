@@ -1,0 +1,560 @@
+@{
+    var promoMap = ViewBag.PromotionMap as Dictionary<int, NextHorizon.Models.DbPromotion> ?? new();
+}
+@model List<NextHorizon.Models.DbProduct>
+@{
+    ViewData["Title"] = "Manage Products";
+    ViewData["DashboardHeading"] = "Products";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+    var activeProducts = Model.Where(p => string.Equals(p.Status, "active", StringComparison.OrdinalIgnoreCase)).ToList();
+    var renewProducts = Model.Where(p => string.Equals(p.Status, "renew", StringComparison.OrdinalIgnoreCase)).ToList();
+    var relistProducts = Model.Where(p => string.Equals(p.Status, "relist", StringComparison.OrdinalIgnoreCase)).ToList();
+    var pendingProducts = Model.Where(p => string.Equals(p.Status, "pending", StringComparison.OrdinalIgnoreCase)).ToList();
+    var rejectedProducts = Model.Where(p => string.Equals(p.Status, "Rejected", StringComparison.OrdinalIgnoreCase)).ToList();
+
+    var activeCount = activeProducts.Count;
+    var renewCount = renewProducts.Count;
+    var relistCount = relistProducts.Count;
+    var pendingCount = pendingProducts.Count;
+    var rejectedCount = rejectedProducts.Count;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/SellerIndex.css" />
+}
+
+        <div class="content-container">
+            
+            <div class="profile-section">
+                <div class="profile-circle">
+                    <i class="fa-regular fa-user" style="font-size: 2.5rem; color: #ccc;"></i>
+                </div>
+                <div class="profile-text">
+                    <h1>Manage your products with ease.</h1>
+                    <p>Track, update, and grow your sales in one place.</p>
+                </div>
+            </div>
+
+            <hr />
+
+            <button class="btn-create" onclick="window.location.href='/Seller/CreateProduct'">
+                <i class="fa-solid fa-plus"></i> Create Product Listing
+            </button>
+
+            <h2 style="font-size: 1.4rem; font-weight: 800; margin-bottom: 20px;">Overview</h2>
+
+            <div class="overview-grid">
+                <div class="overview-card active-card" onclick="changeTab('active', this)">
+                    <span>Active<br>Product</span>
+                    <div class="badge" id="badge-active" style="background: var(--accent-green);">@activeCount</div>
+                </div>
+                
+                <div class="overview-card" onclick="changeTab('pending', this)">
+                    <span>Pending<br>Product</span>
+                    <div class="badge" id="badge-pending" style="background: #3b82f6;">@pendingCount</div>
+                </div>
+
+                <div class="overview-card" onclick="changeTab('renew', this)">
+                    <span>Renew<br>Product</span>
+                    <div class="badge" id="badge-renew" style="background: var(--accent-yellow);">@renewCount</div>
+                </div>
+                <div class="overview-card" onclick="changeTab('relist', this)">
+                    <span>Relist Deleted<br>Product</span>
+                    <div class="badge" id="badge-relist" style="background: var(--accent-red);">@relistCount</div>
+                </div>
+                <div class="overview-card" onclick="changeTab('rejected', this)">
+                    <span>Rejected<br>Product</span>
+                    <div class="badge" id="badge-rejected" style="background: #6b7280;">@rejectedCount</div>
+                </div>
+            </div>
+
+            <div class="product-box">
+                <div class="product-header">
+                     <h3 id="display-title" style="font-weight: 700; font-size: 1.1rem; margin: 0;">Active Product</h3>
+                    <div class="header-actions">
+                        <button class="btn-action-pill" onclick="window.location.href='/Promotions/Promotion'">Promotion</button>
+                        <select class="filter-dropdown-select" id="categoryFilter" onchange="filterProducts()">
+                             <option value="All">All</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="active-content" class="product-group visible">
+                     @foreach (var p in activeProducts)
+                    {
+                    <div class="product-row" data-category="@p.Category">
+                        <div class="product-detail">
+                             <a href="/Seller/ViewProduct?id=@p.ProductId&state=active">
+                                <img src="@(string.IsNullOrEmpty(p.ImagePath) ? "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Crect width='90' height='90' fill='%23e0e0e0'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Inter' font-size='11' fill='%23888'%3ENo Image%3C/text%3E%3C/svg%3E" : p.ImagePath)" class="product-img" alt="Product" onerror="this.onerror=null;this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2790%27 height=%2790%27%3E%3Crect width=%2790%27 height=%2790%27 fill=%27%23e0e0e0%27/%3E%3Ctext x=%2750%25%27 y=%2750%25%27 dominant-baseline=%27middle%27 text-anchor=%27middle%27 font-family=%27Inter%27 font-size=%2711%27 fill=%27%23888%27%3ENo Image%3C/text%3E%3C/svg%3E';">
+                             </a>
+                            <div class="product-info">
+                                <a href="/Seller/ViewProduct?id=@p.ProductId&state=active">
+                                    <h4>@p.ProductName</h4>
+                                </a>
+                                <p>@p.Category</p>
+                                <div class="price-wrap">
+                                    @{
+                                        var promo = promoMap.ContainsKey(p.ProductId) ? promoMap[p.ProductId] : null;
+                                        decimal discountedPrice = p.Price;
+                                        bool hasDiscount = false;
+                                        if (promo != null)
+                                        {
+                                            if (promo.Type == "Percentage Discount" && promo.TotalDiscountPercent.HasValue && promo.TotalDiscountPercent.Value > 0)
+                                            {
+                                                discountedPrice = p.Price - (p.Price * promo.TotalDiscountPercent.Value / 100);
+                                                hasDiscount = true;
+                                            }
+                                            else if (promo.Type == "Fix Amount" && promo.TotalDiscountFix.HasValue && promo.TotalDiscountFix.Value > 0)
+                                            {
+                                                discountedPrice = p.Price - promo.TotalDiscountFix.Value;
+                                                hasDiscount = true;
+                                            }
+                                            if (discountedPrice < 0) discountedPrice = 0;
+                                        }
+                                    }
+                                    @if (promo != null && hasDiscount)
+                                    {
+                                        <span class="price">₱@discountedPrice.ToString("N2")</span>
+                                        <span class="old-price" style="text-decoration:line-through;color:#999;font-size:0.8rem;margin-left:5px;">₱@p.Price.ToString("N2")</span>
+                                        <span style="font-size:0.75rem;color:#e53935;font-weight:600;margin-left:4px;">@promo.Name</span>
+                                    }
+                                    else if (promo != null && !hasDiscount)
+                                    {
+                                        <span class="price">₱@p.Price.ToString("N2")</span>
+                                        <span style="font-size:0.75rem;color:#e53935;font-weight:600;margin-left:4px;">@promo.Name (no discount value set)</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="price">₱@p.Price.ToString("N2")</span>
+                                    }
+                                </div>
+                                @{
+                                    int reviewCountActive = p.ReviewCount ?? 0;
+                                    double ratingActive = p.AverageRating ?? 5.0;
+                                    if (reviewCountActive == 0) { ratingActive = 5.0; }
+                                }
+                                <a href="/Seller/ViewRatings?id=@p.ProductId" class="rating-pill">
+                                     <span class="stars">
+                                        @for (int i = 1; i <= 5; i++)
+                                        {
+                                             if (i <= Math.Floor(ratingActive)) { <i class="fa-solid fa-star"></i> }
+                                            else if (i == Math.Ceiling(ratingActive) && ratingActive % 1 != 0) { <i class="fa-solid fa-star-half-stroke"></i> }
+                                            else { <i class="fa-regular fa-star"></i> }
+                                        }
+                                     </span>
+                                    <span class="review-text">- @reviewCountActive Review@(reviewCountActive == 1 ? "" : "s")</span>
+                                 </a>
+                            </div>
+                        </div>
+                        <div class="action-menu-container">
+                             <button class="btn-ellipses" onclick="toggleMenu(event, this)">
+                                <i class="fa-solid fa-ellipsis"></i>
+                            </button>
+                             <div class="dropdown-menu">
+                                <a href="/Seller/ViewProduct?id=@p.ProductId&state=active" class="dropdown-item">View Product</a>
+                                <a href="/Seller/SizeGuide?id=@p.ProductId" class="dropdown-item">Size Guide</a>
+                                <a href="/Seller/CreateProduct?mode=edit&id=@p.ProductId" class="dropdown-item">Edit Product</a>
+                                 <form asp-action="DeleteProduct" asp-controller="Seller" method="post" style="margin:0;">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@p.ProductId" />
+                                     <button type="submit" class="dropdown-item" style="width:100%;background:none;border:none;cursor:pointer;text-align:left;color:#c5221f;" onclick="return confirm('Delete this product? It will be moved to Relist.')">Delete Product</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    }
+                    @if (!activeProducts.Any())
+                    {
+                    <p style="text-align:center; color:#888; padding:30px 0;">No active products yet.</p>
+                    }
+                </div>
+
+                <div id="pending-content" class="product-group">
+                    @foreach (var p in pendingProducts)
+                    {
+                    <div class="product-row" data-category="@p.Category">
+                        <div class="product-detail">
+                            <a href="/Seller/ViewProduct?id=@p.ProductId&state=pending">
+                                 <img src="@(string.IsNullOrEmpty(p.ImagePath) ? "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Crect width='90' height='90' fill='%23e0e0e0'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Inter' font-size='11' fill='%23888'%3ENo Image%3C/text%3E%3C/svg%3E" : p.ImagePath)" class="product-img" alt="Product" onerror="this.onerror=null;this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2790%27 height=%2790%27%3E%3Crect width=%2790%27 height=%2790%27 fill=%27%23e0e0e0%27/%3E%3Ctext x=%2750%25%27 y=%2750%25%27 dominant-baseline=%27middle%27 text-anchor=%27middle%27 font-family=%27Inter%27 font-size=%2711%27 fill=%27%23888%27%3ENo Image%3C/text%3E%3C/svg%3E';">
+                            </a>
+                            <div class="product-info">
+                                <a href="/Seller/ViewProduct?id=@p.ProductId&state=pending">
+                                    <h4>@p.ProductName</h4>
+                                 </a>
+                                <p>@p.Category (Awaiting Approval)</p>
+                                <div class="price-wrap">
+                                     <span class="price">₱@p.Price.ToString("N2")</span>
+                                </div>
+                                @{
+                                     int reviewCountPending = p.ReviewCount ?? 0;
+                                    double ratingPending = p.AverageRating ?? 5.0;
+                                    if (reviewCountPending == 0) { ratingPending = 5.0; }
+                                }
+                                <a href="/Seller/ViewRatings?id=@p.ProductId" class="rating-pill">
+                                     <span class="stars">
+                                        @for (int i = 1; i <= 5; i++)
+                                        {
+                                             if (i <= Math.Floor(ratingPending)) { <i class="fa-solid fa-star"></i> }
+                                            else if (i == Math.Ceiling(ratingPending) && ratingPending % 1 != 0) { <i class="fa-solid fa-star-half-stroke"></i> }
+                                            else { <i class="fa-regular fa-star"></i> }
+                                        }
+                                     </span>
+                                    <span class="review-text">- @reviewCountPending Review@(reviewCountPending == 1 ? "" : "s")</span>
+                                 </a>
+                            </div>
+                        </div>
+                        <div class="action-menu-container">
+                             <button class="btn-ellipses" onclick="toggleMenu(event, this)">
+                                <i class="fa-solid fa-ellipsis"></i>
+                            </button>
+                             <div class="dropdown-menu">
+                                <a href="/Seller/ViewProduct?id=@p.ProductId&state=pending" class="dropdown-item">View Product</a>
+                                <a href="/Seller/SizeGuide?id=@p.ProductId" class="dropdown-item">Size Guide</a>
+                                <a href="/Seller/CreateProduct?mode=edit&id=@p.ProductId" class="dropdown-item">Edit Product</a>
+                             </div>
+                        </div>
+                    </div>
+                    }
+                    @if (!pendingProducts.Any())
+                    {
+                    <p style="text-align:center; color:#888; padding:30px 0;">No products awaiting approval.</p>
+                    }
+                </div>
+
+                <div id="renew-content" class="product-group">
+                    @foreach (var p in renewProducts)
+                    {
+                    <div class="product-row" data-category="@p.Category">
+                        <div class="product-detail">
+                            <a href="/Seller/ViewProduct?id=@p.ProductId&state=renew">
+                                 <img src="@(string.IsNullOrEmpty(p.ImagePath) ? "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Crect width='90' height='90' fill='%23e0e0e0'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Inter' font-size='11' fill='%23888'%3ENo Image%3C/text%3E%3C/svg%3E" : p.ImagePath)" class="product-img" onerror="this.onerror=null;this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2790%27 height=%2790%27%3E%3Crect width=%2790%27 height=%2790%27 fill=%27%23e0e0e0%27/%3E%3Ctext x=%2750%25%27 y=%2750%25%27 dominant-baseline=%27middle%27 text-anchor=%27middle%27 font-family=%27Inter%27 font-size=%2711%27 fill=%27%23888%27%3ENo Image%3C/text%3E%3C/svg%3E';">
+                            </a>
+                            <div class="product-info">
+                                <a href="/Seller/ViewProduct?id=@p.ProductId&state=renew">
+                                    <h4>@p.ProductName</h4>
+                                 </a>
+                                <p>@p.Category</p>
+                                <div class="price-wrap">
+                                     <span class="price">₱@p.Price.ToString("N2")</span>
+                                </div>
+                                @{
+                                     int reviewCountRenew = p.ReviewCount ?? 0;
+                                    double ratingRenew = p.AverageRating ?? 5.0;
+                                    if (reviewCountRenew == 0) { ratingRenew = 5.0; }
+                                }
+                                <a href="/Seller/ViewRatings?id=@p.ProductId" class="rating-pill">
+                                     <span class="stars">
+                                        @for (int i = 1; i <= 5; i++)
+                                        {
+                                             if (i <= Math.Floor(ratingRenew)) { <i class="fa-solid fa-star"></i> }
+                                            else if (i == Math.Ceiling(ratingRenew) && ratingRenew % 1 != 0) { <i class="fa-solid fa-star-half-stroke"></i> }
+                                            else { <i class="fa-regular fa-star"></i> }
+                                        }
+                                     </span>
+                                    <span class="review-text">- @reviewCountRenew Review@(reviewCountRenew == 1 ? "" : "s")</span>
+                                 </a>
+                            </div>
+                        </div>
+                        <div class="action-menu-container">
+                             <button class="btn-ellipses" onclick="toggleMenu(event, this)">
+                                <i class="fa-solid fa-ellipsis"></i>
+                            </button>
+                             <div class="dropdown-menu">
+                                <a href="/Seller/ViewProduct?id=@p.ProductId&state=renew" class="dropdown-item">View Product</a>
+                                <a href="/Seller/SizeGuide?id=@p.ProductId" class="dropdown-item">Size Guide</a>
+                                <a href="/Seller/CreateProduct?mode=renew&id=@p.ProductId" class="dropdown-item">Renew Product</a>
+                             </div>
+                        </div>
+                    </div>
+                    }
+                    @if (!renewProducts.Any())
+                    {
+                    <p style="text-align:center; color:#888; padding:30px 0;">No products to renew.</p>
+                    }
+                </div>
+
+                <div id="relist-content" class="product-group">
+                    @foreach (var p in relistProducts)
+                    {
+                    <div class="product-row" data-category="@p.Category">
+                        <div class="product-detail">
+                            <a href="/Seller/ViewProduct?id=@p.ProductId&state=relist">
+                                 <img src="@(string.IsNullOrEmpty(p.ImagePath) ? "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Crect width='90' height='90' fill='%23e0e0e0'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Inter' font-size='11' fill='%23888'%3ENo Image%3C/text%3E%3C/svg%3E" : p.ImagePath)" class="product-img" style="filter:grayscale(1)" onerror="this.onerror=null;this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2790%27 height=%2790%27%3E%3Crect width=%2790%27 height=%2790%27 fill=%27%23e0e0e0%27/%3E%3Ctext x=%2750%25%27 y=%2750%25%27 dominant-baseline=%27middle%27 text-anchor=%27middle%27 font-family=%27Inter%27 font-size=%2711%27 fill=%27%23888%27%3ENo Image%3C/text%3E%3C/svg%3E';">
+                            </a>
+                             <div class="product-info">
+                                <a href="/Seller/ViewProduct?id=@p.ProductId&state=relist">
+                                    <h4>@p.ProductName</h4>
+                                 </a>
+                                <p>@p.Category (Deleted)</p>
+                                <div class="price-wrap">
+                                     <span class="price">₱@p.Price.ToString("N2")</span>
+                                </div>
+                                @{
+                                     int reviewCountRelist = p.ReviewCount ?? 0;
+                                    double ratingRelist = p.AverageRating ?? 5.0;
+                                    if (reviewCountRelist == 0) { ratingRelist = 5.0; }
+                                }
+                                <a href="/Seller/ViewRatings?id=@p.ProductId" class="rating-pill">
+                                     <span class="stars">
+                                        @for (int i = 1; i <= 5; i++)
+                                        {
+                                             if (i <= Math.Floor(ratingRelist)) { <i class="fa-solid fa-star"></i> }
+                                            else if (i == Math.Ceiling(ratingRelist) && ratingRelist % 1 != 0) { <i class="fa-solid fa-star-half-stroke"></i> }
+                                            else { <i class="fa-regular fa-star"></i> }
+                                        }
+                                     </span>
+                                    <span class="review-text">- @reviewCountRelist Review@(reviewCountRelist == 1 ? "" : "s")</span>
+                                 </a>
+                            </div>
+                        </div>
+                        <div class="action-menu-container">
+                             <button class="btn-ellipses" onclick="toggleMenu(event, this)">
+                                <i class="fa-solid fa-ellipsis"></i>
+                            </button>
+                             <div class="dropdown-menu">
+                                <a href="/Seller/ViewProduct?id=@p.ProductId&state=relist" class="dropdown-item">View Product</a>
+                                <a href="/Seller/SizeGuide?id=@p.ProductId" class="dropdown-item">Size Guide</a>
+                                <a href="/Seller/CreateProduct?mode=relist&id=@p.ProductId" class="dropdown-item">Relist Product</a>
+                             </div>
+                        </div>
+                    </div>
+                    }
+                    @if (!relistProducts.Any())
+                    {
+                    <p style="text-align:center; color:#888; padding:30px 0;">No deleted products to relist.</p>
+                    }
+                </div>
+
+                <div id="rejected-content" class="product-group">
+                    @foreach (var p in rejectedProducts)
+                    {
+                    <div class="product-row" data-category="@p.Category">
+                        <div class="product-detail">
+                            <a href="/Seller/ViewProduct?id=@p.ProductId&state=rejected">
+                                <img src="@(string.IsNullOrEmpty(p.ImagePath) ? "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Crect width='90' height='90' fill='%23e0e0e0'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Inter' font-size='11' fill='%23888'%3ENo Image%3C/text%3E%3C/svg%3E" : p.ImagePath)" class="product-img" style="filter:grayscale(1)" onerror="this.onerror=null;this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2790%27 height=%2790%27%3E%3Crect width=%2790%27 height=%2790%27 fill=%27%23e0e0e0%27/%3E%3Ctext x=%2750%25%27 y=%2750%25%27 dominant-baseline=%27middle%27 text-anchor=%27middle%27 font-family=%27Inter%27 font-size=%2711%27 fill=%27%23888%27%3ENo Image%3C/text%3E%3C/svg%3E';">
+                            </a>
+                            <div class="product-info">
+                                <a href="/Seller/ViewProduct?id=@p.ProductId&state=rejected">
+                                    <h4>@p.ProductName</h4>
+                                </a>
+                                <p>@p.Category</p>
+                                @if (!string.IsNullOrEmpty(p.RejectionReason))
+                                {
+                                    <p style="color:#c5221f;font-size:0.8rem;"><strong>Reason:</strong> @p.RejectionReason</p>
+                                }
+                                <div class="price-wrap">
+                                    <span class="price">₱@p.Price.ToString("N2")</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="action-menu-container">
+                            <button class="btn-ellipses" onclick="toggleMenu(event, this)">
+                                <i class="fa-solid fa-ellipsis"></i>
+                            </button>
+                            <div class="dropdown-menu">
+                                <a href="/Seller/ViewProduct?id=@p.ProductId&state=rejected" class="dropdown-item">View Product</a>
+                                <a href="/Seller/CreateProduct?mode=edit&id=@p.ProductId" class="dropdown-item">Edit &amp; Resubmit</a>
+                            </div>
+                        </div>
+                    </div>
+                    }
+                    @if (!rejectedProducts.Any())
+                    {
+                    <p style="text-align:center; color:#888; padding:30px 0;">No rejected products.</p>
+                    }
+                </div>
+
+                <div class="pagination">
+                    <i class="fa-solid fa-chevron-left nav-arrow disabled"></i>
+                     <span class="page-active">1</span>
+                    <i class="fa-solid fa-chevron-right nav-arrow disabled"></i>
+                </div>
+            </div>
+        </div>
+
+    <script>
+        // 1. Function to dynamically count products and update the overview badges
+        function updateProductCounts() {
+            var activeCount = document.querySelectorAll('#active-content .product-row').length;
+            var pendingCount = document.querySelectorAll('#pending-content .product-row').length;
+            var renewCount = document.querySelectorAll('#renew-content .product-row').length;
+            var relistCount = document.querySelectorAll('#relist-content .product-row').length;
+            var rejectedCount = document.querySelectorAll('#rejected-content .product-row').length;
+
+            document.getElementById('badge-active').innerText = activeCount;
+            if (document.getElementById('badge-pending')) {
+                document.getElementById('badge-pending').innerText = pendingCount;
+            }
+            document.getElementById('badge-renew').innerText = renewCount;
+            document.getElementById('badge-relist').innerText = relistCount;
+            if (document.getElementById('badge-rejected')) {
+                document.getElementById('badge-rejected').innerText = rejectedCount;
+            }
+        }
+
+        // Run count on initial page load
+        document.addEventListener("DOMContentLoaded", function () {
+            updateProductCounts();
+            populateCategories();
+            filterProducts();
+        });
+
+        // 2. Tab Changing Logic
+        function changeTab(tabId, element) {
+            // Reset all cards styling
+            var cards = document.getElementsByClassName('overview-card');
+            for (var i = 0; i < cards.length; i++) {
+                cards[i].classList.remove('active-card');
+            }
+
+            // Highlight clicked card
+            element.classList.add('active-card');
+
+            // Hide all product groups
+            var groups = document.getElementsByClassName('product-group');
+            for (var j = 0; j < groups.length; j++) {
+                groups[j].classList.remove('visible');
+            }
+
+            // Show the selected group
+            document.getElementById(tabId + '-content').classList.add('visible');
+
+            // Update the list title
+            var titles = {
+                'active': 'Active Product',
+                'pending': 'To Approve Product',
+                'renew': 'Renew Product',
+                'relist': 'Relist Deleted Product',
+                'rejected': 'Rejected Product'
+            };
+            document.getElementById('display-title').innerText = titles[tabId];
+
+            // Refresh category options and apply current filter for selected tab.
+            populateCategories();
+            filterProducts();
+        }
+
+        // 3. Dropdown Menu Toggle Logic
+        function toggleMenu(event, buttonElement) {
+            // Prevent the click from triggering the window.onclick event below immediately
+            event.stopPropagation();
+
+            // First, close any other dropdowns that might be open
+            var allDropdowns = document.getElementsByClassName("dropdown-menu");
+            for (var i = 0; i < allDropdowns.length; i++) {
+                if (allDropdowns[i] !== buttonElement.nextElementSibling) {
+                    allDropdowns[i].classList.remove('show');
+                }
+            }
+
+            // Toggle the dropdown right next to the clicked button
+            var menu = buttonElement.nextElementSibling;
+            menu.classList.toggle("show");
+        }
+
+        // 4. Close dropdown if the user clicks anywhere else on the screen
+        window.onclick = function(event) {
+            if (!event.target.matches('.btn-ellipses') && !event.target.closest('.btn-ellipses')) {
+                var dropdowns = document.getElementsByClassName("dropdown-menu");
+                for (var i = 0; i < dropdowns.length; i++) {
+                    var openDropdown = dropdowns[i];
+                    if (openDropdown.classList.contains('show')) {
+                        openDropdown.classList.remove('show');
+                    }
+                }
+            }
+        }
+
+        function getActiveTabId() {
+            if (document.getElementById('active-content').classList.contains('visible')) return 'active';
+            if (document.getElementById('pending-content').classList.contains('visible')) return 'pending';
+            if (document.getElementById('renew-content').classList.contains('visible')) return 'renew';
+            if (document.getElementById('rejected-content').classList.contains('visible')) return 'rejected';
+            return 'relist';
+        }
+
+        function populateCategories() {
+            var select = document.getElementById('categoryFilter');
+            var currentValue = select.value;
+            var activeTab = getActiveTabId();
+            var rows = document.querySelectorAll('#' + activeTab + '-content .product-row');
+            var categories = ['All'];
+            
+            rows.forEach(function(row) {
+                var category = (row.getAttribute('data-category') || '').trim();
+                if (!category) {
+                    category = 'Uncategorized';
+                    row.setAttribute('data-category', category);
+                }
+                if (categories.indexOf(category) === -1) {
+                    categories.push(category);
+                }
+            });
+
+            select.innerHTML = categories.map(function(category) {
+                return '<option value="' + category.replace(/"/g, '&quot;') + '">' + category + '</option>';
+            }).join('');
+
+            if (categories.indexOf(currentValue) >= 0) {
+                select.value = currentValue;
+            } else {
+                select.value = 'All';
+            }
+        }
+
+        function filterProducts() {
+            var selectedCategory = document.getElementById('categoryFilter').value;
+            var activeTab = getActiveTabId();
+            var rows = document.querySelectorAll('#' + activeTab + '-content .product-row');
+
+            rows.forEach(function(row) {
+                var rowCategory = row.getAttribute('data-category');
+                if (selectedCategory === 'All' || rowCategory === selectedCategory) {
+                    row.style.display = 'flex';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+    </script>
+
+@section Scripts {
+    <script>
+        // Dismiss the Success Toast after 3.8 seconds
+        setTimeout(() => { const t = document.getElementById('seller-toast'); if (t) t.remove(); }, 3800);
+
+        // Dismiss the Size Guide Prompt
+        const dismiss = document.getElementById('sizeguide-prompt-dismiss');
+        if (dismiss) {
+            dismiss.addEventListener('click', () => {
+                const p = document.getElementById('sizeguide-prompt');
+                if (p) p.remove();
+            });
+        }
+    </script>
+}
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div id="seller-toast" class="seller-toast">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>@TempData["SuccessMessage"]</span>
+        </div>
+    }
+
+    @{
+        var sizeGuideProductId = Context.Request.Query["sizeGuideProductId"].FirstOrDefault();
+        if (!string.IsNullOrEmpty(sizeGuideProductId))
+        {
+            <div id="sizeguide-prompt" class="sizeguide-prompt">
+                <span>Product saved. Would you like to add a size guide?</span>
+                <div style="margin-left: 12px; display:flex; gap:10px;">
+                    <a href="/Seller/SizeGuide?id=@sizeGuideProductId" class="btn" style="background:#fff;color:#0b3e6f;padding:6px 12px;border-radius:6px;font-weight:600;text-decoration:none;">Yes</a>
+                    <button id="sizeguide-prompt-dismiss" class="btn" style="background:rgba(255,255,255,0.15);color:#fff;padding:6px 12px;border-radius:6px;border:none;font-weight:600;cursor:pointer;">No thanks</button>
+                </div>
+            </div>
+        }
+    }
+
+
+

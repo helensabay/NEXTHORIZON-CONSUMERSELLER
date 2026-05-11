@@ -1,0 +1,32 @@
+﻿/* Monochrome Theme - Remove Bootstrap Blue */
+.nav-pills .nav-link.active,
+.nav-pills .show > .nav-link {
+    background-color: #000 !important;
+    color: #fff !important;
+}
+
+.nav-pills .nav-link {
+    color: #444;
+}
+
+/* Black Form Switch & Inputs */
+.form-check-input:checked {
+    background-color: #000 !important;
+    border-color: #000 !important;
+}
+
+.form-control:focus, .form-select:focus, .btn:focus {
+    border-color: #000;
+    box-shadow: 0 0 0 0.25rem rgba(0, 0, 0, 0.1);
+}
+
+/* Fix Image Fit */
+#logoPreview {
+    object-fit: contain;
+    width: 100%;
+    height: 100%;
+}
+
+.toast-container {
+    z-index: 9999;
+}

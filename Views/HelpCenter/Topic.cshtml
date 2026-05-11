@@ -1,0 +1,31 @@
+@model MyAspNetApp.Models.HelpCenter.HelpTopicPageViewModel
+
+@{
+    ViewData["Title"] = "Help Center Topic";
+}
+
+@section Styles {
+    <link href="~/HelpCenter/faq-pages.css" rel="stylesheet" asp-append-version="true" />
+}
+
+<div class="help-center-page" data-help-view="topic" data-help-slug="@Model.CategorySlug">
+    <a href="/Help" class="help-back-btn">
+        <i class="fas fa-arrow-left"></i> Back to Help Center
+    </a>
+
+    <div class="help-page-header">
+        <div class="help-page-icon">
+            <i class="fa-solid fa-circle-info" data-help-topic-icon></i>
+        </div>
+        <h1 data-help-topic-title>Loading help topic...</h1>
+        <p data-help-topic-description>Loading frequently asked questions.</p>
+    </div>
+
+    <div class="help-page-faq" data-help-topic-faqs>
+        <div class="help-loading-state">Loading FAQs...</div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/help-center.js" asp-append-version="true"></script>
+}

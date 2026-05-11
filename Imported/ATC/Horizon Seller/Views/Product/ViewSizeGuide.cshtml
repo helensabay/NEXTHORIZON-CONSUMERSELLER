@@ -1,0 +1,338 @@
+﻿@using Horizon_Seller.Models
+@model ViewSizeGuideViewModel
+@{
+    ViewData["Title"] = "View Size Guide";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXT HORIZON - View Size Guide</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --main-bg: #ffffff;
+            --input-bg: #AFAFB3;
+            --text-dark: #111;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--main-bg);
+            color: var(--text-dark);
+        }
+
+        /* Top Navigation Menu */
+        .top-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 40px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .logo {
+            font-weight: 800;
+            font-style: italic;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 25px;
+        }
+
+        /* Sidebar and Main Container */
+        .page-container {
+            display: flex;
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: #000;
+            color: #fff;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            min-height: 100vh;
+        }
+
+            .sidebar a {
+                text-decoration: none;
+                color: #fff;
+                padding: 10px;
+                border-radius: 8px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+                .sidebar a:hover {
+                    background-color: #333;
+                }
+
+                .sidebar a.active {
+                    background-color: #fff;
+                    color: #000;
+                }
+
+        .main-content {
+            flex: 1;
+            padding: 40px;
+        }
+
+        .back-link {
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        h2.page-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .data-area {
+            background-color: #AFAFB3;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-sizing: border-box;
+        }
+
+        /* ================== Photo Upload UI ================== */
+        .photo-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .photo-wrapper {
+            width: 100%;
+            height: auto;
+            max-height: 500px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 12px;
+        }
+
+        .photo-area img {
+            max-width: 100%;
+            max-height: 100%;
+            display: block;
+            object-fit: contain;
+        }
+
+        .carousel-dots {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #ddd;
+            cursor: pointer;
+        }
+
+            .dot.active {
+                background-color: #000;
+            }
+
+        /* ================== Manual Table UI ================== */
+        .measurement-unit-toggle {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .nike-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 1rem;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #ddd;
+        }
+
+            .nike-table th, .nike-table td {
+                border: 1px solid #ddd;
+                padding: 15px;
+                text-align: left;
+            }
+
+            .nike-table th {
+                background-color: #f5f5f5;
+                font-weight: 700;
+            }
+
+        .info-area h4 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        .info-area p {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #eee;
+            margin: 0;
+            white-space: pre-wrap;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header class="top-nav">
+        <div class="logo">
+            <div style="background: black; color: white; padding: 2px 10px; border-radius: 6px;">H</div>
+            NEXT HORIZON
+        </div>
+        <div class="nav-actions">
+            <i class="fa-regular fa-bell" style="font-size: 1.4rem; cursor: pointer;"></i>
+            <div style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                <i class="fa-regular fa-circle-user" style="font-size: 1.8rem;"></i>
+                <span style="font-weight: 600;">Seller</span>
+                <i class="fa-solid fa-chevron-down" style="font-size: 0.7rem;"></i>
+            </div>
+        </div>
+    </header>
+
+    <div class="page-container">
+        <div class="sidebar">
+            <a href="#"><i class="fas fa-th-large"></i>Dashboard</a>
+            <a href="#"><i class="fas fa-list"></i>Orders</a>
+            <a href="#" class="active"><i class="fas fa-tag"></i>Products</a>
+            <a href="#"><i class="fas fa-dollar-sign"></i>Finances</a>
+            <a href="#"><i class="fas fa-chart-line"></i>Analytics</a>
+            <a href="#"><i class="fas fa-cog"></i>Settings</a>
+        </div>
+
+        <div class="main-content">
+            <a href="/Product/ViewProduct/@Model.ProductId" class="back-link">
+                <i class="fas fa-arrow-left"></i> Product Size Guide
+            </a>
+
+            <div class="data-area">
+                <h2 style="font-size: 1.2rem; font-weight: 600; margin: 0;">@Model.ProductTitle</h2>
+            </div>
+
+            @if (Model.IsPhotoUpload)
+            {
+                <div class="photo-area">
+                    <div class="photo-wrapper">
+                        <div style="background-color: #AFAFB3; padding: 20px; border-radius: 12px; display: flex; align-items: center; justify-content: center; width: 100%;">
+                            @foreach (var photoUrl in Model.UploadedPhotoUrls)
+                            {
+                                <img src="@photoUrl" alt="Size Guide Photo" class="size-guide-img" style="display: @(photoUrl == Model.UploadedPhotoUrls[0] ? "block" : "none"); max-width: 100%;">
+                            }
+                        </div>
+                    </div>
+                    <div class="carousel-dots">
+                        @for (int i = 0; i < Model.UploadedPhotoUrls.Count; i++)
+                        {
+                            <span class="dot @(i == 0 ? "active" : "")"></span>
+                        }
+                    </div>
+                </div>
+
+                <div class="info-area">
+                    @if (!string.IsNullOrEmpty(Model.HowToMeasure))
+                    {
+                        <h4>Measurement Instructions</h4>
+                        <p>@Model.HowToMeasure</p>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.AdditionalNotes))
+                    {
+                        <h4>Additional Notes</h4>
+                        <p>@Model.AdditionalNotes</p>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="data-area" style="background-color: transparent; border: 1px solid #ddd;">
+                    <h2 style="font-size: 1.1rem; font-weight: 600; margin: 0;">@Model.Category Size Chart</h2>
+                </div>
+
+                <div class="measurement-unit-toggle">
+                    Measurement:
+                    <span style="font-weight: 600;">@(Model.MeasurementUnit == "cm" ? "Centimeters (cm)" : "Inches (in)")</span>
+                </div>
+
+                <h4>@Model.TableTitle</h4>
+
+                <table class="nike-table" style="margin-bottom: 20px;">
+                    <thead>
+                        <tr>
+                            @if (Model.TableData.Count > 0)
+                            {
+                                @foreach (var headerCell in Model.TableData[0])
+                                {
+                                    <th>@headerCell</th>
+                                }
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.TableData.Count > 1)
+                        {
+                            @for (int i = 1; i < Model.TableData.Count; i++)
+                            {
+                                <tr style="background-color: @(i % 2 != 0 ? "white" : "#f5f5f5");">
+                                    @foreach (var cellData in Model.TableData[i])
+                                    {
+                                        <td>@cellData</td>
+                                    }
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+
+                <div class="info-area">
+                    @if (!string.IsNullOrEmpty(Model.FitTips))
+                    {
+                        <h4>Fit tips</h4>
+                        <p>@Model.FitTips</p>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.HowToMeasure))
+                    {
+                        <h4>Measurement Instructions</h4>
+                        <p>@Model.HowToMeasure</p>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+</body>
+</html>
+

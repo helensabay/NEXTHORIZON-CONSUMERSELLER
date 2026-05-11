@@ -1,0 +1,112 @@
+.loading-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    background: rgba(255, 255, 255, 0.98);
+    z-index: 99999;
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.45s ease, visibility 0.45s ease;
+}
+
+.loading-overlay.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.loading-mark {
+    position: relative;
+    width: 104px;
+    height: 104px;
+    display: grid;
+    place-items: center;
+}
+
+.loading-ring,
+.loading-ring::before {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    content: "";
+}
+
+.loading-ring {
+    border: 3px solid transparent;
+    border-top-color: #111;
+    animation: loading-spin 1s linear infinite;
+}
+
+.loading-ring::before {
+    inset: 10px;
+    border: 2px solid transparent;
+    border-bottom-color: #111;
+    animation: loading-spin-reverse 0.85s linear infinite;
+}
+
+.loading-icon {
+    font-family: "Font Awesome 6 Free" !important;
+    font-weight: 900 !important;
+    font-size: 2.5rem;
+    line-height: 1;
+    display: inline-block;
+    color: #111;
+    animation: loading-pulse 1.2s ease-in-out infinite;
+}
+
+.loading-text {
+    font-family: 'Space Grotesk', 'Inter', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: #111;
+}
+
+.loading-bar-shell {
+    width: min(280px, 72vw);
+    height: 4px;
+    border-radius: 999px;
+    background: #e7e7e7;
+    overflow: hidden;
+}
+
+.loading-bar {
+    height: 100%;
+    width: 35%;
+    background: linear-gradient(90deg, #111 0%, #4a4a4a 100%);
+    border-radius: inherit;
+    animation: loading-progress 1s ease-in-out infinite;
+}
+
+.loading-tagline {
+    font-size: 0.8rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #666;
+}
+
+@keyframes loading-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes loading-spin-reverse {
+    from { transform: rotate(360deg); }
+    to { transform: rotate(0deg); }
+}
+
+@keyframes loading-pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.18); opacity: 0.72; }
+}
+
+@keyframes loading-progress {
+    0% { transform: translateX(-110%); }
+    50% { transform: translateX(125%); }
+    100% { transform: translateX(320%); }
+}

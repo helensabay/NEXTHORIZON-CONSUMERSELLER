@@ -1,0 +1,425 @@
+:root {
+    --sidebar-bg: #000000;
+    --main-bg: #ffffff;
+    --list-bg: #EAE6E4; /* Updated to match the soft gray/beige in the image */
+    --accent-green: #1a8a3d;
+    --accent-yellow: #f2a900;
+    --accent-red: #c5221f;
+}
+
+.content-container {
+    width: 100%;
+}
+
+/* Profile Header */
+.profile-section {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    margin-bottom: 40px;
+}
+
+.profile-circle {
+    width: 110px;
+    height: 110px;
+    border: 2px solid #000;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.profile-text h1 {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.profile-text p {
+    color: #666;
+    margin-top: 5px;
+    font-size: 1.1rem;
+}
+
+hr {
+    border: 0;
+    border-top: 1px solid #eee;
+    margin: 30px 0;
+}
+
+/* Create Button */
+.btn-create {
+    width: 100%;
+    padding: 18px;
+    background: #F6F5F5;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.12), 0px 1px 3px rgba(0, 0, 0, 0.08);
+    border: none;
+    border-radius: 12px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 500;
+    cursor: pointer;
+    margin-bottom: 50px;
+    transition: 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+    .btn-create:hover {
+        background: #EBEBEB;
+    }
+
+/* Overview Grid & Interactive Cards */
+.overview-grid {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 12px;
+    margin-top: 15px;
+    margin-bottom: 40px;
+    width: 100%;
+}
+
+.overview-card {
+    flex: 1 1 0;
+    min-width: 0;
+    background: #F6F5F5;
+    padding: 14px 12px;
+    border-radius: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    border: none;
+    transition: all 0.3s ease;
+    user-select: none;
+}
+
+    .overview-card:hover {
+        background: #EDEDED;
+    }
+
+    .overview-card.active-card {
+        background: #F6F5F5;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.12), 0px 1px 3px rgba(0, 0, 0, 0.08);
+    }
+
+    .overview-card span {
+        font-weight: 600;
+        line-height: 1.2;
+        font-size: 0.78rem;
+    }
+
+.badge {
+    width: 20px;
+    height: 20px;
+    min-width: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-right: 4px;
+}
+
+/* Product List Area */
+.product-box {
+    background-color: var(--list-bg);
+    border-radius: 18px;
+    padding: 30px 40px;
+    padding-bottom: 50px; /* added a bit more bottom padding */
+}
+
+.product-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.btn-action-pill {
+    background: #8A8888;
+    color: white;
+    padding: 6px 22px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    font-family: 'Poppins', sans-serif;
+    transition: background 0.2s;
+}
+
+    .btn-action-pill:hover {
+        background: #737373;
+    }
+
+.filter-dropdown-select {
+    background: #8A8888;
+    color: white;
+    padding: 6px 30px 6px 16px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20320%20512%22%3E%3Cpath%20fill%3D%22%23FFFFFF%22%20d%3D%22M137.4%20374.6c12.5%2012.5%2032.8%2012.5%2045.3%200l128-128c9.2-9.2%2011.9-22.9%206.9-34.9s-16.6-19.8-29.6-19.8L32%20192c-12.9%200-24.6%207.8-29.6%2019.8s-2.2%2025.7%206.9%2034.9l128%20128z%22%2F%3E%3C%2Fsvg%3E');
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 10px auto;
+    font-family: 'Poppins', sans-serif;
+    outline: none;
+    transition: background 0.2s;
+}
+
+    .filter-dropdown-select:hover {
+        background: #737373;
+    }
+
+/* Tab Content Logic */
+.product-group {
+    display: none;
+}
+
+    .product-group.visible {
+        display: block;
+    }
+
+.product-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 0;
+    border-bottom: none; /* Removed the line between items */
+    margin: 20px;
+    position: relative; /* For dropdown placement */
+}
+
+.product-detail {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+
+.product-img {
+    width: 90px;
+    height: 90px;
+    border-radius: 12px;
+    object-fit: cover;
+    background: white;
+    transition: transform 0.2s; /* nice hover effect for images */
+}
+
+    .product-img:hover {
+        transform: scale(1.05);
+    }
+
+.product-info a {
+    text-decoration: none;
+    color: inherit;
+}
+
+.product-info h4 {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #111;
+}
+
+    .product-info h4:hover {
+        text-decoration: underline;
+    }
+
+.product-info p {
+    margin: 4px 0 8px 0;
+    font-size: 0.85rem;
+    color: #555;
+    font-weight: 400;
+}
+
+.price-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+    .price-wrap .price {
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: #000;
+    }
+
+    .price-wrap .old-price {
+        font-weight: 400;
+        font-size: 0.8rem;
+        color: #888;
+        text-decoration: line-through;
+    }
+
+/* Rating Pill Styles */
+.rating-pill {
+    display: inline-flex;
+    align-items: center;
+    background: #969696;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-top: 6px;
+    gap: 5px;
+}
+
+    .rating-pill .stars {
+        color: #111;
+        font-size: 0.6rem;
+        letter-spacing: 1px;
+    }
+
+    .rating-pill .review-text {
+        color: #f0f0f0;
+        font-size: 0.65rem;
+        font-weight: 500;
+    }
+
+/* Action Menu (Ellipses & Dropdown) */
+.action-menu-container {
+    position: relative;
+}
+
+.btn-ellipses {
+    background: transparent;
+    border: none;
+    font-size: 1.5rem;
+    color: #555;
+    cursor: pointer;
+    padding: 5px 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .btn-ellipses:hover {
+        color: #000;
+    }
+
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background-color: #d1cfce; /* Matches the button backgrounds in your screenshot */
+    border-radius: 6px;
+    min-width: 130px;
+    z-index: 50;
+    margin-top: 5px;
+    background: transparent; /* Changed to match image UI of stacked individual pills */
+    box-shadow: none;
+}
+
+    .dropdown-menu.show {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+.dropdown-item {
+    display: block;
+    padding: 8px 15px;
+    color: #000;
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-align: center;
+    background-color: #dcdcdc; /* Separate button boxes like in the UI */
+    border-radius: 6px;
+    transition: background 0.2s;
+}
+
+    .dropdown-item:hover {
+        background-color: #c4c4c4;
+    }
+
+
+/* Pagination Styling */
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin-top: 40px;
+    font-weight: 600;
+    color: #888;
+}
+
+.page-active {
+    color: #000;
+    background: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+}
+
+.nav-arrow {
+    font-size: 0.9rem;
+}
+
+    .nav-arrow.disabled {
+        color: #b0aba8;
+        cursor: not-allowed;
+    }
+
+.seller-toast {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    background: #111;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 22px;
+    border-radius: 6px;
+    font-size: 0.88rem;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+    z-index: 9999;
+    opacity: 0;
+    transform: translateY(12px);
+    animation: toastIn 0.3s ease forwards, toastOut 0.4s ease 3.2s forwards;
+}
+.seller-toast svg { flex-shrink: 0; }
+
+@keyframes toastIn  { to { opacity: 1; transform: translateY(0); } }
+@keyframes toastOut { to { opacity: 0; transform: translateY(12px); } }
+
+.sizeguide-prompt {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    background: #0b3e6f;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+    z-index: 9999;
+}

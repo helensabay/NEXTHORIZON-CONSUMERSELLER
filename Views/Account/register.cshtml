@@ -1,0 +1,1050 @@
+@model WebApplication1.ViewModels.RegisterViewModel
+
+@{
+    ViewData["Title"] = "Sign Up - Next Horizon";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"]</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="~/css/styles.css">
+    <link rel="stylesheet" href="~/css/loading.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+<style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+        --black:      #0a0a0a;
+        --white:      #ffffff;
+        --off-white:  #f6f5f3;
+        --gray-100:   #f0efed;
+        --gray-200:   #e0dfdb;
+        --gray-300:   #c8c7c2;
+        --gray-400:   #a0a09a;
+        --gray-600:   #5c5c58;
+        --red:        #c0392b;
+        --green:      #1e7e34;
+        --radius-sm:  8px;
+        --radius-md:  12px;
+    }
+
+    html, body {
+        height: 100%;
+        font-family: 'DM Sans', sans-serif;
+        background: var(--black);
+        color: var(--black);
+        -webkit-font-smoothing: antialiased;
+    }
+
+    a { text-decoration: none; color: inherit; }
+
+    /* ── OUTER LAYOUT ── */
+    .reg-page {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        height: 100vh;
+    }
+
+    /* ── LEFT SIDEBAR (sticky) ── */
+    .reg-sidebar {
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        background: var(--black);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .sidebar-inner {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        padding: 2.5rem;
+    }
+
+    /* Watermark */
+    .sidebar-watermark {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 11rem;
+        color: rgba(255,255,255,0.035);
+        position: absolute;
+        top: -2rem;
+        left: -1rem;
+        line-height: 1;
+        pointer-events: none;
+        user-select: none;
+        letter-spacing: -0.03em;
+    }
+
+    .sidebar-vert {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 0.65rem;
+        letter-spacing: 0.38em;
+        color: rgba(255,255,255,0.3);
+        writing-mode: vertical-rl;
+        transform: rotate(180deg);
+        position: absolute;
+        top: 2.5rem;
+        right: 2rem;
+    }
+
+    /* Hero image */
+    .sidebar-img-wrap {
+        flex: 1;
+        margin: 4rem -2.5rem 0;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .sidebar-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center top;
+        filter: grayscale(100%) contrast(1.08);
+        display: block;
+    }
+
+    .sidebar-grain {
+        position: absolute;
+        inset: 0;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.07'/%3E%3C/svg%3E");
+        mix-blend-mode: overlay;
+        pointer-events: none;
+    }
+
+    /* Sidebar bottom */
+    .sidebar-bottom {
+        background: var(--black);
+        padding: 2rem 2.5rem;
+        margin: 0 -2.5rem -2.5rem;
+        border-top: 1px solid rgba(255,255,255,0.08);
+        flex-shrink: 0;
+    }
+
+    .sidebar-tagline {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 2.4rem;
+        color: var(--white);
+        line-height: 1.05;
+        letter-spacing: 0.01em;
+        margin-bottom: 1.5rem;
+    }
+
+    .sidebar-steps {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .sidebar-step {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .step-num {
+        width: 24px;
+        height: 24px;
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: 0.75rem;
+        color: rgba(255,255,255,0.5);
+        flex-shrink: 0;
+    }
+
+    .step-text {
+        font-size: 0.78rem;
+        color: rgba(255,255,255,0.45);
+        letter-spacing: 0.04em;
+        font-weight: 300;
+    }
+
+    /* ── RIGHT FORM AREA ── */
+    .reg-main {
+        background: var(--off-white);
+        display: flex;
+        align-items: stretch;
+        min-height: 100vh;
+        height: 100vh;
+        min-width: 0;
+        overflow: hidden;
+    }
+
+    .reg-form-wrap {
+        flex: 1;
+        min-height: 0;
+        width: 100%;
+        max-width: 520px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        padding: 2.5rem 3rem 3rem;
+    }
+
+    .reg-topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2.5rem;
+    }
+
+    .topbar-logo {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+    }
+
+    .topbar-logo-img {
+        width: 32px;
+        height: 32px;
+        object-fit: contain;
+    }
+
+    .topbar-logo-text {
+        font-weight: 600;
+        font-size: 0.95rem;
+        letter-spacing: -0.01em;
+        color: var(--black);
+    }
+
+    .login-pill {
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: var(--gray-600);
+        background: var(--white);
+        border: 1px solid var(--gray-200);
+        border-radius: 999px;
+        padding: 0.45rem 1rem;
+        transition: all 0.2s ease;
+    }
+
+    .login-pill:hover {
+        background: var(--black);
+        color: var(--white);
+        border-color: var(--black);
+    }
+
+    .reg-form-card {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        padding-right: 0.25rem;
+    }
+
+    /* Page title */
+    .reg-heading {
+        margin-bottom: 2.5rem;
+    }
+
+    .reg-kicker {
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--gray-400);
+        margin-bottom: 0.75rem;
+        display: block;
+    }
+
+    .reg-title {
+        font-family: 'Bebas Neue', sans-serif;
+        font-size: clamp(3rem, 5vw, 4.2rem);
+        line-height: 0.92;
+        letter-spacing: -0.01em;
+        color: var(--black);
+        margin-bottom: 0.75rem;
+    }
+
+    .reg-title em {
+        font-style: italic;
+        color: var(--gray-400);
+    }
+
+    .reg-subtitle {
+        font-size: 0.95rem;
+        color: var(--gray-600);
+        font-weight: 300;
+        max-width: 480px;
+        line-height: 1.5;
+    }
+
+    /* Section headings */
+    .section-head {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin: 2.5rem 0 1.5rem;
+    }
+
+    .section-head-label {
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--black);
+        white-space: nowrap;
+    }
+
+    .section-head-line {
+        flex: 1;
+        height: 1px;
+        background: var(--gray-200);
+    }
+
+    /* Field layout */
+    .field-row {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 0;
+        margin-bottom: 0;
+    }
+
+    .field-group {
+        margin-bottom: 1.25rem;
+    }
+
+    .field-label {
+        display: block;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--black);
+        margin-bottom: 0.5rem;
+    }
+
+    .field-wrap {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .field-input {
+        width: 100%;
+        padding: 0.85rem 1rem;
+        border: 1.5px solid var(--gray-200);
+        border-radius: var(--radius-sm);
+        font-size: 0.92rem;
+        font-family: 'DM Sans', sans-serif;
+        font-weight: 400;
+        background: var(--white);
+        color: var(--black);
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        outline: none;
+    }
+
+    .field-input::placeholder { color: var(--gray-400); font-size: 0.88rem; }
+
+    .field-input:focus {
+        border-color: var(--black);
+        box-shadow: 0 0 0 3px rgba(10,10,10,0.07);
+    }
+
+    .field-input.input-invalid { border-color: var(--red) !important; box-shadow: 0 0 0 3px rgba(192,57,43,0.08) !important; }
+    .field-input.input-valid   { border-color: var(--green) !important; box-shadow: 0 0 0 3px rgba(30,126,52,0.08) !important; }
+
+    .password-toggle {
+        position: absolute;
+        right: 0.85rem;
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: var(--gray-400);
+        font-size: 0.88rem;
+        padding: 0.25rem;
+        transition: color 0.15s ease;
+        z-index: 1;
+    }
+
+    .password-toggle:hover { color: var(--black); }
+
+    /* Password rules grid */
+    .password-rules {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.4rem 1rem;
+        margin-top: 0.6rem;
+        padding: 0.85rem 1rem;
+        background: var(--white);
+        border: 1.5px solid var(--gray-200);
+        border-radius: var(--radius-sm);
+    }
+
+    .rule {
+        font-size: 0.72rem;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        line-height: 1.5;
+        font-weight: 500;
+    }
+
+    .rule.pass { color: var(--green); }
+    .rule.fail { color: var(--red); }
+    .rule i    { font-size: 0.7rem; }
+
+    /* Feedback spans below fields */
+    .field-feedback {
+        display: block;
+        margin-top: 0.4rem;
+        font-size: 0.72rem;
+        font-weight: 500;
+    }
+
+    .field-feedback.pass { color: var(--green); }
+    .field-feedback.fail { color: var(--red); }
+
+    .field-error {
+        display: block;
+        font-size: 0.72rem;
+        color: var(--red);
+        margin-top: 0.35rem;
+        font-weight: 500;
+    }
+
+    /* Terms */
+    .terms-row {
+        display: flex;
+        align-items: flex-start;
+        flex-wrap: nowrap;
+        gap: 0.75rem;
+        margin: 2rem 0 1.75rem;
+        padding: 1rem 1.25rem;
+        background: var(--white);
+        border: 1.5px solid var(--gray-200);
+        border-radius: var(--radius-sm);
+    }
+
+    .terms-checkbox-input { display: none; }
+
+    .terms-custom-box {
+        width: 18px;
+        height: 18px;
+        border: 1.5px solid var(--gray-300);
+        border-radius: 4px;
+        background: var(--white);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        margin-top: 1px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+    .terms-checkbox-input:checked + .terms-custom-box {
+        background: var(--black);
+        border-color: var(--black);
+    }
+
+    .terms-checkbox-input:checked + .terms-custom-box::after {
+        content: '';
+        width: 9px;
+        height: 5px;
+        border-left: 2px solid var(--white);
+        border-bottom: 2px solid var(--white);
+        transform: rotate(-45deg) translateY(-1px);
+        display: block;
+    }
+
+    .terms-text {
+        font-size: 0.85rem;
+        color: var(--gray-600);
+        line-height: 1.6;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+    .terms-text a {
+        color: var(--black);
+        font-weight: 600;
+        border-bottom: 1px solid var(--black);
+        transition: opacity 0.15s ease;
+    }
+
+    .terms-text a:hover { opacity: 0.5; }
+
+    /* Submit button */
+    .btn-submit {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.65rem;
+        padding: 1rem 1.5rem;
+        background: var(--black);
+        color: var(--white);
+        border: none;
+        border-radius: var(--radius-sm);
+        font-family: 'DM Sans', sans-serif;
+        font-size: 0.95rem;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        cursor: pointer;
+        transition: all 0.22s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn-submit::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent);
+        transform: translateX(-100%);
+        transition: transform 0.5s ease;
+    }
+
+    .btn-submit:hover::before  { transform: translateX(100%); }
+    .btn-submit:hover          { background: #222; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(0,0,0,0.18); }
+    .btn-submit:active         { transform: translateY(0); box-shadow: none; }
+
+    /* SweetAlert2 custom theme */
+    .nh-alert {
+        background: #fff !important; color: #000 !important;
+        border-radius: 14px !important; padding: 30px !important; width: 420px !important;
+    }
+    .nh-alert-title { color: #000 !important; font-size: 1.3rem !important; font-weight: 700 !important; }
+    .nh-alert-text  { color: #444 !important; font-size: 0.9rem !important; }
+    .nh-alert-btn   { background: #000 !important; color: #fff !important; padding: 10px 28px !important; border-radius: 6px !important; box-shadow: none !important; }
+    .nh-alert-btn:focus, .nh-alert-btn:active { box-shadow: none !important; outline: none !important; }
+    .swal2-confirm  { box-shadow: none !important; outline: none !important; }
+    .swal2-icon.swal2-error,
+    .swal2-icon.swal2-success,
+    .swal2-icon.swal2-warning  { border-color: #000 !important; }
+    .swal2-x-mark-line-left,
+    .swal2-x-mark-line-right   { background: #000 !important; }
+    .swal2-success-line-tip,
+    .swal2-success-line-long   { background: #000 !important; }
+    .swal2-warning-body,
+    .swal2-warning-dot         { background: #000 !important; }
+
+    /* ── RESPONSIVE ── */
+    @@media (max-width: 1024px) {
+        .reg-form-wrap { padding: 2rem 2rem 3rem; }
+    }
+
+    @@media (max-width: 768px) {
+        .reg-page { grid-template-columns: 1fr; height: auto; min-height: 100vh; }
+        .reg-sidebar { display: none; }
+        .reg-main { min-height: auto; height: auto; overflow: visible; }
+        .reg-form-wrap { max-width: none; padding: 1.5rem 1.25rem 2.5rem; }
+        .reg-topbar { margin-bottom: 2rem; }
+        .reg-form-card { overflow: visible; }
+        .field-row { grid-template-columns: 1fr; }
+        .password-rules { grid-template-columns: 1fr; }
+        .terms-text { white-space: normal; }
+    }
+</style>
+
+<div class="reg-page">
+
+    <!-- ── LEFT SIDEBAR ── -->
+    <aside class="reg-sidebar">
+        <div class="sidebar-inner">
+            <div class="sidebar-watermark">NH</div>
+            <div class="sidebar-vert">NEXT HORIZON</div>
+
+            <div class="sidebar-img-wrap">
+                <img src="~/images/hero-runner.jpg" alt="Runner" class="sidebar-img">
+                <div class="sidebar-grain"></div>
+            </div>
+
+            <div class="sidebar-bottom">
+                <p class="sidebar-tagline">Start your<br><em style="font-style:italic;color:rgba(255,255,255,0.35)">journey</em><br>today.</p>
+                <div class="sidebar-steps">
+                    <div class="sidebar-step">
+                        <span class="step-num">1</span>
+                        <span class="step-text">Create your account</span>
+                    </div>
+                    <div class="sidebar-step">
+                        <span class="step-num">2</span>
+                        <span class="step-text">Set up your profile</span>
+                    </div>
+                    <div class="sidebar-step">
+                        <span class="step-num">3</span>
+                        <span class="step-text">Join challenges & track progress</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- ── RIGHT FORM AREA ── -->
+    <main class="reg-main">
+        <div class="reg-form-wrap">
+            <div class="reg-topbar">
+                <a asp-controller="Home" asp-action="Index" class="topbar-logo">
+                    <img src="~/images/Next Horizon Logo.png" alt="Next Horizon" class="topbar-logo-img">
+                    <span class="topbar-logo-text">Next Horizon</span>
+                </a>
+                <a asp-controller="Account" asp-action="Login" class="login-pill">Log in →</a>
+            </div>
+
+            <div class="reg-form-card">
+            <div class="reg-heading">
+                <span class="reg-kicker">Account Registration</span>
+                <h1 class="reg-title">Create your<br><em>account.</em></h1>
+                <p class="reg-subtitle">Register to access orders, challenges, rewards, and messaging.</p>
+            </div>
+
+            <form class="auth-form" asp-controller="Account" asp-action="Register" method="post">
+
+                <!-- ── PERSONAL INFO ── -->
+                <div class="section-head">
+                    <span class="section-head-label">Personal Information</span>
+                    <span class="section-head-line"></span>
+                </div>
+
+                <!-- Name Row -->
+                <div class="field-row">
+                    <div class="field-group">
+                        <label asp-for="FirstName" class="field-label">First Name</label>
+                        <input asp-for="FirstName" class="field-input" placeholder="John" />
+                        <span asp-validation-for="FirstName" class="field-error"></span>
+                    </div>
+                    <div class="field-group">
+                        <label asp-for="MiddleName" class="field-label">Middle Name</label>
+                        <input asp-for="MiddleName" class="field-input" placeholder="Optional" />
+                        <span asp-validation-for="MiddleName" class="field-error"></span>
+                    </div>
+                    <div class="field-group">
+                        <label asp-for="LastName" class="field-label">Last Name</label>
+                        <input asp-for="LastName" class="field-input" placeholder="Doe" />
+                        <span asp-validation-for="LastName" class="field-error"></span>
+                    </div>
+                </div>
+
+                <div class="field-group">
+                    <label asp-for="Username" class="field-label">Username</label>
+                    <input asp-for="Username" id="Username" class="field-input"
+                           placeholder="Choose a username"
+                           oninput="checkUsername(this.value)" />
+                    <span id="username-feedback" class="field-feedback" style="display:block;"></span>
+                    <span asp-validation-for="Username" class="field-error"></span>
+                </div>
+
+                <div class="field-group">
+                    <label asp-for="Email" class="field-label">Email</label>
+                    <input asp-for="Email" id="Email" class="field-input"
+                           placeholder="your@email.com"
+                           oninput="checkEmail(this.value)" />
+                    <span id="email-feedback" class="field-feedback" style="display:block;"></span>
+                    <span asp-validation-for="Email" class="field-error"></span>
+                </div>
+
+                <div class="field-group">
+                    <label asp-for="Address" class="field-label">Address</label>
+                    <input asp-for="Address" class="field-input" placeholder="123 Main Street, City" />
+                    <span asp-validation-for="Address" class="field-error"></span>
+                </div>
+
+                <div class="field-group">
+                    <label asp-for="PhoneNumber" class="field-label">Phone Number</label>
+                    <input asp-for="PhoneNumber" id="PhoneNumber" class="field-input"
+                           placeholder="09XXXXXXXXX or +639XXXXXXXXX"
+                           oninput="checkPhone(this.value)" />
+                    <span id="phone-feedback" class="field-feedback" style="display:block;"></span>
+                    <span asp-validation-for="PhoneNumber" class="field-error"></span>
+                </div>
+
+                <!-- ── SECURITY ── -->
+                <div class="section-head">
+                    <span class="section-head-label">Security Setup</span>
+                    <span class="section-head-line"></span>
+                </div>
+
+                <!-- Password -->
+                <div class="field-group">
+                    <label asp-for="Password" class="field-label">Password</label>
+                    <div class="field-wrap">
+                        <input asp-for="Password" id="Password" class="field-input"
+                               placeholder="Create a password" type="password"
+                               oninput="checkPassword(this.value)"
+                               style="padding-right:3rem;" />
+                        <button type="button" class="password-toggle" onclick="togglePassword('Password', this)">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <div class="password-rules" id="passwordRules">
+                        <span id="rule-lower"  class="rule fail"><i class="fas fa-times-circle"></i> Lowercase letter</span>
+                        <span id="rule-upper"  class="rule fail"><i class="fas fa-times-circle"></i> Uppercase letter</span>
+                        <span id="rule-length" class="rule fail"><i class="fas fa-times-circle"></i> 8–16 characters</span>
+                        <span id="rule-valid"  class="rule pass"><i class="fas fa-check-circle"></i> Valid characters only</span>
+                    </div>
+                    <span asp-validation-for="Password" class="field-error"></span>
+                </div>
+
+                <!-- Confirm Password -->
+                <div class="field-group">
+                    <label asp-for="ConfirmPassword" class="field-label">Confirm Password</label>
+                    <div class="field-wrap">
+                        <input asp-for="ConfirmPassword" id="ConfirmPassword" class="field-input"
+                               placeholder="Confirm your password" type="password"
+                               oninput="checkConfirmPassword(this.value)"
+                               style="padding-right:3rem;" />
+                        <button type="button" class="password-toggle" onclick="togglePassword('ConfirmPassword', this)">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                    <span asp-validation-for="ConfirmPassword" class="field-error"></span>
+                </div>
+
+                <!-- Terms -->
+                <div class="terms-row">
+                    <input asp-for="AgreeTerms" type="checkbox" id="agreeCheckbox" class="terms-checkbox-input" />
+                    <label for="agreeCheckbox" class="terms-custom-box"></label>
+                    <label for="agreeCheckbox" class="terms-text">
+                        I agree to the <a href="@Url.Action("Terms", "Home")">Terms of Service</a> and <a href="#">Privacy Policy</a>
+                    </label>
+                    <span asp-validation-for="AgreeTerms" class="field-error" style="display:block;width:100%;margin-top:0.25rem;"></span>
+                </div>
+
+                <button type="submit" class="btn-submit">
+                    <i class="fas fa-user-plus"></i>
+                    <span>Create Account</span>
+                </button>
+
+            </form>
+            </div>
+        </div>
+    </main>
+
+</div>
+
+    <partial name="_ValidationScriptsPartial" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        // track password validity globally so submit can check it
+        let passwordValid = false;
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const form = document.querySelector(".auth-form");
+            if (!form) return;
+
+            form.addEventListener("submit", function (e) {
+
+                // ── 1. CHECK EMPTY FIELDS ──
+                const inputs = form.querySelectorAll("input[type='text'], input[type='email'], input[type='password']");
+                let firstEmpty = null;
+                inputs.forEach(input => {
+                    if (input.id === "MiddleName") return;
+                    if (!input.value.trim() && !firstEmpty) firstEmpty = input;
+                });
+
+                if (firstEmpty) {
+                    e.preventDefault();
+                    firstEmpty.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    firstEmpty.focus();
+                    Swal.fire({
+                        icon: 'error', title: 'Missing Fields',
+                        text: 'Please fill in all required fields.',
+                        confirmButtonText: 'OK',
+                        customClass: { popup: 'nh-alert', title: 'nh-alert-title', htmlContainer: 'nh-alert-text', confirmButton: 'nh-alert-btn' }
+                    });
+                    return;
+                }
+
+                if (!passwordValid) {
+                    e.preventDefault();
+                    const passwordInput = document.getElementById('Password');
+                    passwordInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    passwordInput.focus();
+                    Swal.fire({
+                        icon: 'error', title: 'Weak Password',
+                        text: 'Your password does not meet all the requirements.',
+                        confirmButtonText: 'OK',
+                        customClass: { popup: 'nh-alert', title: 'nh-alert-title', htmlContainer: 'nh-alert-text', confirmButton: 'nh-alert-btn' }
+                    });
+                    return;
+                }
+
+                // ── 2. CHECK PASSWORDS MATCH ──
+                const password        = document.getElementById('Password');
+                const confirmPassword = document.getElementById('ConfirmPassword');
+
+                if (password.value !== confirmPassword.value) {
+                    e.preventDefault();
+                    confirmPassword.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    confirmPassword.focus();
+                    confirmPassword.classList.add('input-invalid');
+                    confirmPassword.classList.remove('input-valid');
+                    Swal.fire({
+                        icon: 'error', title: 'Passwords Do Not Match',
+                        text: 'Please make sure both passwords are the same.',
+                        confirmButtonText: 'OK',
+                        customClass: { popup: 'nh-alert', title: 'nh-alert-title', htmlContainer: 'nh-alert-text', confirmButton: 'nh-alert-btn' }
+                    });
+                    return;
+                }
+
+                // ── 3. CHECK INLINE FEEDBACK FAILURES ──
+                const usernameFeedback = document.getElementById('username-feedback');
+                const emailFeedback    = document.getElementById('email-feedback');
+                const phoneFeedback    = document.getElementById('phone-feedback');
+
+                const failedField =
+                    (usernameFeedback.classList.contains('fail') && usernameFeedback.textContent.trim() !== '')
+                        ? document.getElementById('Username') :
+                    (emailFeedback.classList.contains('fail') && emailFeedback.textContent.trim() !== '')
+                        ? document.getElementById('Email') :
+                    (phoneFeedback.classList.contains('fail') && phoneFeedback.textContent.trim() !== '')
+                        ? document.getElementById('PhoneNumber') : null;
+
+                if (failedField) {
+                    e.preventDefault();
+                    failedField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    failedField.focus();
+                    Swal.fire({
+                        icon: 'error', title: 'Invalid Field',
+                        text: 'Please fix the highlighted fields before submitting.',
+                        confirmButtonText: 'OK',
+                        customClass: { popup: 'nh-alert', title: 'nh-alert-title', htmlContainer: 'nh-alert-text', confirmButton: 'nh-alert-btn' }
+                    });
+                    return;
+                }
+
+                // ── 4. CHECK TERMS ──
+                const terms = document.getElementById("agreeCheckbox");
+                if (!terms.checked) {
+                    e.preventDefault();
+                    terms.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    Swal.fire({
+                        icon: 'warning', title: 'Terms Required',
+                        text: 'You must agree to the Terms of Service.',
+                        confirmButtonText: 'OK',
+                        customClass: { popup: 'nh-alert', title: 'nh-alert-title', htmlContainer: 'nh-alert-text', confirmButton: 'nh-alert-btn' }
+                    });
+                    return;
+                }
+                // ── ALL GOOD — let the form submit normally ──
+            });
+        });
+
+        // ── SERVER-SIDE ERROR MODAL (phone_invalid only) ──
+        @if (TempData["RegisterError"] != null)
+        {
+            string? error = TempData["RegisterError"]?.ToString();
+            if (error == "phone_invalid")
+            {
+                <text>
+                document.addEventListener('DOMContentLoaded', function () {
+                    Swal.fire({
+                        icon: 'error', title: 'Invalid Phone Number',
+                        text: 'Please enter a valid number starting with 09 or +639.',
+                        confirmButtonText: 'OK',
+                        customClass: { popup: 'nh-alert', title: 'nh-alert-title', htmlContainer: 'nh-alert-text', confirmButton: 'nh-alert-btn' }
+                    });
+                });
+                </text>
+            }
+        }
+
+        // ── SUCCESS MODAL ──
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <text>
+            document.addEventListener('DOMContentLoaded', function () {
+                Swal.fire({
+                    icon: 'success', title: 'Account Created!',
+                    text: 'Your account has been created successfully.',
+                    confirmButtonText: 'Continue to Log In',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    customClass: { popup: 'nh-alert', title: 'nh-alert-title', htmlContainer: 'nh-alert-text', confirmButton: 'nh-alert-btn' }
+                }).then(() => {
+                    window.location.href = '@Url.Action("Login", "Account")';
+                });
+            });
+            </text>
+        }
+
+        // ── TOGGLE PASSWORD VISIBILITY ──
+        function togglePassword(inputId, btn) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            const icon = btn.querySelector('i');
+            const isHidden = input.type === 'password';
+            input.type = isHidden ? 'text' : 'password';
+            icon.classList.toggle('fa-eye',      !isHidden);
+            icon.classList.toggle('fa-eye-slash', isHidden);
+        }
+
+        // ── PASSWORD RULES ──
+        function checkPassword(val) {
+            const input  = document.getElementById('Password');
+            const lower  = document.getElementById('rule-lower');
+            const upper  = document.getElementById('rule-upper');
+            const length = document.getElementById('rule-length');
+            const valid  = document.getElementById('rule-valid');
+
+            const hasLower  = /[a-z]/.test(val);
+            const hasUpper  = /[A-Z]/.test(val);
+            const hasLength = val.length >= 8 && val.length <= 16;
+            const hasValid  = /^[a-zA-Z0-9 !@@#$%^&*()_+\-=\[\]{}|;':",.<>?\/`~]*$/.test(val);
+
+            setRule(lower,  hasLower);
+            setRule(upper,  hasUpper);
+            setRule(length, hasLength);
+            setRule(valid,  hasValid);
+
+            passwordValid = hasLower && hasUpper && hasLength && hasValid;
+            input.classList.toggle('input-valid',   passwordValid);
+            input.classList.toggle('input-invalid', !passwordValid && val.length > 0);
+        }
+
+        function setRule(el, pass) {
+            el.className = 'rule ' + (pass ? 'pass' : 'fail');
+            const icon = el.querySelector('i');
+            icon.className = pass ? 'fas fa-check-circle' : 'fas fa-times-circle';
+        }
+
+        // ── LIVE USERNAME CHECK ──
+        let usernameTimer;
+        function checkUsername(val) {
+            const feedback = document.getElementById('username-feedback');
+            const input    = document.getElementById('Username');
+            if (val.length === 0) {
+                feedback.textContent = '';
+                feedback.className = 'field-feedback';
+                input.classList.remove('input-valid', 'input-invalid');
+                return;
+            }
+            clearTimeout(usernameTimer);
+            usernameTimer = setTimeout(() => {
+                fetch(`/Account/CheckUsername?username=${encodeURIComponent(val)}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.taken) {
+                            feedback.textContent = '✗ Username is already taken';
+                            feedback.className   = 'field-feedback fail';
+                            input.classList.add('input-invalid');
+                            input.classList.remove('input-valid');
+                        } else {
+                            feedback.textContent = '✓ Username is available';
+                            feedback.className   = 'field-feedback pass';
+                            input.classList.add('input-valid');
+                            input.classList.remove('input-invalid');
+                        }
+                    });
+            }, 500);
+        }
+
+        // ── LIVE EMAIL CHECK ──
+        let emailTimer;
+        function checkEmail(val) {
+            const feedback = document.getElementById('email-feedback');
+            const input    = document.getElementById('Email');
+            if (val.length === 0) {
+                feedback.textContent = '';
+                feedback.className = 'field-feedback';
+                input.classList.remove('input-valid', 'input-invalid');
+                return;
+            }
+            const validFormat = /^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/.test(val);
+            if (!validFormat) {
+                feedback.textContent = '✗ Invalid email format';
+                feedback.className   = 'field-feedback fail';
+                input.classList.add('input-invalid');
+                input.classList.remove('input-valid');
+                return;
+            }
+            clearTimeout(emailTimer);
+            emailTimer = setTimeout(() => {
+                fetch(`/Account/CheckEmail?email=${encodeURIComponent(val)}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.taken) {
+                            feedback.textContent = '✗ Email is already in use';
+                            feedback.className   = 'field-feedback fail';
+                            input.classList.add('input-invalid');
+                            input.classList.remove('input-valid');
+                        } else {
+                            feedback.textContent = '✓ Email is available';
+                            feedback.className   = 'field-feedback pass';
+                            input.classList.add('input-valid');
+                            input.classList.remove('input-invalid');
+                        }
+                    });
+            }, 500);
+        }
+
+        // ── LIVE PHONE CHECK ──
+        let phoneTimer;
+        function checkPhone(val) {
+            const feedback = document.getElementById('phone-feedback');
+            const input    = document.getElementById('PhoneNumber');
+            if (val.length === 0) {
+                feedback.textContent = '';
+                feedback.className = 'field-feedback';
+                input.classList.remove('input-valid', 'input-invalid');
+                return;
+            }
+            const validFormat = /^(09\d{9}|\+639\d{9})$/.test(val.trim());
+            if (!validFormat) {
+                feedback.textContent = '✗ Must start with 09 or +639 followed by 9 digits';
+                feedback.className   = 'field-feedback fail';
+                input.classList.add('input-invalid');
+                input.classList.remove('input-valid');
+                return;
+            }
+            clearTimeout(phoneTimer);
+            phoneTimer = setTimeout(() => {
+                fetch(`/Account/CheckPhone?phone=${encodeURIComponent(val)}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.taken) {
+                            feedback.textContent = '✗ Phone number is already in use';
+                            feedback.className   = 'field-feedback fail';
+                            input.classList.add('input-invalid');
+                            input.classList.remove('input-valid');
+                        } else {
+                            feedback.textContent = '✓ Phone number is available';
+                            feedback.className   = 'field-feedback pass';
+                            input.classList.add('input-valid');
+                            input.classList.remove('input-invalid');
+                        }
+                    });
+            }, 500);
+        }
+
+        // ── LIVE CONFIRM PASSWORD ──
+        function checkConfirmPassword(val) {
+            const confirmInput = document.getElementById('ConfirmPassword');
+            const passwordVal  = document.getElementById('Password').value;
+            if (val.length === 0) {
+                confirmInput.classList.remove('input-valid', 'input-invalid');
+                return;
+            }
+            if (val === passwordVal) {
+                confirmInput.classList.add('input-valid');
+                confirmInput.classList.remove('input-invalid');
+            } else {
+                confirmInput.classList.add('input-invalid');
+                confirmInput.classList.remove('input-valid');
+            }
+        }
+    </script>
+</body>
+</html>

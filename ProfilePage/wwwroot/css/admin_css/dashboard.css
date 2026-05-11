@@ -1,0 +1,128 @@
+﻿body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #f4f4f4;
+    color: #111;
+}
+
+
+.stat-value {
+    font-weight: 700;
+    letter-spacing: -1px;
+}
+
+/* Leaderboard Dark Style */
+.leaderboard-container {
+    background: #1a1a1a;
+    color: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.leaderboard-header {
+    padding: 15px 20px;
+    border-bottom: 1px solid #333;
+}
+
+.table-dark-custom {
+    width: 100%;
+    color: #ccc;
+    font-size: 13px;
+}
+
+    .table-dark-custom th {
+        background: #1a1a1a;
+        padding: 12px;
+        color: #888;
+        text-transform: uppercase;
+        font-size: 11px;
+    }
+
+    .table-dark-custom td {
+        padding: 12px;
+        border-bottom: 1px solid #262626;
+        vertical-align: middle;
+    }
+
+.badge-verified {
+    background: #444;
+    color: #fff;
+    border: 1px solid #666;
+    font-size: 10px;
+    padding: 4px 8px;
+}
+
+/* Small Cards */
+.side-card {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.progress {
+    height: 8px;
+    background-color: #eee;
+    border-radius: 0;
+    margin-bottom: 15px;
+}
+
+.progress-bar {
+    background-color: #111;
+}
+
+.btn-verify {
+    background: #111;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 4px;
+    border: none;
+}
+
+/* The Gray Circle for the Icon */
+.stat-icon-wrapper {
+    width: 48px;
+    height: 48px;
+    background-color: #f8f9fa;
+    border-radius: 50%;
+    /* THE CRITICAL FIX */
+    display: flex !important;
+    align-items: center !important; /* Vertical center */
+    justify-content: center !important; /* Horizontal center */
+    /* Reset any inherited spacing */
+    padding: 0 !important;
+    margin: 0;
+    line-height: 1 !important;
+    overflow: hidden;
+}
+
+    /* If you are using an <i> tag or <span> for the Peso */
+    .stat-icon-wrapper i,
+    .stat-icon-wrapper span {
+        display: block;
+        line-height: 1;
+        font-style: normal;
+    }
+
+/* Ensure the card content aligns correctly */
+.stat-card {
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 12px; /* Matches the rounded look in your screenshots */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    transition: transform 0.2s ease;
+}
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+    }
+
+.stat-label {
+    font-size: 0.75rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+

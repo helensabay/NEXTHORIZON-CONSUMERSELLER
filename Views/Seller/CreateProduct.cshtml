@@ -1,0 +1,1549 @@
+@model MyAspNetApp.Models.DbProduct
+@{
+    ViewData["Title"] = "Manage Product Listing";
+    Layout = null;
+    var mode = ViewBag.Mode as string ?? "create";
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXT HORIZON — Manage Product Listing</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+
+    <style>
+        :root {
+            --bg:        #F4F3F0;
+            --surface:   #FFFFFF;
+            --surface-2: #ECEAE5;
+            --border:    #D8D5CE;
+            --border-strong: #B8B4AC;
+            --text-primary:   #0F0E0C;
+            --text-secondary: #6B6760;
+            --text-tertiary:  #9E9B96;
+            --accent:    #1A1614;
+            --accent-hover: #2D2926;
+            --red:       #C0392B;
+            --blue:      #2563EB;
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 14px;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+            --shadow-md: 0 4px 12px rgba(0,0,0,.08), 0 2px 4px rgba(0,0,0,.04);
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text-primary);
+            font-size: 14px;
+            line-height: 1.5;
+            min-height: 100vh;
+            display: flex; /* allow sidebar and main content */
+        }
+
+        /* Sidebar defaults */
+        .sidebar {
+            width: 260px;
+            background-color: var(--sidebar-bg, #000);
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            padding: 30px 20px;
+            position: fixed;
+            height: 100vh;
+            z-index: 100;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 14px 15px;
+            color: #999;
+            text-decoration: none;
+            transition: 0.3s;
+            font-weight: 500;
+            font-size: 1.1rem;
+        }
+        .nav-item i { margin-right: 15px; width: 24px; font-size: 1.2rem; }
+        .nav-item:hover { background-color: #333; color: #fff; border-radius: 10px; }
+        .nav-item.active { background-color: #333; color: #fff; border-radius: 10px; }
+
+        /* Layout adjustments for pages with sidebar */
+        .main-wrapper {
+            flex: 1;
+            margin-left: 260px;
+            display: flex;
+            flex-direction: column;
+        }
+
+
+        /* ─── NAV ─── */
+        .top-nav {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 32px;
+            height: 56px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-left { display: flex; align-items: center; gap: 32px; }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            font-size: 13px;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+
+        .logo-mark {
+            width: 28px; height: 28px;
+            background: var(--accent);
+            color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 5px;
+            font-weight: 700;
+            font-size: 13px;
+            letter-spacing: 0;
+        }
+
+        .nav-divider {
+            width: 1px; height: 20px;
+            background: var(--border);
+        }
+
+        .nav-breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        .nav-breadcrumb span { color: var(--text-tertiary); font-size: 11px; }
+        .nav-breadcrumb strong { color: var(--text-primary); font-weight: 500; }
+
+        .nav-right { display: flex; align-items: center; gap: 20px; }
+
+        .nav-icon-btn {
+            width: 32px; height: 32px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            background: transparent;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            color: var(--text-secondary);
+            font-size: 13px;
+            transition: all .15s;
+        }
+        .nav-icon-btn:hover { background: var(--surface-2); color: var(--text-primary); }
+
+        .nav-user {
+            display: flex; align-items: center; gap: 8px;
+            cursor: pointer;
+            padding: 4px 10px 4px 4px;
+            border-radius: 20px;
+            transition: background .15s;
+        }
+        .nav-user:hover { background: var(--surface-2); }
+
+        .nav-avatar {
+            width: 28px; height: 28px;
+            background: var(--accent);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: .05em;
+        }
+
+        .nav-user span {
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .nav-user i {
+            font-size: 9px;
+            color: var(--text-tertiary);
+        }
+
+        .seller-dropdown {
+            position: relative;
+        }
+
+        .seller-dropdown summary {
+            list-style: none;
+        }
+
+        .seller-dropdown summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .seller-dropdown-menu {
+            position: absolute;
+            top: calc(100% + 10px);
+            right: 0;
+            min-width: 150px;
+            padding: 8px;
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 0 14px 28px rgba(15, 23, 42, 0.12);
+            z-index: 300;
+        }
+
+        .seller-dropdown-menu a {
+            display: block;
+            text-decoration: none;
+            color: #111827;
+            font-weight: 600;
+            padding: 10px 12px;
+            border-radius: 8px;
+        }
+
+        .seller-dropdown-menu a:hover {
+            background: #f4f4f5;
+        }
+
+        /* ─── LAYOUT ─── */
+        .page-wrapper {
+            max-width: 1080px;
+            margin: 0 auto;
+            padding: 32px 24px 80px;
+        }
+
+        .page-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 28px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .page-header-left {}
+
+        .page-eyebrow {
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            color: var(--text-tertiary);
+            margin-bottom: 4px;
+        }
+
+        .page-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: var(--text-primary);
+            letter-spacing: -.02em;
+        }
+
+        .page-header-actions {
+            display: flex; gap: 10px; align-items: center;
+        }
+
+        /* ─── CARDS ─── */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            margin-bottom: 16px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .card-icon {
+            width: 32px; height: 32px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+
+        .card-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            letter-spacing: -.01em;
+        }
+
+        .card-subtitle {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            margin-top: 1px;
+        }
+
+        /* ─── UPLOAD AREA ─── */
+        .upload-zone {
+            border: 1.5px dashed var(--border-strong);
+            border-radius: var(--radius-md);
+            padding: 32px 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: all .2s;
+            background: var(--bg);
+            text-align: center;
+        }
+
+        .upload-zone:hover {
+            border-color: var(--accent);
+            background: #F0EDE8;
+        }
+
+        .upload-zone.has-images {
+            padding: 18px 24px;
+            flex-direction: row;
+            justify-content: flex-start;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .upload-zone-icon {
+            width: 44px; height: 44px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--text-secondary);
+            font-size: 18px;
+            transition: all .2s;
+        }
+
+        .upload-zone:hover .upload-zone-icon {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+
+        .upload-zone-text strong {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .upload-zone-text span {
+            font-size: 12px;
+            color: var(--text-tertiary);
+        }
+
+        /* ─── THUMBNAIL ROW ─── */
+        .thumbnail-strip {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
+        .thumb-item {
+            width: 72px; height: 72px;
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            border: 1px solid var(--border);
+            position: relative;
+            cursor: pointer;
+            flex-shrink: 0;
+            background: var(--surface-2);
+        }
+
+        .thumb-item img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .thumb-item:hover::after {
+            content: '';
+            position: absolute; inset: 0;
+            background: rgba(0,0,0,.3);
+            border-radius: var(--radius-sm);
+        }
+
+        .thumb-delete {
+            position: absolute;
+            top: 4px; right: 4px;
+            width: 20px; height: 20px;
+            background: #fff;
+            border: none;
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: var(--red);
+            cursor: pointer;
+            z-index: 10;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .thumb-item:hover .thumb-delete { display: flex; }
+
+        .thumb-add {
+            width: 72px; height: 72px;
+            border: 1.5px dashed var(--border-strong);
+            border-radius: var(--radius-sm);
+            background: transparent;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px;
+            color: var(--text-tertiary);
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: all .15s;
+        }
+
+        .thumb-add:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: var(--surface-2);
+        }
+
+        /* ─── FORM FIELDS ─── */
+        .field-group {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        .field-group.cols-2 { grid-template-columns: 1fr 1fr; }
+        .field-group.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .field-label {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: .05em;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+        }
+
+        .field-input {
+            width: 100%;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 9px 12px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            color: var(--text-primary);
+            outline: none;
+            transition: border-color .15s, box-shadow .15s;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .field-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(15,14,12,.08);
+        }
+
+        .field-input::placeholder { color: var(--text-tertiary); }
+
+        textarea.field-input {
+            resize: vertical;
+            min-height: 100px;
+            line-height: 1.6;
+        }
+
+        select.field-input {
+            cursor: pointer;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%239E9B96' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 32px;
+        }
+
+        input[type="number"].field-input::-webkit-outer-spin-button,
+        input[type="number"].field-input::-webkit-inner-spin-button {
+            -webkit-appearance: none; margin: 0;
+        }
+        input[type="number"].field-input { -moz-appearance: textfield; }
+
+        /* ─── INLINE INPUT WITH PREFIX LABEL ─── */
+        .prefixed-input {
+            display: flex;
+            align-items: center;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            transition: border-color .15s, box-shadow .15s;
+        }
+
+        .prefixed-input:focus-within {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(15,14,12,.08);
+        }
+
+        .prefixed-input .prefix {
+            padding: 0 10px;
+            border-right: 1px solid var(--border);
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: .04em;
+            text-transform: uppercase;
+            color: var(--text-tertiary);
+            background: var(--bg);
+            white-space: nowrap;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            min-height: 36px;
+        }
+
+        .prefixed-input input, .prefixed-input select {
+            flex: 1;
+            background: transparent;
+            border: none;
+            outline: none;
+            padding: 9px 12px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 14px;
+            color: var(--text-primary);
+            min-width: 0;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .prefixed-input input::placeholder { color: var(--text-tertiary); }
+
+        .prefixed-input input[type="number"]::-webkit-outer-spin-button,
+        .prefixed-input input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+        .prefixed-input input[type="number"] { -moz-appearance: textfield; }
+
+        .prefixed-input .suffix {
+            padding: 0 10px;
+            border-left: 1px solid var(--border);
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-tertiary);
+            background: var(--bg);
+            height: 100%;
+            display: flex;
+            align-items: center;
+            min-height: 36px;
+        }
+
+        .prefixed-input .unit-select {
+            border-left: 1px solid var(--border);
+            background: var(--bg);
+            padding: 0 28px 0 10px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            height: 100%;
+            min-height: 36px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='5' viewBox='0 0 8 5'%3E%3Cpath fill='%239E9B96' d='M0 0l4 5 4-5z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 8px center;
+        }
+
+        /* ─── VARIANT CARD ─── */
+        .variant-card {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            margin-bottom: 10px;
+            position: relative;
+        }
+
+        .variant-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+
+        .variant-number {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            color: var(--text-tertiary);
+        }
+
+        .variant-remove-btn {
+            width: 24px; height: 24px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            color: var(--text-tertiary);
+            font-size: 11px;
+            transition: all .15s;
+        }
+        .variant-remove-btn:hover {
+            background: #FEE2E2;
+            border-color: #FCA5A5;
+            color: var(--red);
+        }
+
+        .variant-grid {
+            display: grid;
+            grid-template-columns: 52px 1fr 1fr 1fr 1fr;
+            gap: 8px;
+            align-items: start;
+            margin-bottom: 12px;
+        }
+
+        .variant-img-upload {
+            width: 52px; height: 52px;
+            border: 1.5px dashed var(--border-strong);
+            border-radius: var(--radius-sm);
+            background: var(--surface);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            color: var(--text-tertiary);
+            font-size: 16px;
+            transition: all .15s;
+            overflow: hidden;
+            position: relative;
+            flex-wrap: wrap;
+            gap: 1px;
+        }
+
+        .variant-img-upload:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .variant-img-upload img {
+            flex: 1 1 40%;
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: cover;
+        }
+
+        .variant-dims {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+
+        .variant-availability {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+        }
+
+        .avail-label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .05em;
+            color: var(--text-secondary);
+            margin-right: 6px;
+        }
+
+        /* Radio toggle */
+        .radio-toggle {
+            display: flex;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+        }
+
+        .radio-toggle label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            transition: all .15s;
+            user-select: none;
+        }
+
+        .radio-toggle label:not(:last-child) {
+            border-right: 1px solid var(--border);
+        }
+
+        .radio-toggle input[type="radio"] { display: none; }
+
+        .radio-toggle input[type="radio"]:checked + span {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .radio-toggle label:has(input:checked) {
+            background: var(--surface-2);
+            color: var(--text-primary);
+        }
+
+        .radio-dot {
+            width: 7px; height: 7px;
+            border: 1.5px solid currentColor;
+            border-radius: 50%;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .radio-toggle input:checked ~ .radio-dot::after {
+            content: '';
+            position: absolute;
+            inset: 1.5px;
+            border-radius: 50%;
+            background: var(--accent);
+        }
+
+        /* ─── BARCODE ─── */
+        .barcode-box {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .barcode-label {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            color: var(--text-tertiary);
+        }
+
+        .barcode-box svg {
+            width: 100%;
+            max-width: 200px;
+        }
+
+        /* ─── BUTTONS ─── */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 9px 18px;
+            border-radius: var(--radius-sm);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all .15s;
+            border: none;
+            white-space: nowrap;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+        }
+        .btn-primary:hover { background: var(--accent-hover); }
+
+        .btn-secondary {
+            background: var(--surface);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+        .btn-secondary:hover { background: var(--surface-2); }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid transparent;
+            padding: 9px 14px;
+        }
+        .btn-ghost:hover {
+            background: var(--surface-2);
+            color: var(--text-primary);
+            border-color: var(--border);
+        }
+
+        .btn-outline-dashed {
+            width: 100%;
+            background: transparent;
+            border: 1.5px dashed var(--border-strong);
+            border-radius: var(--radius-sm);
+            padding: 10px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all .15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .btn-outline-dashed:hover {
+            border-color: var(--accent);
+            color: var(--text-primary);
+            background: var(--bg);
+        }
+
+        /* SKU mono style */
+        .sku-display {
+            font-family: 'DM Mono', monospace !important;
+            font-size: 12px !important;
+            letter-spacing: .04em;
+            color: var(--text-secondary) !important;
+        }
+
+        /* ─── FOOTER ACTIONS ─── */
+        .form-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 24px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .form-footer-left {
+            font-size: 12px;
+            color: var(--text-tertiary);
+        }
+
+        .form-footer-left strong {
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .form-footer-right { display: flex; gap: 10px; }
+
+        /* ─── MODAL ─── */
+        .overlay-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,.5);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(2px);
+        }
+
+        .overlay-content {
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            width: 560px;
+            max-width: 95vw;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0,0,0,.2);
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 24px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-title {
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: -.01em;
+        }
+
+        .modal-close {
+            width: 28px; height: 28px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            font-size: 11px;
+            color: var(--text-secondary);
+            transition: all .15s;
+        }
+        .modal-close:hover { background: #FEE2E2; color: var(--red); border-color: #FCA5A5; }
+
+        .modal-body {
+            padding: 20px 24px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .modal-empty {
+            text-align: center;
+            padding: 40px 0;
+            color: var(--text-tertiary);
+            font-size: 13px;
+        }
+
+        .modal-empty i {
+            display: block;
+            font-size: 28px;
+            margin-bottom: 10px;
+            color: var(--border-strong);
+        }
+
+        .grid-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+            gap: 10px;
+        }
+
+        .modal-img-container {
+            cursor: pointer;
+            position: relative;
+        }
+
+        .modal-img-container img {
+            width: 100%;
+            aspect-ratio: 1;
+            object-fit: cover;
+            border-radius: var(--radius-sm);
+            border: 2px solid transparent;
+            transition: all .15s;
+            display: block;
+        }
+
+        .modal-img-container:hover img { border-color: var(--border-strong); }
+        .modal-img-container.selected img {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(15,14,12,.12);
+        }
+
+        .modal-check {
+            position: absolute;
+            top: 5px; right: 5px;
+            width: 18px; height: 18px;
+            background: var(--accent);
+            border-radius: 50%;
+            display: none;
+            align-items: center; justify-content: center;
+            color: #fff;
+            font-size: 9px;
+        }
+
+        .modal-img-container.selected .modal-check { display: flex; }
+
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        /* ─── RESPONSIVE ─── */
+        @@media (max-width: 680px) {
+            .variant-grid { grid-template-columns: 52px 1fr 1fr; }
+            .variant-dims { grid-template-columns: 1fr 1fr; }
+            .field-group.cols-2 { grid-template-columns: 1fr; }
+            .field-group.cols-3 { grid-template-columns: 1fr; }
+            .form-footer { flex-direction: column; gap: 14px; }
+        }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="logo">
+            <div style="background: white; color: black; padding: 2px 10px; border-radius: 6px;">H</div>
+            NEXT HORIZON
+        </div>
+        <nav>
+            <a href="#" class="nav-item"><i class="fa-solid fa-house"></i> Dashboard</a>
+            <a href="#" class="nav-item"><i class="fa-solid fa-receipt"></i> Orders</a>
+            <a href="#" class="nav-item active"><i class="fa-solid fa-bag-shopping"></i> Products</a>
+            <a href="#" class="nav-item"><i class="fa-solid fa-wallet"></i> Finances</a>
+            <a href="#" class="nav-item"><i class="fa-solid fa-chart-line"></i> Analytics</a>
+            <a href="#" class="nav-item"><i class="fa-solid fa-gear"></i> Settings</a>
+        </nav>
+    </aside>
+
+    <div class="main-wrapper">
+
+    <!-- ─── NAV ─── -->
+    <header class="top-nav">
+        <div class="nav-left">
+            <a href="#" class="logo">
+                <div class="logo-mark">H</div>
+                Next Horizon
+            </a>
+            <div class="nav-divider"></div>
+            <div class="nav-breadcrumb">
+                <span>Seller Portal</span>
+                <i class="fa-solid fa-chevron-right" style="font-size:9px; color:var(--border-strong);"></i>
+                <strong>Product Listing</strong>
+            </div>
+        </div>
+        <div class="nav-right">
+            <button class="nav-icon-btn"><i class="fa-regular fa-bell"></i></button>
+            <details class="seller-dropdown">
+                <summary class="nav-user">
+                    <div class="nav-avatar">SE</div>
+                    <span>Seller</span>
+                    <i class="fa-solid fa-chevron-down"></i>
+                </summary>
+                <div class="seller-dropdown-menu">
+                    <a href="/Home/Logout">Log out</a>
+                </div>
+            </details>
+        </div>
+    </header>
+
+    <!-- ─── PAGE ─── -->
+    <div class="page-wrapper">
+
+        <div class="page-header">
+            <div class="page-header-left">
+                <div class="page-eyebrow">Inventory Management</div>
+                <h1 class="page-title" id="dynamic-page-title">Create Product Listing</h1>
+            </div>
+            <div class="page-header-actions">
+                <a href="/Product/sizeguide" class="btn btn-secondary">
+                    <i class="fa-solid fa-ruler-horizontal"></i> Size Guide
+                </a>
+            </div>
+        </div>
+
+        <form asp-action="CreateProduct" asp-controller="Seller" method="post" enctype="multipart/form-data" id="productForm">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="mode" value="@mode" />
+            <input type="hidden" asp-for="ProductId" />
+            <input type="hidden" asp-for="Status" value="@(mode == "relist" ? "active" : (Model.Status ?? "active"))" />
+            <input type="hidden" asp-for="Sizes" id="sizesHidden" />
+            <input type="hidden" asp-for="Stock" id="stockHidden" />
+            <input type="hidden" id="hiddenProductSku" name="SKU" value="" />
+            <input type="file" id="imageInput" name="imageFile" multiple accept="image/*" style="display:none;">
+
+            <!-- ─── MEDIA ─── -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon"><i class="fa-regular fa-image"></i></div>
+                    <div>
+                        <div class="card-title">Product Media</div>
+                        <div class="card-subtitle">Upload photos for this listing. First image becomes the cover.</div>
+                    </div>
+                </div>
+                <div class="upload-zone" id="uploadBox">
+                    <div class="upload-zone-icon"><i class="fa-solid fa-arrow-up-from-bracket"></i></div>
+                    <div class="upload-zone-text">
+                        <strong>Click to upload photos</strong>
+                        <span>PNG, JPG, WEBP — up to 10MB each</span>
+                    </div>
+                </div>
+                <div class="thumbnail-strip" id="thumbnailRow"></div>
+            </div>
+
+            <!-- ─── DETAILS ─── -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon"><i class="fa-regular fa-file-lines"></i></div>
+                    <div>
+                        <div class="card-title">Product Details</div>
+                        <div class="card-subtitle">Core information about this product.</div>
+                    </div>
+                </div>
+
+                <div class="field-group" style="margin-bottom: 10px;">
+                    <div class="field">
+                        <label class="field-label">Product Name</label>
+                        <input type="text" class="field-input" placeholder="e.g. Classic Oxford Button-Down Shirt" asp-for="ProductName" value="@Model.ProductName">
+                    </div>
+                </div>
+
+                <div class="field-group cols-2" style="margin-bottom: 10px;">
+                    <div class="field">
+                        <label class="field-label">Brand</label>
+                        <input type="text" class="field-input" placeholder="e.g. Polo Ralph Lauren" asp-for="Brand" value="@Model.Brand">
+                    </div>
+                </div>
+
+                <div class="field-group cols-2" style="margin-bottom: 10px;">
+                    <div class="field">
+                        <label class="field-label">Category</label>
+                        <input list="category-options" class="field-input" asp-for="Category" value="@Model.Category" placeholder="Select or type a category">
+                        <datalist id="category-options">
+                            <option value="Tops"></option>
+                            <option value="Bottoms"></option>
+                            <option value="Outerwear"></option>
+                            <option value="Footwear"></option>
+                            <option value="Accessories"></option>
+                        </datalist>
+                    </div>
+                    <div class="field">
+                        <label class="field-label">Target Gender</label>
+                        <select class="field-input" asp-for="Gender" required>
+                            <option value="" disabled>Select gender</option>
+                            <option value="Men">Men</option>
+                            <option value="Women">Women</option>
+                            <option value="Unisex">Unisex</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label class="field-label">Product Details</label>
+                    <textarea class="field-input" placeholder="Describe the product — materials, fit, care instructions, etc." asp-for="Details" style="min-height:120px;">@Model.Details</textarea>
+                </div>
+            </div>
+
+            <!-- ─── VARIANTS ─── -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon"><i class="fa-solid fa-layer-group"></i></div>
+                    <div>
+                        <div class="card-title">Variants &amp; Inventory</div>
+                        <div class="card-subtitle">Define sizes, styles, quantities and shipping dimensions per variant.</div>
+                    </div>
+                </div>
+
+                <div id="variants-container"></div>
+
+                <button type="button" class="btn-outline-dashed" id="btnAddVariant">
+                    <i class="fa-solid fa-plus"></i>
+                    Add Size &amp; Style Variant
+                </button>
+            </div>
+
+            <!-- ─── FOOTER ─── -->
+            <div class="form-footer">
+                <div class="form-footer-left">
+                    All fields marked are required. <strong>Saved drafts</strong> are available in your seller dashboard.
+                </div>
+                <div class="form-footer-right">
+                    <button type="button" class="btn btn-ghost" onclick="window.history.back()">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="dynamic-submit-btn">
+                        <i class="fa-solid fa-check"></i> Add Product
+                    </button>
+                </div>
+            </div>
+
+        </form>
+    </div>
+
+    <!-- ─── IMAGE MODAL ─── -->
+    <div class="overlay-modal" id="imageModal">
+        <div class="overlay-content">
+            <div class="modal-header">
+                <span class="modal-title">Select Variant Images</span>
+                <button type="button" class="modal-close" onclick="document.getElementById('imageModal').style.display='none'">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="grid-selector" id="modalGrid"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('imageModal').style.display='none'">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="applySelectedPhotos()">
+                    <i class="fa-solid fa-check"></i> Apply Selection
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const mode = '@mode';
+        const form = document.getElementById('productForm');
+        const pageTitle = document.getElementById('dynamic-page-title');
+        const submitBtn = document.getElementById('dynamic-submit-btn');
+        const variantsContainer = document.getElementById('variants-container');
+        const btnAddVariant = document.getElementById('btnAddVariant');
+        const uploadBox = document.getElementById('uploadBox');
+        const imageInput = document.getElementById('imageInput');
+        const thumbnailRow = document.getElementById('thumbnailRow');
+        const skuHidden = document.getElementById('hiddenProductSku');
+        const imageModal = document.getElementById('imageModal');
+        const modalGrid = document.getElementById('modalGrid');
+        const existingVariants = @Html.Raw(ViewBag.ExistingVariants ?? "[]");
+        let variantCount = 0;
+        let selectedMainFiles = [];
+        let currentVariantBtn = null;
+        let currentVariantFileInput = null;
+        let selectedPhotosForVariant = [];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (mode === 'edit') {
+                pageTitle.innerText = 'Edit Product Listing';
+                submitBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Update Product';
+            } else if (mode === 'relist') {
+                pageTitle.innerText = 'Relist Product Listing';
+                submitBtn.innerHTML = '<i class="fa-solid fa-rotate"></i> Relist Product';
+            } else if (mode === 'renew') {
+                pageTitle.innerText = 'Renew Product Listing';
+                submitBtn.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i> Renew Product';
+            }
+            if (Array.isArray(existingVariants) && existingVariants.length > 0) {
+                existingVariants.forEach(v => addVariantRow(v));
+            } else {
+                addVariantRow();
+            }
+        });
+
+        function generateSKU() {
+            return 'SKU-' + Date.now().toString(36).toUpperCase() + '-' + Math.random().toString(36).slice(2, 6).toUpperCase();
+        }
+
+        function updateVariantBarcode(svgEl, value) {
+            if (!svgEl || !value || value.trim() === '') return;
+            try {
+                JsBarcode(svgEl, value.trim(), {
+                    format: 'CODE128',
+                    lineColor: '#0F0E0C',
+                    background: 'transparent',
+                    width: 1.4,
+                    height: 44,
+                    displayValue: true,
+                    fontSize: 10,
+                    font: 'DM Mono, monospace',
+                    margin: 0
+                });
+            } catch (e) {}
+        }
+
+        uploadBox.addEventListener('click', () => imageInput.click());
+
+        function syncMainFileInput() {
+            const dt = new DataTransfer();
+            selectedMainFiles.forEach(f => dt.items.add(f));
+            imageInput.files = dt.files;
+        }
+
+        function renderMainThumbnails() {
+            thumbnailRow.innerHTML = '';
+            selectedMainFiles.forEach((file, index) => {
+                const url = URL.createObjectURL(file);
+                const thumb = document.createElement('div');
+                thumb.className = 'thumb-item';
+                thumb.innerHTML = `<img src="${url}" alt=""><button class="thumb-delete" type="button"><i class="fa-solid fa-xmark"></i></button>`;
+                thumb.querySelector('.thumb-delete').addEventListener('click', e => {
+                    e.stopPropagation();
+                    selectedMainFiles.splice(index, 1);
+                    syncMainFileInput();
+                    renderMainThumbnails();
+                });
+                thumbnailRow.appendChild(thumb);
+            });
+
+            const addBtn = document.createElement('button');
+            addBtn.type = 'button';
+            addBtn.className = 'thumb-add';
+            addBtn.title = 'Add more photos';
+            addBtn.innerHTML = '<i class="fa-solid fa-plus"></i>';
+            addBtn.addEventListener('click', () => imageInput.click());
+            thumbnailRow.appendChild(addBtn);
+
+            uploadBox.style.display = selectedMainFiles.length ? 'none' : '';
+        }
+
+        imageInput.addEventListener('change', () => {
+            for (const file of imageInput.files) selectedMainFiles.push(file);
+            syncMainFileInput();
+            renderMainThumbnails();
+        });
+
+        function isSameFile(a, b) {
+            return a && b && a.name === b.name && a.size === b.size && a.lastModified === b.lastModified;
+        }
+
+        function openImageSelector(btn, fileInput) {
+            currentVariantBtn = btn;
+            currentVariantFileInput = fileInput;
+            selectedPhotosForVariant = Array.from(fileInput.files || []);
+            modalGrid.innerHTML = '';
+
+            if (selectedMainFiles.length === 0) {
+                modalGrid.innerHTML = `<div class="modal-empty" style="grid-column:1/-1;"><i class="fa-regular fa-images"></i>Upload product photos first to assign them to variants.</div>`;
+            } else {
+                selectedMainFiles.forEach(file => {
+                    const url = URL.createObjectURL(file);
+                    const wrap = document.createElement('div');
+                    wrap.className = 'modal-img-container';
+                    const isSelected = selectedPhotosForVariant.some(f => isSameFile(f, file));
+                    if (isSelected) wrap.classList.add('selected');
+                    wrap.innerHTML = `<img src="${url}" alt=""><div class="modal-check"><i class="fa-solid fa-check"></i></div>`;
+                    wrap.addEventListener('click', () => {
+                        const idx = selectedPhotosForVariant.findIndex(f => isSameFile(f, file));
+                        if (idx > -1) { selectedPhotosForVariant.splice(idx, 1); wrap.classList.remove('selected'); }
+                        else { selectedPhotosForVariant.push(file); wrap.classList.add('selected'); }
+                    });
+                    modalGrid.appendChild(wrap);
+                });
+            }
+            imageModal.style.display = 'flex';
+        }
+
+        window.applySelectedPhotos = function () {
+            if (!currentVariantBtn || !currentVariantFileInput) { imageModal.style.display = 'none'; return; }
+            const dt = new DataTransfer();
+            selectedPhotosForVariant.forEach(f => dt.items.add(f));
+            currentVariantFileInput.files = dt.files;
+            currentVariantBtn.innerHTML = '';
+
+            if (selectedPhotosForVariant.length > 0) {
+                selectedPhotosForVariant.slice(0, 4).forEach(file => {
+                    const img = document.createElement('img');
+                    img.src = URL.createObjectURL(file);
+                    currentVariantBtn.appendChild(img);
+                });
+            } else {
+                currentVariantBtn.innerHTML = '<i class="fa-solid fa-plus"></i>';
+            }
+            imageModal.style.display = 'none';
+        };
+
+        function renumberVariantFileInputs() {
+            variantsContainer.querySelectorAll('.variant-card').forEach((card, i) => {
+                const fi = card.querySelector('.hidden-color-input');
+                const ep = card.querySelector('.existing-color-paths');
+                if (fi) fi.name = `colorFiles_${i}`;
+                if (ep) ep.name = `existingColorPaths_${i}`;
+            });
+        }
+
+        function addVariantRow(variant) {
+            const idx = variantCount;
+            const groupName = `availability-${idx}`;
+            const card = document.createElement('div');
+            card.className = 'variant-card';
+            card.dataset.idx = idx;
+
+            card.innerHTML = `
+                <div class="variant-card-header">
+                    <span class="variant-number">Variant ${idx + 1}</span>
+                    <button type="button" class="variant-remove-btn" title="Remove variant">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <div class="variant-grid">
+                    <button type="button" class="variant-img-upload" title="Assign photos">
+                        <i class="fa-solid fa-plus"></i>
+                    </button>
+                    <input type="file" class="hidden-color-input" multiple accept="image/*" style="display:none;">
+                    <input type="hidden" class="existing-color-paths" value="">
+
+                    <div class="field">
+                        <label class="field-label">SKU</label>
+                        <div class="prefixed-input">
+                            <input type="text" class="sku-display" name="variantSkus">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label class="field-label">Price</label>
+                        <div class="prefixed-input">
+                            <span class="price-prefix">₱</span>
+                            <input type="number" class="field-input" name="variantPrices" placeholder="0.00" min="0" step="any">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label class="field-label">Size (one per variant)</label>
+                        <input type="text" class="field-input" name="colorSizes" placeholder="e.g. M">
+                    </div>
+                    <div class="field">
+                        <label class="field-label">Style / Color</label>
+                        <input type="text" class="field-input" name="colorNames" placeholder="e.g. Navy Blue">
+                    </div>
+                    <div class="field">
+                        <label class="field-label">Quantity</label>
+                        <input type="number" class="field-input qty-input" name="colorStocks" placeholder="0" min="0">
+                    </div>
+                </div>
+
+                <div class="variant-dims">
+                    <div class="field">
+                        <label class="field-label">Weight</label>
+                        <div class="prefixed-input">
+                            <input type="number" class="field-input" name="variantWeights" placeholder="0" min="0" step="any">
+                            <select class="unit-select"><option>kg</option><option>lb</option><option>g</option></select>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label class="field-label">Length</label>
+                        <div class="prefixed-input">
+                            <input type="number" class="field-input" name="variantLengths" placeholder="0" min="0" step="any">
+                            <select class="unit-select"><option>in</option><option>cm</option></select>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label class="field-label">Height</label>
+                        <div class="prefixed-input">
+                            <input type="number" class="field-input" name="variantHeights" placeholder="0" min="0" step="any">
+                            <select class="unit-select"><option>in</option><option>cm</option></select>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label class="field-label">Width</label>
+                        <div class="prefixed-input">
+                            <input type="number" class="field-input" name="variantWidths" placeholder="0" min="0" step="any">
+                            <select class="unit-select"><option>in</option><option>cm</option></select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="variant-availability">
+                    <span class="avail-label">Availability</span>
+                    <div class="radio-toggle">
+                        <label>
+                            <input type="radio" name="${groupName}" value="In Stock" checked>
+                            <span><span class="radio-dot"></span> In Stock</span>
+                        </label>
+                        <label>
+                            <input type="radio" name="${groupName}" value="Pre-Order">
+                            <span><span class="radio-dot"></span> Pre-Order</span>
+                        </label>
+                    </div>
+                    <input type="hidden" name="variantAvailabilities" value="In Stock" class="variant-availability-hidden">
+                </div>
+
+                <div class="field" style="margin-top:10px;">
+                    <label class="field-label">Barcode Preview</label>
+                    <svg class="variant-barcode" style="width:180px;height:auto;"></svg>
+                </div>
+            `;
+
+            const uploadBtn = card.querySelector('.variant-img-upload');
+            const fileInput = card.querySelector('.hidden-color-input');
+            const skuInput = card.querySelector('input[name="variantSkus"]');
+            const barcodeSvg = card.querySelector('.variant-barcode');
+            const availabilityHidden = card.querySelector('.variant-availability-hidden');
+            uploadBtn.addEventListener('click', () => openImageSelector(uploadBtn, fileInput));
+
+            card.querySelectorAll(`input[name="${groupName}"]`).forEach(radio => {
+                radio.addEventListener('change', () => {
+                    if (radio.checked && availabilityHidden) {
+                        availabilityHidden.value = radio.value;
+                    }
+                });
+            });
+
+            if (skuInput) {
+                skuInput.value = generateSKU();
+                updateVariantBarcode(barcodeSvg, skuInput.value);
+                skuInput.addEventListener('input', () => updateVariantBarcode(barcodeSvg, skuInput.value));
+            }
+
+            card.querySelector('.variant-remove-btn').addEventListener('click', () => {
+                if (variantsContainer.querySelectorAll('.variant-card').length > 1) {
+                    card.remove();
+                    renumberVariantFileInputs();
+                    renumberVariantLabels();
+                }
+            });
+
+            variantsContainer.appendChild(card);
+
+            if (variant) {
+                const nameInput = card.querySelector('input[name="colorNames"]');
+                const stockInput = card.querySelector('input[name="colorStocks"]');
+                const sizeInput = card.querySelector('input[name="colorSizes"]');
+                const priceInput = card.querySelector('input[name="variantPrices"]');
+                const skuVariantInput = card.querySelector('input[name="variantSkus"]');
+                const weightInput = card.querySelector('input[name="variantWeights"]');
+                const lengthInput = card.querySelector('input[name="variantLengths"]');
+                const heightInput = card.querySelector('input[name="variantHeights"]');
+                const widthInput = card.querySelector('input[name="variantWidths"]');
+                const inStockRadio = card.querySelector(`input[name="${groupName}"][value="In Stock"]`);
+                const preOrderRadio = card.querySelector(`input[name="${groupName}"][value="Pre-Order"]`);
+                if (nameInput) nameInput.value = variant.Style ?? variant.ColorName ?? '';
+                if (stockInput) stockInput.value = variant.Quantity ?? variant.Stock ?? '';
+                if (sizeInput) sizeInput.value = variant.Size ?? variant.Sizes ?? '';
+                if (priceInput) priceInput.value = variant.Price != null ? variant.Price.toString() : '';
+                if (skuVariantInput) skuVariantInput.value = variant.SKU ?? skuVariantInput.value;
+                if (weightInput) weightInput.value = variant.Weight ?? '';
+                if (lengthInput) lengthInput.value = variant.Length ?? '';
+                if (heightInput) heightInput.value = variant.Height ?? '';
+                if (widthInput) widthInput.value = variant.Width ?? '';
+                if (availabilityHidden) {
+                    availabilityHidden.value = variant.Availability ?? 'In Stock';
+                }
+                if ((variant.Availability ?? 'In Stock') === 'Pre-Order') {
+                    if (preOrderRadio) preOrderRadio.checked = true;
+                } else {
+                    if (inStockRadio) inStockRadio.checked = true;
+                }
+                updateVariantBarcode(barcodeSvg, skuVariantInput ? skuVariantInput.value : '');
+                computeStockAndSizes();
+            }
+
+            variantCount++;
+            renumberVariantFileInputs();
+        }
+
+        function renumberVariantLabels() {
+            variantsContainer.querySelectorAll('.variant-card').forEach((card, i) => {
+                const lbl = card.querySelector('.variant-number');
+                if (lbl) lbl.textContent = `Variant ${i + 1}`;
+            });
+        }
+
+        btnAddVariant.addEventListener('click', addVariantRow);
+
+        function computeStockAndSizes() {
+            const totalStock = Array.from(variantsContainer.querySelectorAll('input[name="colorStocks"]'))
+                .reduce((sum, el) => sum + (parseInt(el.value || '0', 10) || 0), 0);
+            document.getElementById('stockHidden').value = totalStock;
+
+            const sizes = [];
+            variantsContainer.querySelectorAll('input[name="colorSizes"]').forEach(el => {
+                const sizeVal = (el.value || '').trim();
+                if (sizeVal && !sizes.includes(sizeVal)) sizes.push(sizeVal);
+            });
+            document.getElementById('sizesHidden').value = sizes.join(',');
+
+            const firstVariantSku = variantsContainer.querySelector('input[name="variantSkus"]');
+            if (firstVariantSku) {
+                skuHidden.value = firstVariantSku.value || '';
+                updateVariantBarcode('#liveBarcodePreview', skuHidden.value);
+            }
+        }
+
+        variantsContainer.addEventListener('input', e => {
+            if (e.target.matches('input[name="colorStocks"], input[name="colorSizes"]')) computeStockAndSizes();
+        });
+
+        form.addEventListener('submit', computeStockAndSizes);
+    </script>
+</body>
+</html>

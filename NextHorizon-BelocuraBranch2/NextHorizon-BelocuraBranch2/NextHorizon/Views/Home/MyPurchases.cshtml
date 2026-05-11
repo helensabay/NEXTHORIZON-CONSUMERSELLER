@@ -1,0 +1,204 @@
+@model NextHorizon.Models.PurchaseViewModel
+@using NextHorizon.Models
+@{
+    ViewData["Title"] = "My Purchases";
+    var orders = ViewBag.Orders as List<OrderViewModel> ?? new List<OrderViewModel>();
+}
+
+<div class="my-purchases-page main-container">
+    <aside class="sidebar">
+        <nav class="sidebar-nav">
+            <ul>
+                <li><a asp-controller="Home" asp-action="MyPurchases"><i class="fas fa-heartbeat"></i> Fitness Overview</a></li>
+                <li><a asp-controller="Home" asp-action="MyPurchases"><i class="fas fa-user-edit"></i> Update Profile</a></li>
+                <li><a asp-controller="Home" asp-action="MyPurchases"><i class="fas fa-upload"></i> Upload Activity</a></li>
+                <li><a asp-controller="Home" asp-action="MyPurchases"><i class="fas fa-truck"></i> Shipping Address</a></li>
+                <li><a asp-controller="Home" asp-action="PaymentMethods"><i class="fas fa-credit-card"></i> Payment Methods</a></li>
+                <li class="active"><a asp-controller="Home" asp-action="MyPurchases"><i class="fas fa-shopping-bag"></i> My Purchases</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <main class="content">
+        <div class="content-header">
+            <a asp-controller="Home" asp-action="ViewPurchaseHistory" class="view-history-link">
+                View Purchase History <i class="fas fa-chevron-right"></i>
+            </a>
+        </div>
+
+        <div class="purchase-tabs">
+            <a class="tab-item" asp-controller="Home" asp-action="ViewPurchaseHistory" asp-route-status="to-pay">
+                <i class="fas fa-credit-card"></i>
+                <span>To Pay (@Model.ToPayCount)</span>
+            </a>
+            <a class="tab-item" asp-controller="Home" asp-action="ViewPurchaseHistory" asp-route-status="to-ship">
+                <i class="fas fa-box"></i>
+                <span>To Ship (@Model.ToShipCount)</span>
+            </a>
+            <a class="tab-item" asp-controller="Home" asp-action="ViewPurchaseHistory" asp-route-status="to-receive">
+                <i class="fas fa-truck"></i>
+                <span>To Receive (@Model.ToReceiveCount)</span>
+            </a>
+            <a class="tab-item" asp-controller="Home" asp-action="ViewPurchaseHistory" asp-route-status="to-review">
+                <i class="fas fa-star"></i>
+                <span>To Review (@Model.ToReviewCount)</span>
+            </a>
+            <a class="tab-item" asp-controller="Home" asp-action="ViewPurchaseHistory" asp-route-status="return-refund">
+                <i class="fas fa-undo"></i>
+                <span>Returns (@Model.ReturnsCount)</span>
+            </a>
+        </div>
+
+        @if (orders.Count == 0)
+        {
+            <div class="empty-state">
+                <i class="fas fa-box-open"></i>
+                <h3>No Orders Yet</h3>
+            </div>
+        }
+        else
+        {
+            @foreach (var order in orders)
+            {
+                var normalizedStatus = (order.Status ?? string.Empty).Trim().ToLowerInvariant();
+                var statusGroup = normalizedStatus switch
+                {
+                    "to pay" => "to-pay",
+                    "to ship" => "to-ship",
+                    "to receive" => "to-receive",
+                    "completed" => "to-review",
+                    "delivered" => "to-receive",
+                    "to review" => "to-review",
+                    "return/refund" => "return-refund",
+                    "cancelled" => "cancelled",
+                    _ => "all"
+                };
+
+                <div class="order-card">
+                    <div class="order-header">
+                        <strong class="shop-name">
+                            <svg class="shop-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 9l2-5h14l2 5"></path>
+                                <path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9z"></path>
+                                <path d="M9 21V13h6v8"></path>
+                            </svg>
+                            @order.ShopName
+                        </strong>
+                        <span class="status-label">@order.Status</span>
+                    </div>
+
+                    <div class="order-body">
+                        <img src="@order.ImageUrl" />
+                        <div class="order-info">
+                            @{
+                                var descriptionParts = (order.Description ?? string.Empty).Split(" - ");
+                                var descriptionMain = descriptionParts.Length > 0 ? descriptionParts[0] : string.Empty;
+                                var descriptionDetails = descriptionParts.Length > 1
+                                    ? string.Join(" - ", descriptionParts, 1, descriptionParts.Length - 1)
+                                    : string.Empty;
+                                var detailParts = descriptionDetails.Split(" - Size ");
+                                var colorLine = detailParts.Length > 0 ? detailParts[0] : string.Empty;
+                                var sizeLine = detailParts.Length > 1 ? $"Size {detailParts[1]}" : string.Empty;
+                            }
+                            <h4>@order.ProductName</h4>
+                            <p>@descriptionMain</p>
+                            @if (!string.IsNullOrWhiteSpace(colorLine))
+                            {
+                                <p class="product-meta">@colorLine</p>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(sizeLine))
+                            {
+                                <p class="product-meta">@sizeLine</p>
+                            }
+                        </div>
+
+                        <div class="order-price">
+                            &#8369;@order.Price
+                            <br />
+                            <strong>Total: &#8369;@(order.Price * order.Quantity)</strong>
+                        </div>
+                    </div>
+
+                    @if (statusGroup == "to-pay")
+                    {
+                        <div class="order-actions">
+                            <button class="btn-outline">Cancel Order</button>
+                            <button class="btn-primary">Pay Now</button>
+                        </div>
+                    }
+
+                    @if (statusGroup == "to-receive")
+                    {
+                        <div class="delivery-status toggle-tracking">
+                            <span>Parcel has been shipped</span>
+                            <span class="arrow">&#8250;</span>
+                        </div>
+
+                        <div class="tracking-info">
+                            <p><strong>Courier:</strong> J&T Express</p>
+                            <p>Estimated Delivery: 2-4 days</p>
+                        </div>
+
+                        <div class="order-actions">
+                            <button class="btn-outline">Return/Refund</button>
+                            <button class="btn-primary confirm-received">Order Received</button>
+                        </div>
+                    }
+
+                    @if (statusGroup == "to-review")
+                    {
+                        <div class="order-actions">
+                            <button class="btn-outline">Buy Again</button>
+                            <button class="btn-primary">Rate</button>
+                        </div>
+                    }
+                </div>
+            }
+
+            <div class="modal-overlay" id="confirmModal">
+                <div class="modal">
+                    <h3>Confirm Order Received</h3>
+                    <p>Are you sure you have received this order?</p>
+                    <div class="modal-buttons">
+                        <button class="btn-outline" id="cancelModal">Cancel</button>
+                        <button class="btn-primary" id="confirmYes">Confirm</button>
+                    </div>
+                </div>
+            </div>
+        }
+    </main>
+</div>
+
+<script>
+document.querySelectorAll(".toggle-tracking").forEach(bar => {
+    bar.addEventListener("click", function () {
+        const tracking = this.nextElementSibling;
+        if (!tracking) return;
+        tracking.style.display =
+            tracking.style.display === "block" ? "none" : "block";
+    });
+});
+
+const modal = document.getElementById("confirmModal");
+const cancelModal = document.getElementById("cancelModal");
+
+document.querySelectorAll(".confirm-received").forEach(btn => {
+    btn.addEventListener("click", () => {
+        if (modal) modal.style.display = "flex";
+    });
+});
+
+if (cancelModal) {
+    cancelModal.addEventListener("click", () => {
+        if (modal) modal.style.display = "none";
+    });
+}
+
+const confirmYes = document.getElementById("confirmYes");
+if (confirmYes) {
+    confirmYes.addEventListener("click", () => {
+        alert("Order marked as received!");
+        if (modal) modal.style.display = "none";
+    });
+}
+</script>

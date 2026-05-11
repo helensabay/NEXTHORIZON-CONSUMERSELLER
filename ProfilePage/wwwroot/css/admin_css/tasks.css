@@ -1,0 +1,167 @@
+﻿/* --- General Container & Layout --- */
+.container-fluid {
+    max-width: 1400px;
+}
+
+/* --- Tab Navigation --- */
+.custom-tabs {
+    scrollbar-width: none; /* Firefox */
+}
+
+    .custom-tabs::-webkit-scrollbar {
+        display: none; /* Chrome/Safari */
+    }
+
+.active-tab {
+    border-bottom: 3px solid #000;
+}
+
+/* --- Podium Styling --- */
+.avatar-placeholder {
+    transition: transform 0.3s ease;
+    font-size: 1.5rem;
+}
+
+.card:hover .avatar-placeholder {
+    transform: scale(1.1);
+}
+
+.bg-warning.opacity-50 {
+    background-color: #ffc107 !important;
+}
+
+/* Custom shadow for the 1st place card */
+.shadow-lg {
+    box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.1) !important;
+}
+
+/* --- Challenge Cards --- */
+.card {
+    transition: all 0.3s ease-in-out;
+    border: none;
+}
+
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08) !important;
+    }
+
+.card-img-top {
+    filter: brightness(0.9);
+}
+
+/* --- Table & Grid Styling --- */
+.consumer-grid-wrapper {
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.table thead th {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 700;
+    color: #6c757d;
+    background-color: #f8f9fa;
+    padding: 15px;
+}
+
+.table tbody td {
+    padding: 15px;
+    font-size: 0.95rem;
+}
+
+/* --- Search & Form Elements --- */
+.search-container {
+    position: relative;
+    background: white;
+    border-radius: 50px;
+    width: 250px;
+}
+
+    .search-container input {
+        padding-left: 15px;
+        padding-right: 40px;
+    }
+
+    .search-container i {
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #adb5bd;
+    }
+
+/* --- Progress & Badges --- */
+.progress {
+    background-color: #e9ecef;
+    overflow: visible;
+}
+
+.progress-bar {
+    border-radius: 50px;
+    position: relative;
+}
+
+/* Strava Orange Highlight (Optional brand color) */
+.text-primary {
+    color: #fc4c02 !important; /* Strava's signature orange */
+}
+
+.btn-dark {
+    background-color: #212529;
+    border: none;
+}
+
+    .btn-dark:hover {
+        background-color: #000;
+    }
+
+/* --- Toast Styling --- */
+.toast-container {
+    z-index: 2000;
+}
+
+.toast {
+    background-color: #1a1a1a;
+}
+
+/* --- Responsive Adjustments --- */
+@media (max-width: 768px) {
+    .search-container {
+        width: 100%;
+    }
+
+    .podium-section .col-3,
+    .podium-section .col-4 {
+        width: 33.33%; /* Force three-across on mobile for the podium */
+    }
+
+    .table-responsive {
+        border-radius: 0;
+    }
+}
+
+/* Stats Card Hover */
+.stat-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+    }
+
+/* Challenge Card Hover */
+.challenge-card-hover {
+    transition: all 0.3s ease;
+    border: 1px solid transparent !important;
+}
+
+    .challenge-card-hover:hover {
+        border-color: #dee2e6 !important;
+        box-shadow: 0 15px 30px rgba(0,0,0,0.1) !important;
+    }
+
+        .challenge-card-hover:hover h6 {
+            color: #0d6efd !important; /* Turn title blue on hover */
+        }

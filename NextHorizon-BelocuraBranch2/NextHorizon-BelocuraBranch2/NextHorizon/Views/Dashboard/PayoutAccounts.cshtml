@@ -1,0 +1,193 @@
+@model List<NextHorizon.Models.PayoutAccountViewModel>
+
+@{
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+@section Styles{
+    <link rel="stylesheet" href="~/css/payoutAccounts.css" />
+    <link rel="stylesheet" href="~/css/modal.css" />
+
+}   
+
+<div class="page-actions">
+    <a class="link-btn" asp-controller="Dashboard" asp-action="Finance">
+        <i class="fas fa-arrow-left"></i> Back to Finance
+    </a>
+</div>
+
+<div class="container mt-4">
+    <h2>Payout Accounts</h2>
+
+    <!-- Success/Error Messages -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div style="background: #d4edda; color: #155724; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div style="background: #f8d7da; color: #721c24; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <div class="card mt-3">
+        <div class="card-body p-0">
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Account Type</th>
+                        <th>Bank/Provider</th>
+                        <th>Account Name/Number</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        @foreach (var account in Model)
+                        {
+                            <tr>
+                                <td>
+                                    @if (account.AccountType.Contains("GCash") || account.AccountType.Contains("Maya") || account.AccountType.Contains("ewallet"))
+                                    {
+                                        <span>💳 E-Wallet</span>
+                                    }
+                                    else if (account.AccountType.Contains("Bank") || account.AccountType.Contains("bank"))
+                                    {
+                                        <span>🏦 Bank Account</span>
+                                    }
+                                    else if (account.AccountType.Contains("Card") || account.AccountType.Contains("card"))
+                                    {
+                                        <span>💳 Credit/Debit Card</span>
+                                    }
+                                    else
+                                    {
+                                        <span>@account.AccountType</span>
+                                    }
+                                </td>
+
+                                <td>
+                                    @if (!string.IsNullOrEmpty(account.BankName))
+                                    {
+                                        <span>@account.BankName</span>
+                                    }
+                                    else if (account.AccountType.Contains("GCash"))
+                                    {
+                                        <span>GCash</span>
+                                    }
+                                    else if (account.AccountType.Contains("Maya"))
+                                    {
+                                        <span>Maya</span>
+                                    }
+                                    else if (account.AccountType.Contains("ewallet"))
+                                    {
+                                        <span>E-Wallet</span>
+                                    }
+                                    else
+                                    {
+                                        <span>—</span>
+                                    }
+                                </td>
+
+                                <td>
+                                    @if (!string.IsNullOrEmpty(account.AccountName))
+                                    {
+                                        <span>@account.AccountName</span>
+                                        if (!string.IsNullOrEmpty(account.AccountNumber))
+                                        {
+                                            <br />
+                                            <small style="color: #666;">@account.AccountNumber</small>
+                                        }
+                                    }
+                                    else if (!string.IsNullOrEmpty(account.AccountNumber))
+                                    {
+                                        <span>**** **** **** @(account.AccountNumber.Length >= 4 ? account.AccountNumber.Substring(account.AccountNumber.Length - 4) : account.AccountNumber)</span>
+                                    }
+                                    else if (!string.IsNullOrEmpty(account.CardNumber))
+                                    {
+                                        <span>**** **** **** @(account.CardNumber.Length >= 4 ? account.CardNumber.Substring(account.CardNumber.Length - 4) : account.CardNumber)</span>
+                                    }
+                                    else
+                                    {
+                                        <span>No details</span>
+                                    }
+                                </td>
+
+                                <td class="status-cell">
+                                    @if (account.IsDefault)
+                                    {
+                                        <span class="badge">Default</span>
+                                    }
+                                    else
+                                    {
+                                        <a href="#" class="set-default" data-account-id="@account.AccountId">Set as Default</a>
+                                    }
+                                </td>
+
+                                <td style="text-align:right">
+                                    @if (!account.IsDefault)
+                                    {
+                                        <a href="#" class="text-danger remove-account" data-account-id="@account.AccountId">Remove</a>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 40px;">
+                                <i class="fas fa-credit-card" style="font-size: 48px; color: #ccc; margin-bottom: 16px; display: block;"></i>
+                                <h5 style="color: #666; margin-bottom: 8px;">No payout accounts yet</h5>
+                                <p style="color: #999; margin-bottom: 16px;">Add your first payout account to withdraw funds</p>
+                                <a href="/Dashboard/AddPayoutAccount" class="add-btn" style="display: inline-block; padding: 10px 20px; text-decoration: none;">
+                                    ➕ Add New Account
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            @if (Model != null && Model.Any())
+            {
+                <div style="padding:16px; display: flex; justify-content: space-between; align-items: center;">
+                    <a href="/Dashboard/AddPayoutAccount" class="add-btn" style="text-decoration: none;">
+                        ➕ Add New Account
+                    </a>
+
+                    <div class="accounts-count">
+                        Showing @Model.Count @(Model.Count == 1 ? "account" : "accounts")
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts{
+        <script>
+        // Show success toast if exists
+        @if (TempData["ShowSuccessToast"] != null)
+        {
+            <text>
+                Toast.success('@TempData["SuccessMessage"]');
+            </text>
+        }
+        
+        // Show error modal if exists
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <text>
+                Modal.error('@TempData["ErrorMessage"]');
+            </text>
+        }
+    </script>
+    <script src="~/js/payoutAccounts.js"></script>
+}

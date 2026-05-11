@@ -1,0 +1,288 @@
+﻿@{
+    ViewData["Title"] = "Admin Portal - Analytics Overview";
+    Layout = "_AdminLayout";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin_css/analytics.css" asp-append-version="true" />
+}
+
+<div class="analytics-container p-4">
+
+    <div class="filter-bar d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <div class="d-flex align-items-center gap-1">
+                <input type="date" value="2026-02-01" class="form-control form-control-sm border-dark rounded-0" style="width: 130px;">
+                <span style="font-size: 0.7rem;" class="fw-bold">TO</span>
+                <input type="date" value="2026-02-28" class="form-control form-control-sm border-dark rounded-0" style="width: 130px;">
+            </div>
+
+            <select class="form-select form-select-sm border-dark rounded-0" style="width: auto; min-width: 120px;">
+                <option selected>All Sellers</option>
+                <option>John Electronics</option>
+                <option>Trendy Fashion</option>
+            </select>
+
+            <select class="form-select form-select-sm border-dark rounded-0" style="width: auto; min-width: 140px;">
+                <option selected>All Categories</option>
+                <option>Electronics</option>
+                <option>Apparel</option>
+            </select>
+
+            <button class="btn btn-dark btn-sm rounded-0 px-3">Apply</button>
+        </div>
+
+        <button class="btn btn-outline-dark btn-sm rounded-0">
+            <i class="bi bi-download me-1"></i> Export
+        </button>
+    </div>
+
+    <div class="row g-3 mb-4">
+        @foreach (var item in new[] {
+                new { L = "Gross Merchandise Value", V = "P1,250,000", T = "+12.5%", P = true },
+                new { L = "Commission Revenue", V = "P150,000", T = "+10.5%", P = true },
+                new { L = "Total Orders", V = "3,200", T = "-3.5%", P = false },
+                new { L = "Active Sellers", V = "50", T = "+0.5%", P = true },
+                new { L = "Total Consumers", V = "8,975", T = "+1.5%", P = true }
+                })
+        {
+            <div class="col-md">
+                <div class="kpi-card border-0 shadow-sm p-3 bg-white">
+                    <p class="kpi-label text-muted small mb-1">@item.L</p>
+                    <h4 class="fw-bold mb-1">@item.V</h4>
+                    <span class="small @(item.P ? "text-success" : "text-danger")">@item.T</span>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-9">
+            <div class="chart-card bg-white p-3 shadow-sm chart-row-height">
+                <div class="chart-header d-flex justify-content-between mb-3">
+                    <h6 class="fw-bold text-uppercase small" style="letter-spacing:1px;">Platform Sales Trends</h6>
+
+                    <div class="dropdown">
+                        <button class="btn btn-outline-dark btn-xs dropdown-toggle px-3" type="button" id="trendFilterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            Weekly
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-dark rounded-0" aria-labelledby="trendFilterDropdown">
+                            <li><a class="dropdown-item small" href="#" onclick="updateTrendFilter('Daily', this)">Daily</a></li>
+                            <li><a class="dropdown-item small active" href="#" onclick="updateTrendFilter('Weekly', this)">Weekly</a></li>
+                            <li><a class="dropdown-item small" href="#" onclick="updateTrendFilter('Monthly', this)">Monthly</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li class="dropdown-header fw-bold text-dark" style="font-size: 0.65rem;">PREVIOUS YEARS</li>
+                            <li><a class="dropdown-item small" href="#" onclick="updateTrendFilter('Yearly 2026', this)">Yearly 2026</a></li>
+                            <li><a class="dropdown-item small" href="#" onclick="updateTrendFilter('Yearly 2025', this)">Yearly 2025</a></li>
+                            <li><a class="dropdown-item small" href="#" onclick="updateTrendFilter('Yearly 2024', this)">Yearly 2024</a></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div style="position: relative; height:320px; width:100%;">
+                    <canvas id="salesTrendChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="sub-card bg-white p-3 shadow-sm h-100 chart-row-height">
+                <div class="order-status-container d-flex flex-column h-100">
+                    <div class="order-status-header text-center py-1 mb-3">
+                        Order Status Summary
+                    </div>
+
+                    <div class="flex-grow-1" style="min-height: 300px; position: relative;">
+                        <canvas id="orderStatusChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-9">
+            <div class="chart-card bg-white p-3 shadow-sm h-100">
+                <div class="border-bottom mb-3 d-flex align-items-center">
+                    <button id="tab-seller" onclick="switchTab('seller')" class="btn btn-sm fw-bold border-bottom rounded-0 px-0 me-4 active-tab">Seller Performance</button>
+                    <button id="tab-orders" onclick="switchTab('orders')" class="btn btn-sm text-muted px-0 me-4">Orders Overview</button>
+                    <button id="tab-products" onclick="switchTab('products')" class="btn btn-sm text-muted px-0">Product Intelligence</button>
+                </div>
+
+                <div id="view-seller" class="scrollable-table">
+                    <table class="table table-hover small">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Seller Name</th>
+                                <th>Total Product</th>
+                                <th>Total Orders</th>
+                                <th>Gross Sales</th>
+                                <th>Commission</th>
+                                <th>Net Payout</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>John Electronics</td>
+                                <td>135</td>
+                                <td>135</td>
+                                <td>P350,000</td>
+                                <td>P35,000</td>
+                                <td>P315,000</td>
+                                <td><span class="badge bg-black rounded-0">Active</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="view-orders" class="scrollable-table d-none">
+                    <table class="table table-hover small">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer</th>
+                                <th>Seller</th>
+                                <th>Amount</th>
+                                <th>Commission</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>ORD-10001</td>
+                                <td>Sarah Cruz</td>
+                                <td>Gadget World</td>
+                                <td>P335,000</td>
+                                <td>P33,500</td>
+                                <td><span class="badge bg-primary rounded-0">Shipped</span></td>
+                                <td>2026-02-24</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="view-products" class="scrollable-table d-none">
+                    <table class="table table-hover small">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Product</th>
+                                <th>Seller</th>
+                                <th>Remaining Stock</th>
+                                <th>Severity</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Gaming Headset Pro</td>
+                                <td>Gadget World</td>
+                                <td>3</td>
+                                <td><span class="badge bg-danger rounded-0">Critical</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="financial-overview-card bg-white p-3 shadow-sm h-100 border">
+                <h6 class="fw-bold mb-3">Financial Overview</h6>
+
+                <div class="row g-2">
+                    <div class="col-6">
+                        <div class="financial-metric-box p-2 border shadow-sm rounded">
+                            <small class="fw-bold d-block mb-2" style="font-size: 0.65rem; line-height: 1.2;">Total Seller Payouts</small>
+                            <span class="fw-bold h6">P1,100,000</span>
+                        </div>
+                    </div>
+
+                    <div class="col-6">
+                        <div class="financial-metric-box p-2 border shadow-sm rounded">
+                            <small class="fw-bold d-block mb-2" style="font-size: 0.65rem; line-height: 1.2;">Pending Payouts</small>
+                            <span class="fw-bold h6">P120,000</span>
+                        </div>
+                    </div>
+
+                    <div class="col-6">
+                        <div class="financial-metric-box p-2 border shadow-sm rounded">
+                            <small class="fw-bold d-block mb-2" style="font-size: 0.65rem; line-height: 1.2;">Platform Earnings</small>
+                            <span class="fw-bold h6">P150,000</span>
+                        </div>
+                    </div>
+
+                    <div class="col-6">
+                        <div class="financial-metric-box p-2 border shadow-sm rounded">
+                            <small class="fw-bold d-block mb-2" style="font-size: 0.65rem; line-height: 1.2;">Refund Amounts</small>
+                            <span class="fw-bold h6">P25,000</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mt-1">
+        <div class="col-md-6">
+            <div class="sub-card bg-white p-3 shadow-sm border rounded-4 h-100">
+                <h5 class="fw-bold mb-4">Best- Selling<br>Products</h5>
+                <div class="table-responsive">
+                    <table class="table table-borderless align-middle small mb-0">
+                        <thead>
+                            <tr class="border-bottom">
+                                <th class="text-muted fw-bold ps-0">Product Name</th>
+                                <th class="text-muted fw-bold">Seller</th>
+                                <th class="text-muted fw-bold">Category</th>
+                                <th class="text-muted fw-bold">Units sold</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="ps-0">iPhone 15 Pro</td>
+                                <td>Gadget World</td>
+                                <td>Electronics</td>
+                                <td>150</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="sub-card bg-white p-3 shadow-sm border rounded-4 h-100">
+                <h5 class="fw-bold mb-4">Orders</h5>
+                <div class="table-responsive">
+                    <table class="table table-borderless align-middle small mb-0">
+                        <thead>
+                            <tr class="border-bottom">
+                                <th class="text-muted fw-bold ps-0">Order ID</th>
+                                <th class="text-muted fw-bold">Customer</th>
+                                <th class="text-muted fw-bold">Seller</th>
+                                <th class="text-muted fw-bold">Amount</th>
+                                <th class="text-muted fw-bold">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="ps-0">AP85,030</td>
+                                <td>Sarah Cue Gagnossia</td>
+                                <td>Gadget World</td>
+                                <td>P35,000</td>
+                                <td>Confirm</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+   <script src="~/js/admin_js/analytics.js" asp-append-version="true"></script>
+}

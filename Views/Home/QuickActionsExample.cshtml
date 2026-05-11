@@ -1,0 +1,222 @@
+@* 
+    QUICK ACTIONS EXAMPLE IMPLEMENTATION
+    
+    This file demonstrates how to use Quick Actions in various form scenarios.
+    Copy and adapt the patterns shown below to your own views.
+*@
+
+@{
+    ViewData["Title"] = "Quick Actions Examples";
+}
+
+<div class="content-container">
+    <h1>Quick Actions Implementation Examples</h1>
+
+    <!-- Example 1: Simple Text Input with Quick Actions -->
+    <section class="example-section">
+        <h2>Example 1: Messaging Input</h2>
+        <p>Quick action buttons for common messaging responses</p>
+
+        <div class="quick-actions-group">
+            <div class="quick-actions-label">
+                <span>QUICK ACTIONS</span>
+                <button class="quick-actions-toggle" onclick="toggleQuickActions(this)" type="button">Hide</button>
+            </div>
+            <div class="quick-actions-container">
+                <button class="quick-action-btn" onclick="insertText('Hi there! How can I help?', 'messageInput1')" type="button">Greeting</button>
+                <button class="quick-action-btn" onclick="insertText('Thank you for your inquiry!', 'messageInput1')" type="button">Thank You</button>
+                <button class="quick-action-btn" onclick="insertText('I\'m interested in this item.', 'messageInput1')" type="button">Interested</button>
+                <button class="quick-action-btn" onclick="insertText('Can you provide more details?', 'messageInput1')" type="button">Details</button>
+                <button class="quick-action-btn" onclick="insertText('What\'s the best price?', 'messageInput1')" type="button">Price</button>
+                <button class="quick-action-btn" onclick="insertText('When is this available?', 'messageInput1')" type="button">Availability</button>
+            </div>
+        </div>
+
+        <div class="form-input-wrapper">
+            <input type="text" id="messageInput1" class="form-input" placeholder="Type your message...">
+        </div>
+    </section>
+
+    <!-- Example 2: Product Feedback -->
+    <section class="example-section">
+        <h2>Example 2: Product Review / Feedback</h2>
+        <p>Quick actions for product review input</p>
+
+        <div class="quick-actions-group">
+            <div class="quick-actions-label">
+                <span>QUICK ACTIONS</span>
+                <button class="quick-actions-toggle" onclick="toggleQuickActions(this)" type="button">Hide</button>
+            </div>
+            <div class="quick-actions-container">
+                <button class="quick-action-btn" onclick="insertText('Excellent quality!', 'reviewInput')" type="button">Quality</button>
+                <button class="quick-action-btn" onclick="insertText('Great fit and comfort.', 'reviewInput')" type="button">Fit</button>
+                <button class="quick-action-btn" onclick="insertText('Fast shipping!', 'reviewInput')" type="button">Shipping</button>
+                <button class="quick-action-btn" onclick="insertText('Good value for money.', 'reviewInput')" type="button">Value</button>
+                <button class="quick-action-btn" onclick="insertText('Highly recommend!', 'reviewInput')" type="button">Recommend</button>
+            </div>
+        </div>
+
+        <div class="form-input-wrapper">
+            <textarea id="reviewInput" class="form-input" placeholder="Share your experience..."></textarea>
+        </div>
+    </section>
+
+    <!-- Example 3: Seller Shop Description -->
+    <section class="example-section">
+        <h2>Example 3: Shop Description / Product Details</h2>
+        <p>Quick actions for product description editing</p>
+
+        <div class="quick-actions-group">
+            <div class="quick-actions-label">
+                <span>QUICK ACTIONS</span>
+                <button class="quick-actions-toggle" onclick="toggleQuickActions(this)" type="button">Hide</button>
+            </div>
+            <div class="quick-actions-container">
+                <button class="quick-action-btn" onclick="insertText('Material: ', 'descriptionInput')" type="button">Material</button>
+                <button class="quick-action-btn" onclick="insertText('Size: ', 'descriptionInput')" type="button">Size</button>
+                <button class="quick-action-btn" onclick="insertText('Color: ', 'descriptionInput')" type="button">Color</button>
+                <button class="quick-action-btn" onclick="insertText('Care: Wash at 30°C. Air dry.', 'descriptionInput')" type="button">Care</button>
+                <button class="quick-action-btn" onclick="insertText('\n\nFree shipping available!', 'descriptionInput')" type="button">Shipping</button>
+                <button class="quick-action-btn" onclick="insertText('\n\n✓ Authentic product\n✓ Quality guaranteed', 'descriptionInput')" type="button">Guarantee</button>
+            </div>
+        </div>
+
+        <div class="form-input-wrapper">
+            <textarea id="descriptionInput" class="form-input" placeholder="Enter product description..."></textarea>
+        </div>
+    </section>
+
+    <hr style="margin: 40px 0; border: none; border-top: 1px solid #ddd;">
+
+    <h2>Using Quick Actions in Your Views</h2>
+
+    <h3>Option 1: Using the Partial View (Recommended)</h3>
+    <pre><code>@@{
+    var quickActions = new QuickActionsViewModel
+    {
+        InputId = "messageInput",
+        Buttons = new[]
+        {
+            new QuickActionButton { Label = "Hello", Value = "Hello there!" },
+            new QuickActionButton { Label = "Thanks", Value = "Thank you!" },
+            new QuickActionButton { Label = "Help", Value = "Can you help me?" }
+        }
+    };
+}
+
+@@await Html.PartialAsync("_QuickActionsPartial", quickActions)
+
+&lt;textarea id="messageInput" class="form-input" placeholder="Type message..."&gt;&lt;/textarea&gt;
+    </code></pre>
+
+    <h3>Option 2: HTML-Only Implementation</h3>
+    <pre><code>&lt;div class="quick-actions-group"&gt;
+    &lt;div class="quick-actions-label"&gt;
+        &lt;span&gt;QUICK ACTIONS&lt;/span&gt;
+        &lt;button class="quick-actions-toggle" onclick="toggleQuickActions(this)" type="button"&gt;Hide&lt;/button&gt;
+    &lt;/div&gt;
+    &lt;div class="quick-actions-container"&gt;
+        &lt;button class="quick-action-btn" onclick="insertText('Hello!', 'inputId')" type="button"&gt;Button 1&lt;/button&gt;
+        &lt;button class="quick-action-btn" onclick="insertText('Hi!', 'inputId')" type="button"&gt;Button 2&lt;/button&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+
+&lt;input type="text" id="inputId" placeholder="Type here..."&gt;
+    </code></pre>
+
+    <h3>JavaScript API</h3>
+    <pre><code>
+// Insert text at cursor position
+insertText(text, inputId)
+// Example: insertText('Hello world', 'messageInput')
+
+// Replace entire input value
+quickActionSelect(value, inputId)
+// Example: quickActionSelect('New Value', 'statusSelect')
+
+// Toggle quick actions visibility
+toggleQuickActions(buttonElement)
+// Called automatically by the Hide/Show button
+    </code></pre>
+
+    <h3>CSS Classes</h3>
+    <pre><code>
+.quick-actions-group         /* Container for the entire group */
+.quick-actions-label         /* Header with title and toggle */
+.quick-actions-toggle        /* Hide/Show button */
+.quick-actions-container     /* Flex container for buttons */
+.quick-action-btn            /* Individual button styling */
+.form-input-wrapper          /* Wrapper for input fields */
+.form-input                  /* Styled input/textarea */
+    </code></pre>
+
+    <h3>Best Practices</h3>
+    <ul>
+        <li>Keep button labels short (1-2 words) for mobile screens</li>
+        <li>Use insertText() for adding content, quickActionSelect() for replacing entire value</li>
+        <li>Escape quotes in text: use backslash or single/double quote alternation</li>
+        <li>Test on mobile - buttons have responsive sizing</li>
+        <li>Hide complicated UI elements on small screens using CSS media queries</li>
+        <li>Consider accessibility - all buttons have proper type="button" and aria-labels</li>
+    </ul>
+
+    <h3>Troubleshooting</h3>
+    <ul>
+        <li><strong>Buttons not inserting text:</strong> Check that inputId matches your input element's ID attribute</li>
+        <li><strong>Quote escaping issues:</strong> Use \' for apostrophes in onclick handlers</li>
+        <li><strong>Functions not found:</strong> Ensure app.js is loaded and quick actions functions are present</li>
+        <li><strong>Mobile layout broken:</strong> Verify CSS media query at 600px breakpoint is loading</li>
+    </ul>
+</div>
+
+<style>
+    .content-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 20px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    }
+
+    .example-section {
+        background: #f9f9f9;
+        border-left: 4px solid #0f4a87;
+        padding: 20px;
+        margin: 20px 0;
+        border-radius: 4px;
+    }
+
+    .example-section h2 {
+        margin-top: 0;
+        color: #0f4a87;
+    }
+
+    .form-input-wrapper {
+        margin-top: 12px;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-family: inherit;
+    }
+
+    pre {
+        background: #1f2937;
+        color: #e5e7eb;
+        padding: 12px;
+        border-radius: 4px;
+        overflow-x: auto;
+        font-size: 12px;
+    }
+
+    h3 {
+        margin-top: 24px;
+        color: #111;
+    }
+
+    ul {
+        line-height: 1.8;
+    }
+</style>

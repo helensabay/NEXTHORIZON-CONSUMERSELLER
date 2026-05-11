@@ -1,0 +1,891 @@
+@model List<MyAspNetApp.Models.DbProduct>
+@{
+    ViewData["Title"] = "Manage Products";
+    Layout = null;
+    var activeProducts = Model.Where(p => p.Status == "active").ToList();
+    var approvedProducts = Model.Where(p => p.Status == "approved" || p.Status == "active").ToList();
+    var pendingProducts = Model.Where(p => p.Status == "pending").ToList();
+    var renewProducts = Model.Where(p => p.Status == "renew").ToList();
+    var relistProducts = Model.Where(p => p.Status == "relist").ToList();
+    var activeCount = activeProducts.Count;
+    var approvedCount = approvedProducts.Count;
+    var pendingCount = pendingProducts.Count;
+    var renewCount = renewProducts.Count;
+    var relistCount = relistProducts.Count;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXT HORIZON - Manage Products</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --sidebar-bg: #000000;
+            --main-bg: #ffffff;
+            --list-bg: #EAE6E4;
+            --accent-green: #1a8a3d;
+            --accent-yellow: #f2a900;
+            --accent-red: #c5221f;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--main-bg);
+            display: flex;
+            min-height: 100vh;
+            color: #1a1a1a;
+        }
+
+        .sidebar {
+            width: 260px;
+            background-color: var(--sidebar-bg);
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            padding: 30px 20px;
+            position: fixed;
+            height: 100vh;
+            z-index: 100;
+        }
+
+        .logo {
+            font-weight: 800;
+            font-style: italic;
+            font-size: 1.4rem;
+            margin-bottom: 40px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 14px 15px;
+            color: #999;
+            text-decoration: none;
+            transition: 0.3s;
+            font-weight: 500;
+            font-size: 1.1rem;
+        }
+
+        .nav-item i {
+            margin-right: 15px;
+            width: 24px;
+            font-size: 1.2rem;
+        }
+
+        .nav-item:hover {
+            color: #fff;
+        }
+
+        .nav-item.active {
+            background-color: #333;
+            color: #fff;
+            border-radius: 10px;
+        }
+
+        .main-wrapper {
+            flex: 1;
+            margin-left: 300px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            height: 70px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            padding: 0 50px;
+            gap: 30px;
+        }
+
+        .seller-dropdown {
+            position: relative;
+        }
+
+        .seller-dropdown summary {
+            list-style: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .seller-dropdown summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .seller-dropdown-menu {
+            position: absolute;
+            top: calc(100% + 10px);
+            right: 0;
+            min-width: 150px;
+            padding: 8px;
+            background: #fff;
+            border: 1px solid #ececec;
+            border-radius: 12px;
+            box-shadow: 0 14px 28px rgba(0, 0, 0, 0.12);
+            z-index: 300;
+        }
+
+        .seller-dropdown-menu a {
+            display: block;
+            text-decoration: none;
+            color: #111;
+            font-weight: 600;
+            padding: 10px 12px;
+            border-radius: 8px;
+        }
+
+        .seller-dropdown-menu a:hover {
+            background: #f6f6f6;
+        }
+
+        .content-container {
+            padding: 50px 80px;
+            max-width: 1200px;
+        }
+
+        .profile-section {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .profile-circle {
+            width: 110px;
+            height: 110px;
+            border: 2px solid #000;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .profile-text h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        .profile-text p {
+            color: #666;
+            margin-top: 5px;
+            font-size: 1.1rem;
+        }
+
+        hr {
+            border: 0;
+            border-top: 1px solid #eee;
+            margin: 30px 0;
+        }
+
+        .btn-create {
+            width: 100%;
+            padding: 18px;
+            background: #F6F5F5;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.12), 0px 1px 3px rgba(0, 0, 0, 0.08);
+            border: none;
+            border-radius: 12px;
+            font-family: 'Inter', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 500;
+            cursor: pointer;
+            margin-bottom: 50px;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-create:hover {
+            background: #EBEBEB;
+        }
+
+        .approval-links {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-bottom: 32px;
+        }
+
+        .approval-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: #111;
+            background: #F6F5F5;
+            border-radius: 14px;
+            padding: 14px 18px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.08), 0px 1px 3px rgba(0, 0, 0, 0.06);
+            font-weight: 600;
+        }
+
+        .approval-link .mini-badge {
+            min-width: 26px;
+            height: 26px;
+            padding: 0 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 999px;
+            color: #fff;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .overview-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-top: 15px;
+            margin-bottom: 40px;
+        }
+
+        .overview-card {
+            background: #F6F5F5;
+            padding: 20px;
+            border-radius: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+
+        .overview-card:hover {
+            background: #EDEDED;
+        }
+
+        .overview-card.active-card {
+            background: #F6F5F5;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.12), 0px 1px 3px rgba(0, 0, 0, 0.08);
+        }
+
+        .overview-card span {
+            font-weight: 600;
+            line-height: 1.2;
+            font-size: 0.95rem;
+        }
+
+        .badge {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .product-box {
+            background-color: var(--list-bg);
+            border-radius: 18px;
+            padding: 30px 40px 50px;
+        }
+
+        .product-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-action-pill {
+            background: #8A8888;
+            color: white;
+            padding: 6px 22px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            font-family: 'Inter', sans-serif;
+            transition: background 0.2s;
+        }
+
+        .btn-action-pill:hover {
+            background: #737373;
+        }
+
+        .filter-dropdown-select {
+            background: #8A8888;
+            color: white;
+            padding: 6px 30px 6px 16px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            appearance: none;
+            -webkit-appearance: none;
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 10px auto;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            transition: background 0.2s;
+        }
+
+        .filter-dropdown-select:hover {
+            background: #737373;
+        }
+
+        .product-group {
+            display: none;
+        }
+
+        .product-group.visible {
+            display: block;
+        }
+
+        .product-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            margin: 20px;
+            position: relative;
+        }
+
+        .product-detail {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .product-img {
+            width: 90px;
+            height: 90px;
+            border-radius: 12px;
+            object-fit: cover;
+            background: white;
+            transition: transform 0.2s;
+        }
+
+        .product-img:hover {
+            transform: scale(1.05);
+        }
+
+        .product-info a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .product-info h4 {
+            margin: 0;
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: #111;
+        }
+
+        .product-info h4:hover {
+            text-decoration: underline;
+        }
+
+        .product-info p {
+            margin: 4px 0 8px 0;
+            font-size: 0.85rem;
+            color: #555;
+            font-weight: 400;
+        }
+
+        .price-wrap {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .price-wrap .price {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: #000;
+        }
+
+        .price-wrap .old-price {
+            font-weight: 400;
+            font-size: 0.8rem;
+            color: #888;
+            text-decoration: line-through;
+        }
+
+        .action-menu-container {
+            position: relative;
+        }
+
+        .btn-ellipses {
+            background: transparent;
+            border: none;
+            font-size: 1.5rem;
+            color: #555;
+            cursor: pointer;
+            padding: 5px 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-ellipses:hover {
+            color: #000;
+        }
+
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            border-radius: 6px;
+            min-width: 130px;
+            z-index: 50;
+            margin-top: 5px;
+            background: transparent;
+            box-shadow: none;
+        }
+
+        .dropdown-menu.show {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .dropdown-item {
+            display: block;
+            padding: 8px 15px;
+            color: #000;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            text-align: center;
+            background-color: #dcdcdc;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+
+        .dropdown-item:hover {
+            background-color: #c4c4c4;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-top: 40px;
+            font-weight: 600;
+            color: #888;
+        }
+
+        .page-active {
+            color: #000;
+            background: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.95rem;
+        }
+
+        .nav-arrow {
+            font-size: 0.9rem;
+        }
+
+        .nav-arrow.disabled {
+            color: #b0aba8;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="logo">
+            <div style="background: white; color: black; padding: 2px 10px; border-radius: 6px;">H</div>
+            NEXT HORIZON
+        </div>
+        <nav>
+            <a href="#" class="nav-item"><i class="fa-solid fa-house"></i> Dashboard</a>
+            <a href="#" class="nav-item"><i class="fa-solid fa-receipt"></i> Orders</a>
+            <a href="#" class="nav-item active"><i class="fa-solid fa-bag-shopping"></i> Products</a>
+            <a href="#" class="nav-item"><i class="fa-solid fa-wallet"></i> Finances</a>
+            <a href="#" class="nav-item"><i class="fa-solid fa-chart-line"></i> Analytics</a>
+            <a href="/Dashboard/AccountSettings" class="nav-item"><i class="fa-solid fa-gear"></i> Settings</a>
+        </nav>
+    </aside>
+
+    <div class="main-wrapper">
+        <header class="header">
+            <i class="fa-regular fa-bell" style="font-size: 1.4rem; cursor: pointer;"></i>
+            <details class="seller-dropdown">
+                <summary>
+                    <i class="fa-regular fa-circle-user" style="font-size: 1.8rem;"></i>
+                    <span style="font-weight: 600;">Seller</span>
+                    <i class="fa-solid fa-chevron-down" style="font-size: 0.7rem;"></i>
+                </summary>
+                <div class="seller-dropdown-menu">
+                    <a href="/Home/Logout">Log out</a>
+                </div>
+            </details>
+        </header>
+
+        <div class="content-container">
+            <div class="profile-section">
+                <div class="profile-circle">
+                    <i class="fa-regular fa-user" style="font-size: 2.5rem; color: #ccc;"></i>
+                </div>
+                <div class="profile-text">
+                    <h1>Manage your products with ease.</h1>
+                    <p>Track, update, and grow your sales in one place.</p>
+                </div>
+            </div>
+
+            <hr />
+
+            <button class="btn-create" onclick="window.location.href='/Seller/CreateProduct'">
+                <i class="fa-solid fa-plus"></i> Create Product Listing
+            </button>
+
+            <div class="approval-links">
+                <a href="/Seller/PendingProducts" class="approval-link">
+                    <span>Pending Products</span>
+                    <span class="mini-badge" style="background:#f2a900;">@pendingCount</span>
+                </a>
+                <a href="/Seller/ApprovedProducts" class="approval-link">
+                    <span>Approved Products</span>
+                    <span class="mini-badge" style="background:#1a8a3d;">@approvedCount</span>
+                </a>
+                <a href="/Admin/ProductApprovals" class="approval-link">
+                    <span>Admin Approval Panel</span>
+                    <span class="mini-badge" style="background:#111;">@pendingCount</span>
+                </a>
+            </div>
+
+            <h2 style="font-size: 1.4rem; font-weight: 800; margin-bottom: 20px;">Overview</h2>
+
+            <div class="overview-grid">
+                <div class="overview-card active-card" onclick="changeTab('active', this)">
+                    <span>Active<br>Product</span>
+                    <div class="badge" id="badge-active" style="background: var(--accent-green);">@activeCount</div>
+                </div>
+                <div class="overview-card" onclick="changeTab('renew', this)">
+                    <span>Renew<br>Product</span>
+                    <div class="badge" id="badge-renew" style="background: var(--accent-yellow);">@renewCount</div>
+                </div>
+                <div class="overview-card" onclick="changeTab('relist', this)">
+                    <span>Relist Deleted<br>Product</span>
+                    <div class="badge" id="badge-relist" style="background: var(--accent-red);">@relistCount</div>
+                </div>
+            </div>
+
+            <div class="product-box">
+                <div class="product-header">
+                    <h3 id="display-title" style="font-weight: 700; font-size: 1.1rem; margin: 0;">Active Product</h3>
+                    <div class="header-actions">
+                        <button class="btn-action-pill" onclick="window.location.href='/Promotions/Promotion'">Add Promotion</button>
+                        <select class="filter-dropdown-select" id="categoryFilter" onchange="filterProducts()">
+                            <option value="All">All</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="active-content" class="product-group visible">
+                    @foreach (var p in activeProducts)
+                    {
+                        <div class="product-row" data-category="@p.Category">
+                            <div class="product-detail">
+                                <a href="/Seller/ViewProduct?id=@p.ProductId&state=active">
+                                    <img src="@(string.IsNullOrEmpty(p.ImagePath) ? "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Crect width='90' height='90' fill='%23e0e0e0'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Inter' font-size='11' fill='%23888'%3ENo Image%3C/text%3E%3C/svg%3E" : p.ImagePath)" class="product-img" alt="Product">
+                                </a>
+                                <div class="product-info">
+                                    <a href="/Seller/ViewProduct?id=@p.ProductId&state=active">
+                                        <h4>@p.ProductName</h4>
+                                    </a>
+                                    <p>@p.Category</p>
+                                    <div class="price-wrap">
+                                        <span class="price">P @p.Price.ToString("N2")</span>
+                                        @if (p.Discount.HasValue && p.Discount.Value > 0)
+                                        {
+                                            <span class="old-price">- P @((p.Price + p.Discount.Value).ToString("N2"))</span>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="action-menu-container">
+                                <button class="btn-ellipses" onclick="toggleMenu(event, this)">
+                                    <i class="fa-solid fa-ellipsis"></i>
+                                </button>
+                                <div class="dropdown-menu">
+                                    <a href="/Seller/ViewProduct?id=@p.ProductId&state=active" class="dropdown-item">View Product</a>
+                                    <a href="/Seller/CreateProduct?mode=edit&id=@p.ProductId" class="dropdown-item">Edit Product</a>
+                                    <form asp-action="DeleteProduct" asp-controller="Seller" method="post" style="margin:0;">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@p.ProductId" />
+                                        <button type="submit" class="dropdown-item" style="width:100%;background:none;border:none;cursor:pointer;text-align:left;color:#c5221f;" onclick="return confirm('Delete this product? It will be moved to Relist.')">Delete Product</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    @if (!activeProducts.Any())
+                    {
+                        <p style="text-align:center; color:#888; padding:30px 0;">No active products yet.</p>
+                    }
+                </div>
+
+                <div id="renew-content" class="product-group">
+                    @foreach (var p in renewProducts)
+                    {
+                        <div class="product-row" data-category="@p.Category">
+                            <div class="product-detail">
+                                <a href="/Seller/ViewProduct?id=@p.ProductId&state=renew">
+                                    <img src="@(string.IsNullOrEmpty(p.ImagePath) ? "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Crect width='90' height='90' fill='%23e0e0e0'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Inter' font-size='11' fill='%23888'%3ENo Image%3C/text%3E%3C/svg%3E" : p.ImagePath)" class="product-img">
+                                </a>
+                                <div class="product-info">
+                                    <a href="/Seller/ViewProduct?id=@p.ProductId&state=renew">
+                                        <h4>@p.ProductName</h4>
+                                    </a>
+                                    <p>@p.Category</p>
+                                    <div class="price-wrap">
+                                        <span class="price">P @p.Price.ToString("N2")</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="action-menu-container">
+                                <button class="btn-ellipses" onclick="toggleMenu(event, this)">
+                                    <i class="fa-solid fa-ellipsis"></i>
+                                </button>
+                                <div class="dropdown-menu">
+                                    <a href="/Seller/ViewProduct?id=@p.ProductId&state=renew" class="dropdown-item">View Product</a>
+                                    <a href="/Seller/CreateProduct?mode=renew&id=@p.ProductId" class="dropdown-item">Renew Product</a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    @if (!renewProducts.Any())
+                    {
+                        <p style="text-align:center; color:#888; padding:30px 0;">No products to renew.</p>
+                    }
+                </div>
+
+                <div id="relist-content" class="product-group">
+                    @foreach (var p in relistProducts)
+                    {
+                        <div class="product-row" data-category="@p.Category">
+                            <div class="product-detail">
+                                <a href="/Seller/ViewProduct?id=@p.ProductId&state=relist">
+                                    <img src="@(string.IsNullOrEmpty(p.ImagePath) ? "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Crect width='90' height='90' fill='%23e0e0e0'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Inter' font-size='11' fill='%23888'%3ENo Image%3C/text%3E%3C/svg%3E" : p.ImagePath)" class="product-img" style="filter:grayscale(1)">
+                                </a>
+                                <div class="product-info">
+                                    <a href="/Seller/ViewProduct?id=@p.ProductId&state=relist">
+                                        <h4>@p.ProductName</h4>
+                                    </a>
+                                    <p>@p.Category (Deleted)</p>
+                                    <div class="price-wrap">
+                                        <span class="price">P @p.Price.ToString("N2")</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="action-menu-container">
+                                <button class="btn-ellipses" onclick="toggleMenu(event, this)">
+                                    <i class="fa-solid fa-ellipsis"></i>
+                                </button>
+                                <div class="dropdown-menu">
+                                    <a href="/Seller/ViewProduct?id=@p.ProductId&state=relist" class="dropdown-item">View Product</a>
+                                    <a href="/Seller/CreateProduct?mode=relist&id=@p.ProductId" class="dropdown-item">Relist Product</a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    @if (!relistProducts.Any())
+                    {
+                        <p style="text-align:center; color:#888; padding:30px 0;">No deleted products to relist.</p>
+                    }
+                </div>
+
+                <div class="pagination">
+                    <i class="fa-solid fa-chevron-left nav-arrow disabled"></i>
+                    <span class="page-active">1</span>
+                    <i class="fa-solid fa-chevron-right nav-arrow disabled"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateProductCounts() {
+            var activeCount = document.querySelectorAll('#active-content .product-row').length;
+            var renewCount = document.querySelectorAll('#renew-content .product-row').length;
+            var relistCount = document.querySelectorAll('#relist-content .product-row').length;
+
+            document.getElementById('badge-active').innerText = activeCount;
+            document.getElementById('badge-renew').innerText = renewCount;
+            document.getElementById('badge-relist').innerText = relistCount;
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            updateProductCounts();
+            populateCategories();
+            filterProducts();
+        });
+
+        function changeTab(tabId, element) {
+            var cards = document.getElementsByClassName('overview-card');
+            for (var i = 0; i < cards.length; i++) {
+                cards[i].classList.remove('active-card');
+            }
+
+            element.classList.add('active-card');
+
+            var groups = document.getElementsByClassName('product-group');
+            for (var j = 0; j < groups.length; j++) {
+                groups[j].classList.remove('visible');
+            }
+
+            document.getElementById(tabId + '-content').classList.add('visible');
+
+            var titles = {
+                'active': 'Active Product',
+                'renew': 'Renew Product',
+                'relist': 'Relist Deleted Product'
+            };
+            document.getElementById('display-title').innerText = titles[tabId];
+
+            populateCategories();
+            filterProducts();
+        }
+
+        function toggleMenu(event, buttonElement) {
+            event.stopPropagation();
+
+            var allDropdowns = document.getElementsByClassName("dropdown-menu");
+            for (var i = 0; i < allDropdowns.length; i++) {
+                if (allDropdowns[i] !== buttonElement.nextElementSibling) {
+                    allDropdowns[i].classList.remove('show');
+                }
+            }
+
+            var menu = buttonElement.nextElementSibling;
+            menu.classList.toggle("show");
+        }
+
+        window.onclick = function(event) {
+            if (!event.target.matches('.btn-ellipses') && !event.target.closest('.btn-ellipses')) {
+                var dropdowns = document.getElementsByClassName("dropdown-menu");
+                for (var i = 0; i < dropdowns.length; i++) {
+                    var openDropdown = dropdowns[i];
+                    if (openDropdown.classList.contains('show')) {
+                        openDropdown.classList.remove('show');
+                    }
+                }
+            }
+        };
+
+        function getActiveTabId() {
+            if (document.getElementById('active-content').classList.contains('visible')) return 'active';
+            if (document.getElementById('renew-content').classList.contains('visible')) return 'renew';
+            return 'relist';
+        }
+
+        function populateCategories() {
+            var select = document.getElementById('categoryFilter');
+            var currentValue = select.value;
+            var activeTab = getActiveTabId();
+            var rows = document.querySelectorAll('#' + activeTab + '-content .product-row');
+
+            var categories = ['All'];
+            rows.forEach(function(row) {
+                var category = (row.getAttribute('data-category') || '').trim();
+                if (!category) {
+                    category = 'Uncategorized';
+                    row.setAttribute('data-category', category);
+                }
+                if (categories.indexOf(category) === -1) {
+                    categories.push(category);
+                }
+            });
+
+            select.innerHTML = categories.map(function(category) {
+                return '<option value="' + category.replace(/"/g, '&quot;') + '">' + category + '</option>';
+            }).join('');
+
+            if (categories.indexOf(currentValue) >= 0) {
+                select.value = currentValue;
+            } else {
+                select.value = 'All';
+            }
+        }
+
+        function filterProducts() {
+            var selectedCategory = document.getElementById('categoryFilter').value;
+            var activeTab = getActiveTabId();
+            var rows = document.querySelectorAll('#' + activeTab + '-content .product-row');
+
+            rows.forEach(function(row) {
+                var rowCategory = row.getAttribute('data-category');
+                if (selectedCategory === 'All' || rowCategory === selectedCategory) {
+                    row.style.display = 'flex';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+    </script>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div id="seller-toast" class="seller-toast">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>@TempData["SuccessMessage"]</span>
+        </div>
+        <style>
+            .seller-toast {
+                position: fixed;
+                bottom: 32px;
+                right: 32px;
+                background: #111;
+                color: #fff;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                padding: 14px 22px;
+                border-radius: 6px;
+                font-size: 0.88rem;
+                font-weight: 500;
+                letter-spacing: 0.01em;
+                box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+                z-index: 9999;
+                opacity: 0;
+                transform: translateY(12px);
+                animation: toastIn 0.3s ease forwards, toastOut 0.4s ease 3.2s forwards;
+            }
+            .seller-toast svg { flex-shrink: 0; }
+            @@keyframes toastIn  { to { opacity: 1; transform: translateY(0); } }
+            @@keyframes toastOut { to { opacity: 0; transform: translateY(12px); } }
+        </style>
+        <script>
+            setTimeout(() => { const t = document.getElementById('seller-toast'); if (t) t.remove(); }, 3800);
+        </script>
+    }
+</body>
+</html>

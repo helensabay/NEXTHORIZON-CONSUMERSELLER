@@ -1,0 +1,270 @@
+@model List<NextHorizon.Models.DbPromotion>
+@{
+    ViewData["Title"] = "Promotions";
+    ViewData["DashboardHeading"] = "Promotions";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+
+    var activePromotions = Model?.Where(p => string.Equals(p.Status, "Active", StringComparison.OrdinalIgnoreCase)).ToList() ?? new List<NextHorizon.Models.DbPromotion>();
+    var pendingPromotions = Model?.Where(p => string.Equals(p.Status, "Pending", StringComparison.OrdinalIgnoreCase)).ToList() ?? new List<NextHorizon.Models.DbPromotion>();
+    var inactivePromotions = Model?.Where(p => string.Equals(p.Status, "Inactive", StringComparison.OrdinalIgnoreCase)).ToList() ?? new List<NextHorizon.Models.DbPromotion>();
+    var deletedPromotions = Model?.Where(p => string.Equals(p.Status, "Deleted", StringComparison.OrdinalIgnoreCase)).ToList() ?? new List<NextHorizon.Models.DbPromotion>();
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/Promotions.css" />
+}
+
+        <div class="content-container">
+
+            <div class="page-title-header">
+                <button class="btn-back" onclick="window.history.back()">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </button>
+                <h1>Promotions</h1>
+            </div>
+
+            <a href="/Promotions/AddPromotion" class="btn-create" style="text-decoration:none;">
+                <i class="fa-solid fa-plus"></i> Add Promotions
+            </a>
+
+            <h2 style="font-size: 1.4rem; font-weight: 800; margin-bottom: 20px;">Overview</h2>
+
+            <div class="overview-grid">
+                <div class="overview-card active-card" onclick="changeTab('active', this)">
+                    <span>Active<br>Promotions</span>
+                    <div class="badge" id="badge-active" style="background: var(--accent-green);">@activePromotions.Count</div>
+                </div>
+                <div class="overview-card" onclick="changeTab('pending', this)">
+                    <span>Pending<br>Promotions</span>
+                    <div class="badge" id="badge-pending" style="background: #3b82f6;">@pendingPromotions.Count</div>
+                </div>
+                <div class="overview-card" onclick="changeTab('inactive', this)">
+                    <span>Inactive<br>Promotions</span>
+                    <div class="badge" id="badge-inactive" style="background: var(--accent-yellow);">@inactivePromotions.Count</div>
+                </div>
+                <div class="overview-card" onclick="changeTab('deleted', this)">
+                    <span>Deleted<br>Promotions</span>
+                    <div class="badge" id="badge-deleted" style="background: var(--accent-red);">@deletedPromotions.Count</div>
+                </div>
+            </div>
+
+            <div class="product-box">
+                <div class="product-header">
+                    <h3 id="display-title" style="font-weight: 700; font-size: 1.15rem; margin: 0;">Active Promotions</h3>
+                </div>
+
+                <div id="active-content" class="product-group visible">
+                    @if (activePromotions.Any())
+                    {
+                        @foreach (var promo in activePromotions)
+                        {
+                            <div class="product-row">
+                                <div class="product-detail">
+                                    <div class="product-img" style="background: linear-gradient(135deg, #FFD13B 50%, #612F87 50%);"></div>
+                                    <div class="product-info">
+                                        <h4>@promo.Name</h4>
+                                        <p>@promo.Type</p>
+                                        <p>@promo.CreatedAt.ToString("MMMM dd, yyyy")</p>
+                                        <p class="usage-limit">Usage Limit: @(promo.UntilPromotionLast ? "Unlimited" : promo.UsageLimit.ToString())</p>
+                                    </div>
+                                </div>
+                                <div class="action-menu-container">
+                                    <button class="btn-ellipses" onclick="toggleMenu(event, this)">
+                                        <i class="fa-solid fa-ellipsis"></i>
+                                    </button>
+                                    <div class="promo-dropdown">
+                                        <a href="/Promotions/AddPromotion/@promo.PromotionId" class="promo-action-btn">Edit</a>
+                                        <form method="post" action="/Promotions/InactivatePromotion/@promo.PromotionId">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="promo-action-btn">Inactivate</button>
+                                        </form>
+                                        <form method="post" action="/Promotions/DeletePromotion/@promo.PromotionId">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="promo-action-btn">Delete</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div style="text-align:center;padding:40px;color:#999;">
+                            <p>No active promotions. <a href="/Promotions/AddPromotion">Create one now</a></p>
+                        </div>
+                    }
+                </div>
+
+                <div id="pending-content" class="product-group">
+                    @if (pendingPromotions.Any())
+                    {
+                        @foreach (var promo in pendingPromotions)
+                        {
+                            <div class="product-row">
+                                <div class="product-detail">
+                                    <div class="product-img" style="background: linear-gradient(135deg, #3b82f6 50%, #1d4ed8 50%);"></div>
+                                    <div class="product-info">
+                                        <h4>@promo.Name</h4>
+                                        <p>@promo.Type</p>
+                                        <p>@promo.CreatedAt.ToString("MMMM dd, yyyy")</p>
+                                        <p class="usage-limit">Usage Limit: @(promo.UntilPromotionLast ? "Unlimited" : promo.UsageLimit.ToString())</p>
+                                        <p style="color:#3b82f6;font-size:0.8rem;font-weight:600;">Awaiting admin approval</p>
+                                    </div>
+                                </div>
+                                <div class="action-menu-container">
+                                    <button class="btn-ellipses" onclick="toggleMenu(event, this)">
+                                        <i class="fa-solid fa-ellipsis"></i>
+                                    </button>
+                                    <div class="promo-dropdown">
+                                        <a href="/Promotions/AddPromotion/@promo.PromotionId" class="promo-action-btn">Edit</a>
+                                        <form method="post" action="/Promotions/DeletePromotion/@promo.PromotionId">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="promo-action-btn">Delete</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div style="text-align:center;padding:40px;color:#999;"><p>No pending promotions.</p></div>
+                    }
+                </div>
+
+                <div id="inactive-content" class="product-group">
+                    @if (inactivePromotions.Any())
+                    {
+                        @foreach (var promo in inactivePromotions)
+                        {
+                            <div class="product-row">
+                                <div class="product-detail">
+                                    <div class="product-img" style="background: linear-gradient(135deg, #4CAF50 50%, #2E7D32 50%);"></div>
+                                    <div class="product-info">
+                                        <h4>@promo.Name</h4>
+                                        <p>@promo.Type</p>
+                                        <p>@promo.CreatedAt.ToString("MMMM dd, yyyy")</p>
+                                        <p class="usage-limit">Usage Limit: @(promo.UntilPromotionLast ? "Unlimited" : promo.UsageLimit.ToString())</p>
+                                    </div>
+                                </div>
+                                <div class="action-menu-container">
+                                    <button class="btn-ellipses" onclick="toggleMenu(event, this)">
+                                        <i class="fa-solid fa-ellipsis"></i>
+                                    </button>
+                                    <div class="promo-dropdown">
+                                        <a href="/Promotions/AddPromotion/@promo.PromotionId" class="promo-action-btn">Edit</a>
+                                        <form method="post" action="/Promotions/ActivatePromotion/@promo.PromotionId">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="promo-action-btn">Activate</button>
+                                        </form>
+                                        <form method="post" action="/Promotions/DeletePromotion/@promo.PromotionId">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="promo-action-btn">Delete</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div style="text-align:center;padding:40px;color:#999;"><p>No inactive promotions.</p></div>
+                    }
+                </div>
+
+                <div id="deleted-content" class="product-group">
+                    @if (deletedPromotions.Any())
+                    {
+                        @foreach (var promo in deletedPromotions)
+                        {
+                            <div class="product-row">
+                                <div class="product-detail">
+                                    <div class="product-img" style="background: linear-gradient(135deg, #FFD13B 50%, #612F87 50%); filter: grayscale(100%);"></div>
+                                    <div class="product-info">
+                                        <h4>@promo.Name</h4>
+                                        <p>@promo.Type</p>
+                                        <p>@promo.CreatedAt.ToString("MMMM dd, yyyy")</p>
+                                    </div>
+                                </div>
+                                <div class="action-menu-container">
+                                    <button class="btn-ellipses" onclick="toggleMenu(event, this)">
+                                        <i class="fa-solid fa-ellipsis"></i>
+                                    </button>
+                                    <div class="promo-dropdown">
+                                        <form method="post" action="/Promotions/RestorePromotion/@promo.PromotionId">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="promo-action-btn">Restore</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div style="text-align:center;padding:40px;color:#999;"><p>No deleted promotions.</p></div>
+                    }
+                </div>
+
+                <div class="pagination" id="pagination-controls"></div>
+            </div>
+        </div>
+
+@section Scripts {
+    <script>
+        const ITEMS_PER_PAGE = 4;
+        let currentPage = 1;
+        let currentTabId = 'active';
+
+        function updateProductCounts() {
+            document.getElementById('badge-active').innerText = document.querySelectorAll('#active-content .product-row').length;
+            document.getElementById('badge-pending').innerText = document.querySelectorAll('#pending-content .product-row').length;
+            document.getElementById('badge-inactive').innerText = document.querySelectorAll('#inactive-content .product-row').length;
+            document.getElementById('badge-deleted').innerText = document.querySelectorAll('#deleted-content .product-row').length;
+            ['active', 'pending', 'inactive', 'deleted'].forEach(tab => {
+                document.querySelectorAll('#' + tab + '-content .product-row').forEach((row, i) => {
+                    row.style.display = i < ITEMS_PER_PAGE ? 'flex' : 'none';
+                });
+            });
+            updatePagination();
+        }
+
+        document.addEventListener("DOMContentLoaded", function () { updateProductCounts(); });
+
+        function changeTab(tabId, element) {
+            document.querySelectorAll('.overview-card').forEach(c => c.classList.remove('active-card'));
+            element.classList.add('active-card');
+            document.querySelectorAll('.product-group').forEach(g => g.classList.remove('visible'));
+            document.getElementById(tabId + '-content').classList.add('visible');
+            document.getElementById('display-title').innerText = { active: 'Active Promotions', pending: 'Pending Promotions', inactive: 'Inactive Promotions', deleted: 'Deleted Promotions' }[tabId];
+            currentPage = 1;
+            currentTabId = tabId;
+            updatePagination();
+        }
+
+        function toggleMenu(event, btn) {
+            event.stopPropagation();
+            document.querySelectorAll('.promo-dropdown').forEach(d => { if (d !== btn.nextElementSibling) d.classList.remove('show'); });
+            btn.nextElementSibling.classList.toggle('show');
+        }
+
+        window.onclick = function (e) {
+            if (!e.target.closest('.btn-ellipses')) document.querySelectorAll('.promo-dropdown.show').forEach(d => d.classList.remove('show'));
+        };
+
+        function updatePagination() {
+            const rows = document.querySelectorAll('#' + currentTabId + '-content .product-row');
+            const totalPages = Math.max(1, Math.ceil(rows.length / ITEMS_PER_PAGE));
+            if (currentPage > totalPages) currentPage = totalPages;
+            rows.forEach((row, i) => row.style.display = (i >= (currentPage - 1) * ITEMS_PER_PAGE && i < currentPage * ITEMS_PER_PAGE) ? 'flex' : 'none');
+            const pc = document.getElementById('pagination-controls');
+            pc.innerHTML = '';
+            if (totalPages <= 1) { pc.innerHTML = '<i class="fa-solid fa-chevron-left nav-arrow disabled"></i><span class="page-active">1</span><i class="fa-solid fa-chevron-right nav-arrow disabled"></i>'; return; }
+            const prev = document.createElement('i'); prev.className = `fa-solid fa-chevron-left nav-arrow ${currentPage === 1 ? 'disabled' : ''}`; if (currentPage > 1) prev.onclick = () => goToPage(currentPage - 1); pc.appendChild(prev);
+            for (let i = 1; i <= totalPages; i++) { const s = document.createElement('span'); s.innerText = i; s.className = i === currentPage ? 'page-active' : 'page-number'; if (i !== currentPage) s.onclick = () => goToPage(i); pc.appendChild(s); }
+            const next = document.createElement('i'); next.className = `fa-solid fa-chevron-right nav-arrow ${currentPage === totalPages ? 'disabled' : ''}`; if (currentPage < totalPages) next.onclick = () => goToPage(currentPage + 1); pc.appendChild(next);
+        }
+
+        function goToPage(p) { currentPage = p; updatePagination(); }
+    </script>
+}

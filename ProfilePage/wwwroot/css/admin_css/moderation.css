@@ -1,0 +1,106 @@
+﻿/* --- Moderation Queue Specific Styles --- */
+
+/* Violation Typography */
+.fw-600 {
+    font-weight: 600;
+}
+
+/* Violation Badges & Indicators */
+.text-danger.fw-600 {
+    letter-spacing: -0.2px;
+}
+
+/* Tab Styling Overrides */
+.nav-tabs .nav-link {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #666;
+    background: #fff;
+    transition: all 0.3s ease;
+    border: 1px solid #eee !important;
+}
+
+    .nav-tabs .nav-link.active {
+        background-color: #000 !important;
+        color: #fff !important;
+        border-color: #000 !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+    }
+
+/* Table Row Hover Effect */
+.table tbody tr {
+    transition: background-color 0.2s ease;
+}
+
+    .table tbody tr:hover {
+        background-color: #fdfdfe;
+    }
+
+/* Evidence Button */
+.btn-outline-dark:hover {
+    background-color: #000;
+    color: #fff;
+}
+
+/* Action Button Grouping */
+.btn-group .btn {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Status Pulse for Pending Reviews */
+.badge.bg-danger.rounded-pill {
+    animation: pulse-red 2s infinite;
+}
+
+@keyframes pulse-red {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4);
+    }
+
+    70% {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 10px rgba(220, 53, 69, 0);
+    }
+
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+    }
+}
+
+/* Profile Initials Circle */
+.bg-dark.text-white.rounded-circle {
+    border: 2px solid #eee;
+}
+
+/* --- Responsive Table Actions --- */
+@media (max-width: 768px) {
+    /* Make the Action column wider on mobile to prevent text wrapping */
+    .table td:last-child {
+        min-width: 140px;
+        padding: 1rem !important;
+    }
+
+    /* Adjust the Reinstate button text for very small screens */
+    .btn-sm {
+        font-size: 0.75rem;
+        padding: 8px 12px;
+    }
+}
+
+/* Hover effect for Reinstate */
+.btn-outline-success:hover {
+    background-color: #198754 !important;
+    color: #fff !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(25, 135, 84, 0.2);
+}
+
+/* Smooth transition for all buttons */
+.btn {
+    transition: all 0.2s ease-in-out !important;
+}

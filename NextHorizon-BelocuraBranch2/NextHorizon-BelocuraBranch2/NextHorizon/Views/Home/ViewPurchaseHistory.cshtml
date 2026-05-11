@@ -1,0 +1,166 @@
+@model List<NextHorizon.Models.OrderViewModel>
+
+<link rel="stylesheet" href="~/css/style.css" />
+
+<div class="main-content">
+
+    <a class="back-link" asp-controller="Home" asp-action="MyPurchases">&lt; Back</a>
+
+    <div class="order-status-tabs" role="tablist" aria-label="Order status filters">
+        <button type="button" class="status-tab active" data-filter="all">All</button>
+        <button type="button" class="status-tab" data-filter="to-pay">To Pay</button>
+        <button type="button" class="status-tab" data-filter="to-ship">To Ship</button>
+        <button type="button" class="status-tab" data-filter="to-receive">To Receive</button>
+        <button type="button" class="status-tab" data-filter="to-review">To Review</button>
+        <button type="button" class="status-tab" data-filter="return-refund">Return/Refund</button>
+    </div>
+
+    @foreach (var order in Model)
+    {
+        var normalizedStatus = (order.Status ?? string.Empty).Trim().ToLowerInvariant();
+        var statusGroup = normalizedStatus switch
+        {
+            "to pay" => "to-pay",
+            "to ship" => "to-ship",
+            "to receive" => "to-receive",
+            "completed" => "to-review",
+            "delivered" => "to-receive",
+            "to review" => "to-review",
+            "return/refund" => "return-refund",
+            "cancelled" => "cancelled",
+            _ => "all"
+        };
+
+        <div class="order-card order-item" data-status="@statusGroup">
+
+            <div class="order-header">
+                <strong class="shop-name">
+                    <svg class="shop-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 9l2-5h14l2 5"></path>
+                        <path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9z"></path>
+                        <path d="M9 21V13h6v8"></path>
+                    </svg>
+                    @order.ShopName
+                </strong>
+
+                <span class="status-label">@order.Status</span>
+            </div>
+
+            <div class="order-body">
+                <img src="@order.ImageUrl" />
+
+                <div class="order-info">
+                    @{
+                        var descriptionParts = (order.Description ?? string.Empty).Split(" - ");
+                        var descriptionMain = descriptionParts.Length > 0 ? descriptionParts[0] : string.Empty;
+                        var descriptionDetails = descriptionParts.Length > 1
+                            ? string.Join(" - ", descriptionParts, 1, descriptionParts.Length - 1)
+                            : string.Empty;
+                        var detailParts = descriptionDetails.Split(" - Size ");
+                        var colorLine = detailParts.Length > 0 ? detailParts[0] : string.Empty;
+                        var sizeLine = detailParts.Length > 1 ? $"Size {detailParts[1]}" : string.Empty;
+                    }
+                    <h4>@order.ProductName</h4>
+                    <p>@descriptionMain</p>
+                    @if (!string.IsNullOrWhiteSpace(colorLine))
+                    {
+                        <p class="product-meta">@colorLine</p>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(sizeLine))
+                    {
+                        <p class="product-meta">@sizeLine</p>
+                    }
+                </div>
+
+                <div class="order-price">
+                    &#8369;@order.Price
+                    <br />
+                    <strong>Total: &#8369;@(order.Price * order.Quantity)</strong>
+                </div>
+            </div>
+
+            @if (statusGroup == "to-pay")
+            {
+                <div class="order-actions">
+                    <button class="btn-outline">Cancel Order</button>
+                    <button class="btn-primary">Pay Now</button>
+                </div>
+            }
+
+            @if (statusGroup == "to-receive")
+            {
+                <div class="delivery-status toggle-tracking">
+                    <span>Parcel has been shipped</span>
+                    <span class="arrow">›</span>
+                </div>
+
+                <div class="tracking-info">
+                    <p><strong>Courier:</strong> J&T Express</p>
+                    <p>Estimated Delivery: 2–4 days</p>
+                </div>
+
+                <div class="order-actions">
+                    <button class="btn-outline">Return/Refund</button>
+                    <button class="btn-primary confirm-received">Order Received</button>
+                </div>
+            }
+
+            @if (statusGroup == "to-review")
+            {
+                <div class="order-actions">
+                    <button class="btn-outline">Buy Again</button>
+                    <button class="btn-primary">Rate</button>
+                </div>
+            }
+
+            @if (statusGroup == "cancelled")
+            {
+                <div class="order-actions">
+                    <button class="btn-outline">Buy Again</button>
+                </div>
+            }
+
+        </div>
+    }
+    <p id="empty-orders" style="display:none; text-align:center; margin:20px 0;">No orders in this status.</p>
+
+    <div class="modal-overlay" id="confirmModal">
+        <div class="modal">
+            <h3>Confirm Order Received</h3>
+            <p>Are you sure you have received this order?</p>
+            <div class="modal-buttons">
+                <button class="btn-outline" id="cancelModal">Cancel</button>
+                <button class="btn-primary" id="confirmYes">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+document.querySelectorAll(".toggle-tracking").forEach(bar => {
+    bar.addEventListener("click", function () {
+        const tracking = this.nextElementSibling;
+        tracking.style.display =
+            tracking.style.display === "block" ? "none" : "block";
+    });
+});
+
+const modal = document.getElementById("confirmModal");
+const cancelModal = document.getElementById("cancelModal");
+
+document.querySelectorAll(".confirm-received").forEach(btn => {
+    btn.addEventListener("click", () => {
+        modal.style.display = "flex";
+    });
+});
+
+cancelModal.addEventListener("click", () => {
+    modal.style.display = "none";
+});
+
+document.getElementById("confirmYes").addEventListener("click", () => {
+    alert("Order marked as received!");
+    modal.style.display = "none";
+});
+</script>

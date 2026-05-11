@@ -1,0 +1,401 @@
+@{
+    ViewData["Title"] = "Write a Review";
+    var productId = ViewData["ProductId"];
+}
+
+<div class="wr-page">
+
+    <!-- Breadcrumb -->
+    <div class="product-page-breadcrumb">
+        <div class="container">
+            <a id="wr-back-link" href="#" class="back-link">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+                Back to Reviews
+            </a>
+            <span class="breadcrumb-sep">/</span>
+            <a id="wr-product-crumb" href="#" class="breadcrumb-current-link"></a>
+            <span class="breadcrumb-sep">/</span>
+            <span class="breadcrumb-current">Write a Review</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Loading -->
+        <div class="wr-loading" id="wr-loading">
+            <div class="loading-spinner"></div>
+        </div>
+
+        <!-- Page body -->
+        <div class="wr-body" id="wr-body" style="display:none;">
+
+            <!-- LEFT: product panel -->
+            <div class="wr-left">
+                <div class="wr-product-card">
+                    <div class="wr-product-img-wrap">
+                        <img id="wr-product-img" src="" alt="" />
+                    </div>
+                    <div class="wr-product-meta">
+                        <span class="wr-product-brand" id="wr-product-brand"></span>
+                        <span class="wr-product-name" id="wr-product-name"></span>
+                    </div>
+                </div>
+                <div class="wr-heading">
+                    <h1>Write your review</h1>
+                    <p>Share your experience with other shoppers.</p>
+                </div>
+            </div>
+
+            <!-- CENTER: form -->
+            <div class="wr-form-panel">
+                <form class="wr-form" id="wr-form" novalidate>
+
+                    <!-- Overall rating -->
+                    <div class="wr-field">
+                        <label class="wr-label">Your overall rating <span class="wr-req">*</span></label>
+                        <div class="wr-star-picker" id="wr-star-picker">
+                            <span class="wr-star" data-val="1">&#9733;</span>
+                            <span class="wr-star" data-val="2">&#9733;</span>
+                            <span class="wr-star" data-val="3">&#9733;</span>
+                            <span class="wr-star" data-val="4">&#9733;</span>
+                            <span class="wr-star" data-val="5">&#9733;</span>
+                        </div>
+                        <span class="wr-star-label" id="wr-star-label">Please select</span>
+                        <input type="hidden" id="wr-rating" name="rating" value="0" />
+                    </div>
+
+                    <!-- Recommend -->
+                    <div class="wr-field">
+                        <label class="wr-label">Would you recommend this product? <span class="wr-req">*</span></label>
+                        <div class="wr-radio-row">
+                            <label class="wr-radio-btn">
+                                <input type="radio" name="recommend" value="yes" /> Yes
+                            </label>
+                            <label class="wr-radio-btn">
+                                <input type="radio" name="recommend" value="no" /> No
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Experience -->
+                    <div class="wr-field">
+                        <label class="wr-label" for="wr-comment">Share your experience</label>
+                        <p class="wr-hint">Tell other people more about the product. What about the quality? Or the comfort?</p>
+                        <textarea class="wr-textarea" id="wr-comment" name="comment" rows="4" placeholder="Your Review"></textarea>
+                    </div>
+
+                    <!-- Short review -->
+                    <div class="wr-field">
+                        <label class="wr-label" for="wr-short">What&#39;s your opinion in one sentence? <span class="wr-req">*</span></label>
+                        <p class="wr-hint">Example: Best purchase ever.</p>
+                        <input type="text" class="wr-input" id="wr-short" name="shortReview" placeholder="Review in Short" />
+                    </div>
+
+                    <!-- Metrics row -->
+                    <div class="wr-metrics-row">
+
+                        <!-- Size -->
+                        <div class="wr-field wr-metric-field">
+                            <label class="wr-label">How would you describe the size? <span class="wr-req">*</span></label>
+                            <div class="wr-dot-slider" id="wr-size-slider" data-group="size">
+                                <div class="wr-dot-labels">
+                                    <span>Too small</span><span>Perfect</span><span>Too big</span>
+                                </div>
+                                <div class="wr-dot-track">
+                                    <div class="wr-dot-line"></div>
+                                    <button type="button" class="wr-dot" data-group="size" data-val="1" data-label="Too small"></button>
+                                    <button type="button" class="wr-dot" data-group="size" data-val="2" data-label="1/2 a size too small"></button>
+                                    <button type="button" class="wr-dot" data-group="size" data-val="3" data-label="Perfect"></button>
+                                    <button type="button" class="wr-dot" data-group="size" data-val="4" data-label="1/2 a size too big"></button>
+                                    <button type="button" class="wr-dot" data-group="size" data-val="5" data-label="Too big"></button>
+                                </div>
+                                <div class="wr-dot-selected-label" id="wr-size-label"></div>
+                            </div>
+                            <input type="hidden" id="wr-size" name="sizeFit" value="" />
+                        </div>
+
+                        <!-- Width -->
+                        <div class="wr-field wr-metric-field">
+                            <label class="wr-label">How would you describe the width? <span class="wr-req">*</span></label>
+                            <div class="wr-dot-slider" id="wr-width-slider" data-group="width">
+                                <div class="wr-dot-labels">
+                                    <span>Too narrow</span><span>Perfect</span><span>Too wide</span>
+                                </div>
+                                <div class="wr-dot-track">
+                                    <div class="wr-dot-line"></div>
+                                    <button type="button" class="wr-dot" data-group="width" data-val="1" data-label="Too narrow"></button>
+                                    <button type="button" class="wr-dot" data-group="width" data-val="2" data-label="Slightly narrow"></button>
+                                    <button type="button" class="wr-dot" data-group="width" data-val="3" data-label="Perfect"></button>
+                                    <button type="button" class="wr-dot" data-group="width" data-val="4" data-label="Slightly wide"></button>
+                                    <button type="button" class="wr-dot" data-group="width" data-val="5" data-label="Too wide"></button>
+                                </div>
+                                <div class="wr-dot-selected-label" id="wr-width-label"></div>
+                            </div>
+                            <input type="hidden" id="wr-width" name="widthFit" value="" />
+                        </div>
+
+                        <!-- Comfort -->
+                        <div class="wr-field wr-metric-field">
+                            <label class="wr-label">How would you rate the comfort? <span class="wr-req">*</span></label>
+                            <div class="wr-star-picker wr-star-picker-sm" id="wr-comfort-picker">
+                                <span class="wr-star" data-group="comfort" data-val="1">&#9733;</span>
+                                <span class="wr-star" data-group="comfort" data-val="2">&#9733;</span>
+                                <span class="wr-star" data-group="comfort" data-val="3">&#9733;</span>
+                                <span class="wr-star" data-group="comfort" data-val="4">&#9733;</span>
+                                <span class="wr-star" data-group="comfort" data-val="5">&#9733;</span>
+                            </div>
+                            <span class="wr-star-label wr-metric-star-label" id="wr-comfort-label">Please select</span>
+                            <input type="hidden" id="wr-comfort" name="comfort" value="" />
+                        </div>
+
+                        <!-- Quality -->
+                        <div class="wr-field wr-metric-field">
+                            <label class="wr-label">And the quality? <span class="wr-req">*</span></label>
+                            <div class="wr-star-picker wr-star-picker-sm" id="wr-quality-picker">
+                                <span class="wr-star" data-group="quality" data-val="1">&#9733;</span>
+                                <span class="wr-star" data-group="quality" data-val="2">&#9733;</span>
+                                <span class="wr-star" data-group="quality" data-val="3">&#9733;</span>
+                                <span class="wr-star" data-group="quality" data-val="4">&#9733;</span>
+                                <span class="wr-star" data-group="quality" data-val="5">&#9733;</span>
+                            </div>
+                            <span class="wr-star-label wr-metric-star-label" id="wr-quality-label">Please select</span>
+                            <input type="hidden" id="wr-quality" name="quality" value="" />
+                        </div>
+
+                    </div>
+
+                    <!-- Photo upload -->
+                    <div class="wr-field">
+                        <label class="wr-label">Would you like to add a photo?</label>
+                        <div class="wr-upload-area" id="wr-upload-area">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                            <span>Upload photo</span>
+                            <input type="file" id="wr-photo" name="photo" accept="image/png,image/jpeg" style="display:none;" />
+                        </div>
+                        <div class="wr-photo-preview" id="wr-photo-preview" style="display:none;">
+                            <img id="wr-photo-img" src="" alt="Preview" />
+                            <button type="button" class="wr-photo-remove" id="wr-photo-remove">&times;</button>
+                        </div>
+                    </div>
+
+                    <!-- Your info -->
+                    <div class="wr-field-row">
+                        <div class="wr-field wr-field-half">
+                            <label class="wr-label" for="wr-nickname">Nickname <span class="wr-req">*</span></label>
+                            <p class="wr-hint">Example: Jack27. Be mindful of your own privacy.</p>
+                            <input type="text" class="wr-input" id="wr-nickname" name="nickname" placeholder="Nickname" />
+                        </div>
+                        <div class="wr-field wr-field-half">
+                            <label class="wr-label" for="wr-email">Email <span class="wr-req">*</span></label>
+                            <p class="wr-hint">For confirmation only &mdash; we won&#39;t send promotional emails.</p>
+                            <input type="email" class="wr-input" id="wr-email" name="email" placeholder="Email" />
+                        </div>
+                    </div>
+
+                    <p class="wr-terms">By submitting a review you agree to our <a href="#">Terms and Conditions</a></p>
+
+                    <button type="submit" class="wr-submit-btn" id="wr-submit-btn">Submit review</button>
+
+                </form>
+
+                <!-- Success state -->
+                <div class="wr-success" id="wr-success" style="display:none;">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
+                    <h2>Thank you for your review!</h2>
+                    <p>Your review has been submitted and is pending approval.</p>
+                    <a id="wr-back-btn" href="#" class="wr-submit-btn" style="display:inline-block;text-decoration:none;margin-top:1rem;">Back to Reviews</a>
+                </div>
+
+            </div>
+
+            <!-- RIGHT: tips -->
+            <div class="wr-tips-panel">
+                <div class="wr-tips-block">
+                    <h3>Writing the perfect review</h3>
+                    <ul class="wr-tips-list">
+                        <li><strong>Be specific</strong> &mdash; Say why you like or dislike something. E.g. very comfortable, cool colour.</li>
+                        <li><strong>No prices</strong> &mdash; Avoid prices or promotions &mdash; these are temporary.</li>
+                        <li><strong>Keep it short</strong> &mdash; Detail is great, but make sure your review is a manageable length.</li>
+                        <li><strong>Keep it clean</strong> &mdash; Don&#39;t use any words you wouldn&#39;t use with your grandmother!</li>
+                        <li><strong>Focus on the product</strong> &mdash; If you have a delivery or price issue, contact our customer service team.</li>
+                    </ul>
+                </div>
+                <div class="wr-tips-block">
+                    <h3>Sharing the perfect photo</h3>
+                    <ul class="wr-tips-list">
+                        <li>Upload photos in PNG or JPEG format.</li>
+                        <li>Maximum file size: 5 MB.</li>
+                        <li>Only upload images where you own the copyright.</li>
+                        <li>Offensive or inappropriate photos are not allowed.</li>
+                    </ul>
+                </div>
+            </div>
+
+        </div><!-- /.wr-body -->
+    </div><!-- /.container -->
+</div><!-- /.wr-page -->
+
+@section Scripts {
+<script>
+const WR_PRODUCT_ID = @productId;
+const starLabels = ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'];
+let selectedRating = 0;
+
+document.addEventListener('DOMContentLoaded', function() {
+    fetch('/api/products/' + WR_PRODUCT_ID)
+        .then(function(r) { return r.ok ? r.json() : Promise.reject(); })
+        .then(function(p) {
+            document.getElementById('wr-loading').style.display = 'none';
+            document.getElementById('wr-body').style.display = 'flex';
+
+            document.getElementById('wr-product-img').src = p.image;
+            document.getElementById('wr-product-img').alt = p.name;
+            document.getElementById('wr-product-brand').textContent = p.brand || '';
+            document.getElementById('wr-product-name').textContent = p.name;
+            document.title = 'Write a Review \u2014 ' + p.name + ' \u00B7 NEXT HORIZON';
+
+            var reviewsUrl = '/Home/Reviews?id=' + WR_PRODUCT_ID;
+            document.getElementById('wr-back-link').href = reviewsUrl;
+            document.getElementById('wr-back-btn').href = reviewsUrl;
+            document.getElementById('wr-product-crumb').textContent = p.name;
+            document.getElementById('wr-product-crumb').href = '/Home/Product?id=' + WR_PRODUCT_ID;
+        })
+        .catch(function() {
+            document.getElementById('wr-loading').innerHTML = '<p style="text-align:center;opacity:.5;padding:4rem;">Product not found.</p>';
+        });
+
+    // Star picker — overall rating
+    var stars = document.querySelectorAll('#wr-star-picker .wr-star');
+    stars.forEach(function(star) {
+        star.addEventListener('mouseenter', function() { highlightGroup(stars, parseInt(star.dataset.val)); });
+        star.addEventListener('mouseleave', function() { highlightGroup(stars, selectedRating); });
+        star.addEventListener('click', function() {
+            selectedRating = parseInt(star.dataset.val);
+            document.getElementById('wr-rating').value = selectedRating;
+            document.getElementById('wr-star-label').textContent = starLabels[selectedRating];
+            highlightGroup(stars, selectedRating);
+        });
+    });
+
+    // Star pickers — comfort & quality
+    var metricStarGroups = { comfort: 0, quality: 0 };
+    var metricStarLabels = { comfort: ['','Uncomfortable','Below average','Average','Comfortable','Very comfortable'], quality: ['','Poor','Below average','Average','Good','Perfect'] };
+    ['comfort', 'quality'].forEach(function(grp) {
+        var grpStars = document.querySelectorAll('.wr-star[data-group="' + grp + '"]');
+        grpStars.forEach(function(star) {
+            star.addEventListener('mouseenter', function() { highlightGroup(grpStars, parseInt(star.dataset.val)); });
+            star.addEventListener('mouseleave', function() { highlightGroup(grpStars, metricStarGroups[grp]); });
+            star.addEventListener('click', function() {
+                metricStarGroups[grp] = parseInt(star.dataset.val);
+                document.getElementById('wr-' + grp).value = metricStarGroups[grp];
+                document.getElementById('wr-' + grp + '-label').textContent = metricStarLabels[grp][metricStarGroups[grp]];
+                highlightGroup(grpStars, metricStarGroups[grp]);
+            });
+        });
+    });
+
+    // Dot sliders — size & width
+    document.querySelectorAll('.wr-dot').forEach(function(dot) {
+        dot.addEventListener('click', function() {
+            var group = dot.dataset.group;
+            document.querySelectorAll('.wr-dot[data-group="' + group + '"]').forEach(function(d) { d.classList.remove('active'); });
+            dot.classList.add('active');
+            document.getElementById('wr-' + group).value = dot.dataset.val;
+            document.getElementById('wr-' + group + '-label').textContent = dot.dataset.label;
+        });
+    });
+
+    // Upload area
+    var uploadArea = document.getElementById('wr-upload-area');
+    var photoInput = document.getElementById('wr-photo');
+    uploadArea.addEventListener('click', function() { photoInput.click(); });
+    photoInput.addEventListener('change', function() {
+        var file = photoInput.files[0];
+        if (!file) return;
+        if (file.size > 5 * 1024 * 1024) { alert('Photo must be under 5 MB.'); return; }
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('wr-photo-img').src = e.target.result;
+            uploadArea.style.display = 'none';
+            document.getElementById('wr-photo-preview').style.display = 'flex';
+        };
+        reader.readAsDataURL(file);
+    });
+    document.getElementById('wr-photo-remove').addEventListener('click', function() {
+        photoInput.value = '';
+        document.getElementById('wr-photo-img').src = '';
+        document.getElementById('wr-photo-preview').style.display = 'none';
+        uploadArea.style.display = 'flex';
+    });
+
+    // Submit
+    document.getElementById('wr-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        var errors = [];
+        if (selectedRating === 0) errors.push('Please select a star rating.');
+        if (!document.querySelector('input[name="recommend"]:checked')) errors.push('Please answer the recommendation question.');
+        if (!document.getElementById('wr-short').value.trim()) errors.push('Please enter a short review title.');
+        if (!document.getElementById('wr-size').value) errors.push('Please describe the size.');
+        if (!document.getElementById('wr-width').value) errors.push('Please describe the width.');
+        if (!document.getElementById('wr-comfort').value) errors.push('Please rate the comfort.');
+        if (!document.getElementById('wr-quality').value) errors.push('Please rate the quality.');
+        if (!document.getElementById('wr-nickname').value.trim()) errors.push('Please enter a nickname.');
+        if (!document.getElementById('wr-email').value.trim()) errors.push('Please enter your email.');
+        if (errors.length) { alert(errors.join('\n')); return; }
+
+        var submitBtn = document.getElementById('wr-submit-btn');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Submitting...';
+
+        var imagePayload = [];
+        var previewSrc = document.getElementById('wr-photo-img').src;
+        if (previewSrc && previewSrc.indexOf('data:image/') === 0) {
+            imagePayload.push(previewSrc);
+        }
+
+        var payload = {
+            userName: document.getElementById('wr-nickname').value.trim(),
+            rating: selectedRating,
+            shortReview: document.getElementById('wr-short').value.trim(),
+            comment: document.getElementById('wr-comment').value.trim(),
+            email: document.getElementById('wr-email').value.trim(),
+            recommend: document.querySelector('input[name="recommend"]:checked').value === 'yes',
+            comfort: parseInt(document.getElementById('wr-comfort').value),
+            quality: parseInt(document.getElementById('wr-quality').value),
+            sizeFit: parseInt(document.getElementById('wr-size').value),
+            widthFit: parseInt(document.getElementById('wr-width').value),
+            verifiedPurchase: true,
+            images: imagePayload
+        };
+
+        try {
+            var res = await fetch('/api/products/' + WR_PRODUCT_ID + '/reviews', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!res.ok) {
+                var errText = await res.text();
+                throw new Error(errText || 'Could not submit review.');
+            }
+
+            document.getElementById('wr-form').style.display = 'none';
+            document.getElementById('wr-success').style.display = 'flex';
+        } catch (err) {
+            alert('Failed to submit review. Please try again.');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Submit review';
+        }
+    });
+});
+
+function highlightGroup(nodeList, count) {
+    nodeList.forEach(function(s) {
+        s.classList.toggle('active', parseInt(s.dataset.val) <= count);
+    });
+}
+</script>
+}

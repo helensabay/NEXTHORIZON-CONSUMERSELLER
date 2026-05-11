@@ -1,0 +1,527 @@
+@model NextHorizon.Models.PromotionViewModel
+@{
+    ViewData["Title"] = Model?.Id > 0 ? "Edit Promotion" : "Add Promotion";
+    ViewData["DashboardHeading"] = "Add Promotion";
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/AddPromotion.css" />
+}
+
+        <main class="content-container">
+            <div class="page-title-header">
+                <button type="button" class="btn-back" onclick="window.history.back()">
+                    <i class="fa-solid fa-arrow-left"></i>
+                </button>
+                <h1>Add Promotions</h1>
+            </div>
+
+            <form method="post" enctype="multipart/form-data">
+
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div style="background: #fee; border: 1px solid #f88; border-radius: 4px; padding: 15px; margin-bottom: 20px; color: #c00;">
+                        <h4 style="margin-top: 0;">Please fix the following errors:</h4>
+                        <ul style="margin: 10px 0; padding-left: 20px;">
+                            @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                            {
+                                <li>@error.ErrorMessage</li>
+                            }
+                        </ul>
+                    </div>
+                }
+
+                <!-- Hidden fields for model binding -->
+                <input type="hidden" asp-for="Id">
+                <input type="hidden" name="UntilPromotionLast" value="false" />
+
+                <div class="form-card">
+                    <label class="section-title">Select Promotions Banner Size</label>
+                    <div class="banner-grid">
+                        <div class="banner-option">
+                            <input type="radio" asp-for="BannerSize" value="300x250" id="sz-300" class="sr-only" checked>
+                            <label for="sz-300">
+                                <div class="banner-wireframe" style="width: 50px; height: 40px;"></div>
+                                <span>300 X 250</span>
+                            </label>
+                        </div>
+                        <div class="banner-option">
+                            <input type="radio" asp-for="BannerSize" value="728x90" id="sz-728" class="sr-only">
+                            <label for="sz-728">
+                                <div class="banner-wireframe" style="width: 80px; height: 15px;"></div>
+                                <span>728 X 90</span>
+                            </label>
+                        </div>
+                        <div class="banner-option">
+                            <input type="radio" asp-for="BannerSize" value="320x100" id="sz-320" class="sr-only">
+                            <label for="sz-320">
+                                <div class="banner-wireframe" style="width: 60px; height: 20px;"></div>
+                                <span>320 X 100</span>
+                            </label>
+                        </div>
+                        <div class="banner-option">
+                            <input type="radio" asp-for="BannerSize" value="336x280" id="sz-336" class="sr-only">
+                            <label for="sz-336">
+                                <div class="banner-wireframe" style="width: 60px; height: 50px;"></div>
+                                <span>336 X 280</span>
+                            </label>
+                        </div>
+                        <div class="banner-option">
+                            <input type="radio" asp-for="BannerSize" value="250x250" id="sz-250" class="sr-only">
+                            <label for="sz-250">
+                                <div class="banner-wireframe" style="width: 45px; height: 45px;"></div>
+                                <span>250 X 250</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="upload-area" id="trigger-upload">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        <span>Upload Photos</span>
+                    </div>
+
+                    <input type="file" id="photo-upload-input" name="BannerImages" accept="image/*" multiple class="sr-only">
+                    <div class="uploaded-thumbnails" id="thumbnail-container"></div>
+                </div>
+
+                <div class="form-card">
+                    <h2 class="section-title" style="font-size: 1.4rem;">Promotional Details</h2>
+                    <input type="text" asp-for="Name" class="input-text" placeholder="Promotion Name" required>
+
+                    <h3 class="section-title" style="margin-top: 15px;">Promotion Type</h3>
+
+                    <div class="promo-type-grid">
+                        <div class="promo-type-btn">
+                            <input type="radio" asp-for="Type" value="Percentage Discount" id="type-percent" class="sr-only promo-trigger" data-target="percent" checked>
+                            <label for="type-percent">Percentage Discount</label>
+                        </div>
+                        <div class="promo-type-btn">
+                            <input type="radio" asp-for="Type" value="Fix Amount" id="type-fix" class="sr-only promo-trigger" data-target="fix">
+                            <label for="type-fix">Fix Amount</label>
+                        </div>
+                        <div class="promo-type-btn">
+                            <input type="radio" asp-for="Type" value="Buy X, Take Y" id="type-bogo" class="sr-only promo-trigger" data-target="bogo">
+                            <label for="type-bogo">Buy X, Take Y</label>
+                        </div>
+                        <div class="promo-type-btn">
+                            <input type="radio" asp-for="Type" value="Free Return" id="type-return" class="sr-only promo-trigger" data-target="return">
+                            <label for="type-return">Free Return</label>
+                        </div>
+                    </div>
+
+                    <div id="section-percent" class="dynamic-section active">
+                        <div class="form-row">
+                            <div class="input-combined" style="max-width: 350px;">
+                                <span class="inner-label">Percentage Discount</span>
+                                <div class="divider"></div>
+                                <input type="number" asp-for="TotalDiscountPercent" placeholder="0">
+                                <span style="margin-left: 10px; font-weight: 500; color: var(--text-main);">%</span>
+                            </div>
+
+                            <div class="input-combined">
+                                <span class="inner-label">Usage Limit</span>
+                                <div class="divider"></div>
+                                <input type="number" asp-for="UsageLimit" class="usage-limit-input">
+                                <label class="custom-check-card" style="margin-left: 15px; border-left: 1px solid #d1d1d1; padding-left: 15px; height: 30px;">
+                                    <input type="checkbox" asp-for="UntilPromotionLast" class="custom-checkbox until-last-cb">
+                                    <span class="check-label" style="font-size: 0.75rem;">Until<br>Promotion<br>Last</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="section-fix" class="dynamic-section">
+                        <div class="form-row">
+                            <div class="input-combined" style="max-width: 350px;">
+                                <span class="inner-label">Total amount of Discount</span>
+                                <div class="divider"></div>
+                                <span style="margin-right: 5px; font-weight: 500; color: #999;">₱</span>
+                                <input type="number" asp-for="TotalDiscountFix">
+                            </div>
+
+                            <div class="input-combined">
+                                <span class="inner-label">Usage Limit</span>
+                                <div class="divider"></div>
+                                <input type="number" asp-for="UsageLimit" class="usage-limit-input">
+                                <label class="custom-check-card" style="margin-left: 15px; border-left: 1px solid #d1d1d1; padding-left: 15px; height: 30px;">
+                                    <input type="checkbox" asp-for="UntilPromotionLast" class="custom-checkbox until-last-cb">
+                                    <span class="check-label" style="font-size: 0.75rem;">Until<br>Promotion<br>Last</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="section-bogo" class="dynamic-section">
+                        <div class="form-row">
+                            <div class="input-combined" style="max-width: 150px;">
+                                <span class="inner-label">Buy</span>
+                                <div class="divider"></div>
+                                <input type="number" asp-for="BuyQuantity">
+                            </div>
+                            <div class="input-combined" style="max-width: 150px;">
+                                <span class="inner-label">Take</span>
+                                <div class="divider"></div>
+                                <input type="number" asp-for="TakeQuantity">
+                            </div>
+                            <div class="input-combined" style="flex: 1;">
+                                <span class="inner-label">Usage Limit</span>
+                                <div class="divider"></div>
+                                <input type="number" asp-for="UsageLimit" class="usage-limit-input">
+                                <label class="custom-check-card" style="margin-left: 15px; border-left: 1px solid #d1d1d1; padding-left: 15px; height: 30px;">
+                                    <input type="checkbox" asp-for="UntilPromotionLast" class="custom-checkbox until-last-cb">
+                                    <span class="check-label" style="font-size: 0.75rem;">Until<br>Promotion<br>Last</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <label class="section-title" style="margin-top: 5px;">Item Free</label>
+                        <div class="form-row">
+                            <label class="custom-check-card-free">
+                                <input type="radio" asp-for="FreeItemRequirement" value="ExactProduct" class="custom-radio bogo-free-trigger" checked>
+                                <span class="check-label">Free item must be the exact same product</span>
+                            </label>
+                            <label class="custom-check-card-free" style="margin-left: 30px;">
+                                <input type="radio" asp-for="FreeItemRequirement" value="DifferentProduct" class="custom-radio bogo-free-trigger">
+                                <span class="check-label">Free item can be a different product</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="section-return" class="dynamic-section">
+                        <div class="form-row">
+                            <div class="input-combined" style="max-width: 300px;">
+                                <span class="inner-label">Return Window</span>
+                                <div class="divider"></div>
+                                <input type="number" asp-for="ReturnWindowDays">
+                            </div>
+                            <span style="font-weight: lighter; font-size: 0.95rem; margin-left: 5px;">Days after receiving the item</span>
+                        </div>
+
+                        <label class="section-title" style="margin-top: 10px;">Accepted Reasons for Free Return</label>
+                        <div class="grid-2">
+                            <label class="custom-check-card-free"><input type="checkbox" name="ReturnReasons" value="Change of Mind" class="custom-checkbox"><span class="check-label">Change of Mind / Wrong Size</span></label>
+                            <label class="custom-check-card-free"><input type="checkbox" name="ReturnReasons" value="Incomplete" class="custom-checkbox"><span class="check-label">Order arrived incomplete / Missing items</span></label>
+                            <label class="custom-check-card-free"><input type="checkbox" name="ReturnReasons" value="Damaged" class="custom-checkbox"><span class="check-label">Damaged / Defective</span></label>
+                            <label class="custom-check-card-free"><input type="checkbox" name="ReturnReasons" value="Not as described" class="custom-checkbox"><span class="check-label">Item does not match description/photos</span></label>
+                        </div>
+
+                        <label class="section-title" style="margin-top: 10px;">Item Condition Requirements</label>
+                        <div class="grid-3">
+                            <label class="custom-check-card-free"><input type="checkbox" name="ReturnConditionRequirements" value="Unused" class="custom-checkbox"><span class="check-label">Must be unused/unworn</span></label>
+                            <label class="custom-check-card-free"><input type="checkbox" name="ReturnConditionRequirements" value="Tags" class="custom-checkbox"><span class="check-label">Original tags must be attached</span></label>
+                            <label class="custom-check-card-free"><input type="checkbox" name="ReturnConditionRequirements" value="Packaging" class="custom-checkbox"><span class="check-label">Original packaging intact</span></label>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 25px; margin-top: 15px;">
+
+                        <div id="min-req-wrapper">
+                            <label class="section-title">Set Minimum Requirement</label>
+                            <div class="form-row" style="margin-top: 10px;">
+                                <label class="custom-check-card">
+                                    <input type="radio" asp-for="MinimumRequirementType" value="None" class="custom-radio" checked>
+                                    <span class="check-label">No Minimum Purchase Amount</span>
+                                </label>
+                                <label class="custom-check-card" style="margin-left: 20px;">
+                                    <input type="radio" asp-for="MinimumRequirementType" value="FixedAmount" class="custom-radio">
+                                    <span class="check-label">Minimum Purchase Amount</span>
+                                </label>
+                                <div class="input-combined" style="width: 150px; flex: none; height: 45px; margin-left: 10px;">
+                                    <span class="inner-label" style="color: #666; margin-right: 8px;">₱</span>
+                                    <input type="number" asp-for="MinimumPurchaseAmount" style="text-align: left;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-row" style="align-items: flex-start; gap: 70px;">
+                            <div>
+                                <label class="section-title">Status</label>
+                                <div class="form-row" style="margin-top: 10px;">
+                                    <label class="custom-check-card">
+                                        <input type="radio" asp-for="Status" value="Active" class="custom-radio" checked>
+                                        <span class="check-label">Active</span>
+                                    </label>
+                                    <label class="custom-check-card" style="margin-left: 20px;">
+                                        <input type="radio" asp-for="Status" value="Inactive" class="custom-radio">
+                                        <span class="check-label">Inactive</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div style="flex: 1;">
+                                <label class="section-title">Set Schedule</label>
+                                <div class="schedule-container">
+                                    <div class="schedule-pill">
+                                        <input type="date" name="StartDate" id="StartDate">
+                                        <span class="divider">|</span>
+                                        <input type="time" name="StartTime" id="StartTime">
+                                    </div>
+                                    <span style="font-weight: 600; color: #333;">-</span>
+                                    <div class="schedule-pill">
+                                        <input type="date" name="EndDate" id="EndDate">
+                                        <span class="divider">|</span>
+                                        <input type="time" name="EndTime" id="EndTime">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <div class="product-list-container">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                            <label class="custom-check-card" id="all-btn-wrapper" style="padding-left: 5px; margin-bottom: 0;">
+                                <input type="checkbox" id="check-all" class="custom-checkbox">
+                                <span class="check-label" style="font-weight: 600;">All</span>
+                            </label>
+                            <div style="position:relative;">
+                                <i class="fa-solid fa-magnifying-glass" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#999;font-size:0.8rem;"></i>
+                                <input type="text" id="product-search" placeholder="Search by name, ID, SKU..." autocomplete="off"
+                                    style="padding:7px 12px 7px 30px;border:1px solid #ddd;border-radius:8px;font-family:'Poppins',sans-serif;font-size:0.8rem;width:220px;outline:none;">
+                            </div>
+                        </div>
+
+                        @if (ViewBag.Products != null && ViewBag.Products.Count > 0)
+                        {
+                            @foreach (var product in ViewBag.Products)
+                            {
+                                <div class="product-wrapper"
+                                     data-name="@product.ProductName.ToLower()"
+                                     data-id="@product.ProductId">
+                                    <div class="product-item">
+                                        <label class="custom-check-card">
+                                            <input type="checkbox" name="SelectedProductIds" value="@product.ProductId" class="custom-checkbox parent-product-checkbox">
+                                        </label>
+                                        <img src="@(product.ImagePath ?? "/images/placeholder.png")" alt="@product.ProductName" class="product-img">
+                                        <div class="product-details">
+                                            <span class="product-title">@product.ProductName</span>
+                                            <span class="product-cat">@product.Category</span>
+                                            <div class="product-price-box">
+                                                <div class="price-current">₱@product.Price.ToString("F2")</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div style="padding: 20px; text-align: center; color: #666;">
+                                <p>No products available. <a href="/Dashboard">Add products first</a></p>
+                            </div>
+                        }
+
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; padding-top: 10px;">
+                    <button type="submit" class="btn-primary">Save Promotion</button>
+                </div>
+            </form>
+        </main>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- PHOTO UPLOAD LOGIC ---
+            const uploadTrigger = document.getElementById('trigger-upload');
+            const fileInput = document.getElementById('photo-upload-input');
+            const thumbnailContainer = document.getElementById('thumbnail-container');
+
+            let selectedFiles = [];
+
+            uploadTrigger.addEventListener('click', () => {
+                fileInput.click();
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                const newFiles = Array.from(e.target.files);
+
+                newFiles.forEach(file => {
+                    selectedFiles.push(file);
+
+                    const objectUrl = URL.createObjectURL(file);
+
+                    const thumbDiv = document.createElement('div');
+                    thumbDiv.className = 'uploaded-thumb';
+
+                    const img = document.createElement('img');
+                    img.src = objectUrl;
+
+                    const removeBtn = document.createElement('button');
+                    removeBtn.type = 'button';
+                    removeBtn.className = 'remove-btn';
+                    removeBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+
+                    removeBtn.addEventListener('click', () => {
+                        thumbDiv.remove();
+                        URL.revokeObjectURL(objectUrl);
+                        selectedFiles = selectedFiles.filter(f => f !== file);
+                        updateFileInput();
+                    });
+
+                    thumbDiv.appendChild(img);
+                    thumbDiv.appendChild(removeBtn);
+                    thumbnailContainer.appendChild(thumbDiv);
+                });
+
+                updateFileInput();
+            });
+
+            function updateFileInput() {
+                const dataTransfer = new DataTransfer();
+                selectedFiles.forEach(file => dataTransfer.items.add(file));
+                fileInput.files = dataTransfer.files;
+            }
+
+            // --- FORM LOGIC (BOGO, DYNAMIC SECTIONS, ETC) ---
+            const promoTriggers = document.querySelectorAll('.promo-trigger');
+            const bogoTriggers = document.querySelectorAll('.bogo-free-trigger');
+            const parentProductCheckboxes = document.querySelectorAll('.parent-product-checkbox');
+            const minReqWrapper = document.getElementById('min-req-wrapper');
+            const allBtnWrapper = document.getElementById('all-btn-wrapper');
+            const checkAllBtn = document.getElementById('check-all');
+
+            function switchDynamicSection(targetId) {
+                document.querySelectorAll('.dynamic-section').forEach(section => {
+                    section.classList.remove('active');
+                });
+
+                const targetSection = document.getElementById('section-' + targetId);
+                if (targetSection) {
+                    targetSection.classList.add('active');
+                }
+
+                if (targetId === 'bogo') {
+                    minReqWrapper.style.display = 'none';
+                } else {
+                    minReqWrapper.style.display = 'block';
+                }
+            }
+
+            function evaluateNestedBogoState() {
+                const isBogoActive = document.querySelector('#type-bogo').checked;
+                const isDiffProductActive = document.querySelector('input[value="DifferentProduct"]')?.checked;
+
+                if (isBogoActive && isDiffProductActive) {
+                    if (allBtnWrapper) allBtnWrapper.style.display = 'none';
+                } else {
+                    if (allBtnWrapper) allBtnWrapper.style.display = 'inline-flex';
+                }
+
+                document.querySelectorAll('.product-wrapper').forEach(wrapper => {
+                    const parentCheckbox = wrapper.querySelector('.parent-product-checkbox');
+                    const nestedSelector = wrapper.querySelector('.nested-free-item-selector');
+
+                    if (nestedSelector) {
+                        if (isBogoActive && isDiffProductActive && parentCheckbox && parentCheckbox.checked) {
+                            nestedSelector.classList.add('active');
+                        } else {
+                            nestedSelector.classList.remove('active');
+                        }
+                    }
+                });
+            }
+
+            if (checkAllBtn) {
+                checkAllBtn.addEventListener('change', (e) => {
+                    const isChecked = e.target.checked;
+                    parentProductCheckboxes.forEach(cb => {
+                        cb.checked = isChecked;
+                        cb.dispatchEvent(new Event('change'));
+                    });
+                });
+            }
+
+            promoTriggers.forEach(trigger => {
+                trigger.addEventListener('change', (e) => {
+                    if(e.target.checked) {
+                        switchDynamicSection(e.target.dataset.target);
+                        evaluateNestedBogoState();
+                    }
+                });
+            });
+
+            bogoTriggers.forEach(trigger => {
+                trigger.addEventListener('change', () => {
+                    evaluateNestedBogoState();
+                });
+            });
+
+            parentProductCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', () => {
+                    if (!checkbox.checked && checkAllBtn) {
+                        checkAllBtn.checked = false;
+                    }
+                    evaluateNestedBogoState();
+                });
+            });
+
+            document.querySelector('form').addEventListener('submit', function() {
+                const activeSection = document.querySelector('.dynamic-section.active');
+                document.querySelectorAll('.dynamic-section').forEach(section => {
+                    if (section !== activeSection) {
+                        section.querySelectorAll('input[type=number]').forEach(input => {
+                            input.disabled = true;
+                        });
+                    }
+                });
+            });
+
+            // Initialize main view states on load
+            const initialMainChecked = document.querySelector('.promo-trigger:checked');
+            if (initialMainChecked) {
+                switchDynamicSection(initialMainChecked.dataset.target);
+            }
+            evaluateNestedBogoState();
+
+            // --- UNTIL PROMOTION LAST / USAGE LIMIT TOGGLE ---
+            function syncUsageLimitToggle(isChecked) {
+                document.querySelectorAll('.until-last-cb').forEach(cb => cb.checked = isChecked);
+                document.querySelectorAll('.usage-limit-input').forEach(input => {
+                    input.disabled = isChecked;
+                    input.style.opacity = isChecked ? '0.4' : '1';
+                    input.style.cursor = isChecked ? 'not-allowed' : '';
+                });
+            }
+
+            document.querySelectorAll('.until-last-cb').forEach(cb => {
+                cb.addEventListener('change', (e) => syncUsageLimitToggle(e.target.checked));
+            });
+
+            syncUsageLimitToggle(document.querySelector('.until-last-cb')?.checked || false);
+
+            // --- PRODUCT SEARCH ---
+            // Calls /Promotions/SearchProducts?q=... via AJAX
+            // SP: sp_SearchSellerProducts joins Products + ProductVariants to search by name, ID, SKU
+            const searchInput = document.getElementById('product-search');
+            let searchTimeout = null;
+
+            searchInput?.addEventListener('input', () => {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    const q = searchInput.value.trim();
+                    if (q === '') {
+                        // Show all wrappers when search is cleared
+                        document.querySelectorAll('.product-wrapper').forEach(w => w.style.display = '');
+                        return;
+                    }
+                    fetch(`/Promotions/SearchProducts?q=${encodeURIComponent(q)}`)
+                        .then(r => r.json())
+                        .then(results => {
+                            const matchedIds = new Set(results.map(r => String(r.productId)));
+                            document.querySelectorAll('.product-wrapper').forEach(wrapper => {
+                                const id = wrapper.getAttribute('data-id');
+                                wrapper.style.display = matchedIds.has(id) ? '' : 'none';
+                            });
+                        });
+                }, 300);
+            });
+
+        });
+    </script>
+}
+
+

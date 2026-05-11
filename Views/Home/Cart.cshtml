@@ -1,0 +1,167 @@
+@{
+    ViewData["Title"] = "Cart";
+}
+
+<div class="bag-page">
+    <div class="container">
+
+        <div class="bag-header">
+            <h1 class="bag-title">Your Cart</h1>
+            <span class="bag-count" id="bag-count"></span>
+        </div>
+
+        <div class="bag-layout" id="bag-layout">
+            <!-- Items column -->
+            <div class="bag-items-col">
+                <div id="cart-lines"></div>
+            </div>
+
+            <!-- Summary column -->
+            <div class="bag-summary" id="bag-summary" style="display:none;">
+                <div class="summary-row">
+                    <span>Subtotal (<span id="bag-item-count">0</span> item<span id="bag-item-plural">s</span>)</span>
+                    <span id="bag-subtotal">₱0.00</span>
+                </div>
+                <div class="summary-row">
+                    <span>Shipping</span>
+                    <span class="summary-free">Free</span>
+                </div>
+                <div class="summary-divider"></div>
+                <div class="summary-row summary-total">
+                    <span>Total</span>
+                    <span id="bag-total">₱0.00</span>
+                </div>
+                <button class="bag-checkout-btn" onclick="window.location.href='/Home/Checkout'">Proceed to Checkout</button>
+                <div class="bag-secure-note">🔒 Secure checkout &bull; SSL encrypted</div>
+                <a href="/Home/Shop" class="bag-continue-link">Continue Shopping</a>
+            </div>
+        </div>
+
+        <div id="bag-empty" style="display:none;" class="bag-empty">
+            <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="9" cy="21" r="1"></circle>
+                <circle cx="20" cy="21" r="1"></circle>
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+            </svg>
+            <h2>Your cart is empty</h2>
+            <p>Add some items from the shop to get started.</p>
+            <a href="/Home/Shop" class="bag-shop-btn">Browse Shop</a>
+        </div>
+
+        <!-- You May Also Like -->
+        <div class="bag-ymal" id="bag-ymal" style="display:none;">
+            <h2 class="bag-ymal-title">You May Also Like</h2>
+            <div class="bag-ymal-grid" id="bag-ymal-grid"></div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+<script>
+document.addEventListener('DOMContentLoaded', loadCartPage);
+
+async function loadCartPage() {
+    try {
+        const res = await fetch('/api/cart');
+        const items = await res.json();
+        renderCartLines(items);
+        loadBagYmal();
+    } catch(e) {
+        document.getElementById('cart-lines').innerHTML = '<p style="opacity:.5">Could not load cart.</p>';
+    }
+}
+
+function renderCartLines(items) {
+    const countEl = document.getElementById('bag-count');
+    const emptyEl = document.getElementById('bag-empty');
+    const summaryEl = document.getElementById('bag-summary');
+    const layoutEl = document.getElementById('bag-layout');
+
+    if (!items || items.length === 0) {
+        layoutEl.style.display = 'none';
+        emptyEl.style.display = 'flex';
+        countEl.textContent = '';
+        return;
+    }
+
+    layoutEl.style.display = 'grid';
+    emptyEl.style.display = 'none';
+    summaryEl.style.display = 'block';
+    countEl.textContent = `(${items.length} item${items.length !== 1 ? 's' : ''})`;
+
+    document.getElementById('cart-lines').innerHTML = items.map(item => `
+        <div class="bag-line" id="line-${item.product.id}">
+            <img class="bag-line-img" src="${item.product.image}" alt="${item.product.name}"
+                onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27200%27 height=%27200%27%3E%3Crect width=%27200%27 height=%27200%27 fill=%27%23f4f4f4%27/%3E%3C/svg%3E'">
+            <div class="bag-line-info">
+                <div class="bag-line-name">${item.product.name}</div>
+                <div class="bag-line-meta">${item.product.brand} &nbsp;·&nbsp; Size: ${item.cartItem.size}</div>
+                <div class="bag-line-price">${formatPeso(item.product.price)}</div>
+            </div>
+            <div class="bag-line-qty">
+                <button class="bag-qty-btn" onclick="bagUpdateQty(${item.product.id}, ${item.cartItem.quantity - 1})">−</button>
+                <span class="bag-qty-val">${item.cartItem.quantity}</span>
+                <button class="bag-qty-btn" onclick="bagUpdateQty(${item.product.id}, ${item.cartItem.quantity + 1})">+</button>
+            </div>
+            <div class="bag-line-total">${formatPeso(item.product.price * item.cartItem.quantity)}</div>
+            <button class="bag-remove-btn" onclick="bagRemove(${item.product.id})" title="Remove">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+    `).join('');
+
+    const totalQty = items.reduce((s, i) => s + i.cartItem.quantity, 0);
+    document.getElementById('bag-item-count').textContent = totalQty;
+    document.getElementById('bag-item-plural').textContent = totalQty === 1 ? '' : 's';
+    const subtotal = items.reduce((s, i) => s + i.product.price * i.cartItem.quantity, 0);
+    document.getElementById('bag-subtotal').textContent = formatPeso(subtotal);
+    document.getElementById('bag-total').textContent = formatPeso(subtotal);
+}
+
+async function bagUpdateQty(productId, newQty) {
+    if (newQty <= 0) { bagRemove(productId); return; }
+    await fetch(`/api/cart/${productId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quantity: newQty })
+    });
+    loadCartPage();
+    updateCartCount();
+}
+
+async function bagRemove(productId) {
+    await fetch(`/api/cart/${productId}`, { method: 'DELETE' });
+    loadCartPage();
+    updateCartCount();
+    toast.success('Removed from cart');
+}
+
+async function loadBagYmal() {
+    try {
+        const res = await fetch('/api/products');
+        const all = await res.json();
+        const picks = all.sort(() => Math.random() - 0.5).slice(0, 4);
+        const ymal = document.getElementById('bag-ymal');
+        const grid = document.getElementById('bag-ymal-grid');
+        ymal.style.display = 'block';
+        grid.innerHTML = picks.map(p => `
+            <div class="related-card" onclick="window.location.href='/Home/Product?id=${p.id}'">
+                <div class="related-card-image">
+                    <img src="${p.image}" alt="${p.name}" loading="lazy"
+                        onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%27300%27 height=%27300%27%3E%3Crect width=%27300%27 height=%27300%27 fill=%27%23fafafa%27/%3E%3C/svg%3E'">
+                    <div class="related-card-overlay">View</div>
+                </div>
+                <div class="related-card-info">
+                    <div class="related-card-name">${p.name}</div>
+                    <div class="related-card-price">${formatPeso(p.price)}</div>
+                </div>
+            </div>
+        `).join('');
+    } catch(e) {}
+}
+</script>
+}

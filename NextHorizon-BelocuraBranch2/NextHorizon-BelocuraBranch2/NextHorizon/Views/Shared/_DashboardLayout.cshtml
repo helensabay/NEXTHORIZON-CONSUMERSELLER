@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - NextHorizon</title>
+
+    <!-- FONT & ICONS -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="~/css/global-help-center.css" asp-append-version="true" />
+    <style>
+        /* ===== RESET & BASE ===== */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Poppins', sans-serif; background-color: #f5f7fa; color: #1a1a1a; font-size: 16px; }
+
+        /* ===== LAYOUT ===== */
+        .dashboard-container { display: flex; min-height: 100vh; }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            width: 260px;
+            background-color: #fff; /* changed to white */
+            color: #1a1a1a; /* black text */
+            padding: 20px 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            transition: all 0.3s ease;
+            font-size: 16px;
+            font-weight: 400;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 0;
+            margin-bottom: 40px;
+            font-size: 24px;
+            font-weight: 700;
+        }
+        .logo i { font-size: 28px; }
+        .seller-logo-img { height: 30px; width: auto; display: block; object-fit: contain; }
+        .sidebar-nav ul { list-style: none; }
+        .sidebar-nav li { margin-bottom: 5px; }
+
+        /* Sidebar links */
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px 25px;
+            color: #1a1a1a; /* black text */
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            font-size: 16px;
+            border-radius: 8px;
+        }
+        .sidebar-nav a i { width: 20px; text-align: center; }
+
+        /* Hover effect: invert colors */
+        .sidebar-nav a:hover,
+        .sidebar-nav li.active a {
+            background-color: #1a1a1a; /* black background on hover/active */
+            color: #fff; /* white text and icons */
+        }
+
+        /* ===== MAIN CONTENT ===== */
+        .main-content { flex: 1; margin-left: 260px; background-color: #f5f7fa; margin-top: 80px; width: 100%; overflow: hidden; }
+
+        /* ===== TOP HEADER ===== */
+        .top-header {
+            background-color: white;
+            padding: 20px 40px;
+            display: flex;
+            width: calc(100% - 260px);
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e1e4e8;
+            position: fixed;
+            top: 0;
+            left: 260px;
+            right: 0;
+            z-index: 50;
+        }
+        .section-title {
+            font-size: 22px;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .icon-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: #666;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 8px;
+            transition: all 0.3s;
+            color: black;
+        }
+        .icon-btn:hover { background-color: #f0f0f0; color: #1a1a1a; }
+        .notif-wrap { position: relative; }
+        .notif-btn {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .notif-dot {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: #dc2626;
+            display: none;
+        }
+        .notif-dot.active { display: block; }
+        .notif-dropdown {
+            position: absolute;
+            top: calc(100% + 12px);
+            right: 0;
+            width: 380px;
+            max-width: min(380px, calc(100vw - 40px));
+            background: #fff;
+            border: 1px solid #d9d9d9;
+            border-radius: 18px;
+            box-shadow: 0 18px 36px rgba(0,0,0,0.10);
+            display: none;
+            overflow: hidden;
+            z-index: 100;
+        }
+        .notif-dropdown.open { display: block; }
+        .notif-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 18px;
+            border-bottom: 1px solid #ececec;
+        }
+        .notif-header span {
+            font-size: 15px;
+            font-weight: 700;
+            color: #111;
+        }
+        .notif-clear-btn {
+            border: 1px solid #111;
+            background: #fff;
+            color: #111;
+            padding: 7px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .notif-clear-btn:hover {
+            background: #111;
+            color: #fff;
+        }
+        .notif-list {
+            list-style: none;
+            max-height: 420px;
+            overflow-y: auto;
+        }
+        .notif-item {
+            display: block;
+            text-decoration: none;
+            color: inherit;
+            padding: 14px 18px;
+            border-bottom: 1px solid #f0f0f0;
+            background: #fff;
+            transition: background-color .2s ease;
+        }
+        .notif-item:last-child { border-bottom: none; }
+        .notif-item:hover { background: #f7f7f7; }
+        .notif-item.unread { background: #f3f3f3; }
+        .notif-item-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+        .notif-category {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            color: #111;
+        }
+        .notif-time {
+            font-size: 11px;
+            color: #777;
+            white-space: nowrap;
+        }
+        .notif-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #111;
+            margin-bottom: 4px;
+        }
+        .notif-text {
+            font-size: 13px;
+            color: #333;
+            line-height: 1.5;
+        }
+        .notif-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-top: 10px;
+        }
+        .notif-order,
+        .notif-link {
+            font-size: 11px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+        }
+        .notif-empty {
+            padding: 26px 18px;
+            text-align: center;
+            color: #555;
+            font-size: 13px;
+        }
+
+        .seller-dropdown {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background-color: #f5f7fa;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .seller-dropdown i { font-size: 12px; }
+
+        /* ===== DASHBOARD CONTENT ===== */
+        .dashboard-content { padding: 40px; font-family: 'Poppins', sans-serif; }
+
+        /* ===== CARDS / BOXES STYLE ===== */
+        .card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+        }
+
+        /* ===== TABLE ===== */
+        table { width: 100%; border-collapse: separate; border-spacing: 0; font-family: 'Poppins', sans-serif; }
+        thead { background: #f1f1f1; }
+        th, td { padding: 14px 16px; text-align: left; font-size: 14px; }
+        th { font-weight: 600; }
+        tbody tr:hover { background: #fafafa; }
+
+        /* ===== BADGES & BUTTONS ===== */
+        .badge { width: 20px !important; height: 20px !important; min-width: 20px !important; padding: 0 !important; background: #1a1a1a; color: #fff; border-radius: 50% !important; font-size: 11px; font-weight: 600; display: inline-flex !important; align-items: center; justify-content: center; flex-shrink: 0; }
+        .text-danger { color: #dc3545; text-decoration: none; font-size: 13px; }
+        .text-danger:hover { text-decoration: underline; }
+        .set-default { color: #1a1a1a; text-decoration: none; font-size: 13px; font-weight: 500; }
+        .set-default:hover { text-decoration: underline; }
+        .add-btn {
+            border: 1px solid #1a1a1a;
+            background: #fff;
+            padding: 10px 18px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .add-btn:hover { background: #1a1a1a; color: #fff; }
+
+        /* ===== PAGE ACTIONS ===== */
+        .page-actions { margin-bottom: 20px; display: flex; gap: 12px; }
+        .link-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: 1px solid #1a1a1a;
+            color: #1a1a1a;
+            text-decoration: none;
+            padding: 10px 16px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 600;
+            background: #fff;
+            transition: all 0.3s ease;
+        }
+        .link-btn:hover { background: #1a1a1a; color: #fff; }
+
+        /* ===== RESPONSIVE ===== */
+        @@media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); transition: transform 0.3s; }
+            .main-content { margin-left: 0; }
+            .dashboard-content { padding: 20px; }
+        }
+
+        /* PROFILE DROPDOWN */
+        .profile-dropdown{
+            position: relative;
+            color: black;
+        }
+
+        .profile-menu{
+            position: absolute;
+            right: 0;
+            top: 45px;
+            background: white;
+            border-radius: 10px;
+            width: 180px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .profile-menu a{
+            padding: 12px 16px;
+            text-decoration: none;
+            color: #1a1a1a;
+            font-size: 14px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .profile-menu form {
+            margin: 0;
+        }
+
+        .profile-menu .logout-link {
+            width: 100%;
+            border: none;
+            background: transparent;
+            padding: 12px 16px;
+            text-decoration: none;
+            color: #1a1a1a;
+            font-size: 14px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            cursor: pointer;
+            text-align: left;
+            font-family: inherit;
+        }
+
+        .profile-menu a:hover{
+            background:#f5f5f5;
+        }
+
+        .profile-menu .logout-link:hover {
+            background:#f5f5f5;
+        }
+
+        .profile-name{
+            padding: 12px 16px;
+            font-weight:600;
+            border-bottom:1px solid #eee;
+        }
+
+        .profile-dropdown{
+            position: relative;
+            margin-right: 30px;
+        }
+
+        /* Seller messenger route-specific layout */
+        body.seller-messenger-layout {
+            background-color: #ffffff;
+            overflow: hidden;
+        }
+
+        .seller-messenger-main {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            min-height: 0;
+            margin-top: 0;
+            background-color: #ffffff;
+            overflow: hidden;
+        }
+
+        .seller-messenger-topbar {
+            width: auto;
+            position: static;
+            top: auto;
+            flex-shrink: 0;
+        }
+
+        .seller-messenger-content {
+            flex: 1;
+            min-height: 0;
+            padding: 0;
+            overflow: hidden;
+            background: #ffffff;
+        }
+
+        @@media (max-width: 768px) {
+            body.seller-messenger-layout {
+                overflow: auto;
+            }
+
+            .seller-messenger-main {
+                height: auto;
+                min-height: calc(100vh - 80px);
+            }
+        }
+    </style>
+
+    @RenderSection("Styles", required: false)
+</head>
+@{
+    var currentAction = (ViewContext.RouteData.Values["action"]?.ToString() ?? string.Empty).ToLowerInvariant();
+    var sellerName = ViewData["SellerName"]?.ToString() ?? "Seller";
+    var pageHeading = ViewData["DashboardHeading"]?.ToString() ?? ViewData["Title"]?.ToString() ?? "Dashboard";
+    var isMessenger = currentAction == "sellermessenger";
+    var isDashboard = currentAction == "sellerdashboard";
+    var isOrders = currentAction == "ordermanagement" || currentAction == "orderdetails";
+    var isFinance =
+    currentAction == "finance"
+    || currentAction == "transactionhistory"
+    || currentAction == "payoutaccounts"
+    || currentAction == "addpayoutaccount"
+    || currentAction == "withdraw"
+    || currentAction == "pendingpayout"
+    || currentAction == "mybalance";
+    var isAnalytics = currentAction == "analytics";
+    var isHelpCenter = currentAction == "helpcenter";
+    var currentController = (ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty).ToLowerInvariant();
+    var isProducts = currentController == "seller" && (currentAction == "index" || currentAction == "createproduct" || currentAction == "viewproduct" || currentAction == "viewratings" || currentAction == "sizeguide" || currentAction == "viewsizeguide");
+}
+<body class="@(isMessenger ? "seller-messenger-layout" : string.Empty)">
+
+    <div class="dashboard-container @(isMessenger ? "seller-messenger-shell" : string.Empty)">
+        <aside class="sidebar @(isMessenger ? "seller-messenger-sidebar" : string.Empty)">
+            <div class="logo">
+                <img src="/images/new-logo.png" alt="Horizon" class="seller-logo-img" />
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="@(isDashboard ? "active" : string.Empty)">
+                        <a asp-controller="Dashboard" asp-action="SellerDashboard"><i class="fas fa-home"></i> Dashboard</a>
+                    </li>
+                    <li class="@(isOrders ? "active" : string.Empty)">
+                        <a asp-controller="Dashboard" asp-action="OrderManagement"><i class="fas fa-shopping-bag"></i> Orders</a>
+                    </li>
+                    <li class="@(isProducts ? "active" : string.Empty)">
+                        <a asp-controller="Seller" asp-action="Index"><i class="fas fa-box"></i> Products</a>
+                    </li>
+                    <li class="@(isMessenger ? "active" : string.Empty)">
+                        <a asp-controller="Seller" asp-action="SellerMessenger"><i class="fas fa-envelope"></i> Message</a>
+                    </li>
+                    <li class="@(isFinance ? "active" : string.Empty)">
+                        <a asp-controller="Dashboard" asp-action="Finance"><i class="fas fa-wallet"></i> Finances</a>
+                    </li>
+                    <li class="@(isAnalytics ? "active" : string.Empty)">
+                        <a asp-controller="Dashboard" asp-action="Analytics"><i class="fas fa-chart-bar"></i> Analytics</a>
+                    </li>
+                    <li class="@(isHelpCenter ? "active" : string.Empty)">
+                        <a asp-controller="Dashboard" asp-action="HelpCenter"><i class="fas fa-circle-question"></i> Help Center</a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <main class="main-content  @(isMessenger ? "seller-messenger-main" : string.Empty)">
+            <header class="top-header order-header @(isMessenger ? "seller-messenger-topbar" : string.Empty)">
+                <h2 class="section-title">@pageHeading</h2>
+                <div class="header-right">
+                    <div class="notif-wrap" id="notif-wrap">
+                        <button class="icon-btn notif-btn" id="notif-btn" type="button" aria-label="Notifications" onclick="toggleSellerNotifDropdown()">
+                            <i class="fas fa-bell"></i>
+                            <span class="notif-dot" id="notif-dot"></span>
+                        </button>
+                        <div class="notif-dropdown" id="notif-dropdown">
+                            <div class="notif-header">
+                                <span>Notifications</span>
+                                <button class="notif-clear-btn" type="button" onclick="markAllSellerNotificationsRead()">Mark all read</button>
+                            </div>
+                            <ul class="notif-list" id="notif-list">
+                                <li class="notif-empty">Loading notifications...</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="profile-dropdown">
+                        <button class="icon-btn profile-btn" onclick="toggleProfileMenu()">
+                            <i class="fas fa-user-circle"></i>
+                        </button>
+
+                        <div class="profile-menu" id="profileMenu">
+                            <div class="profile-name">@sellerName</div>
+                            <a asp-controller="Dashboard" asp-action="AccountSettings">
+                                <i class="fas fa-cog"></i> Settings
+                            </a>
+                            <form asp-controller="Account" asp-action="Logout" method="post">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="logout-link">
+                                    <i class="fas fa-sign-out-alt"></i> Logout
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="dashboard-content @(isMessenger ? "seller-messenger-content" : string.Empty)">
+                @RenderBody()
+            </div>
+        </main>
+    </div>
+
+    @if (!isHelpCenter)
+    {
+        <partial name="_GlobalHelpCenterLauncher" />
+    }
+
+    @await RenderSectionAsync("Scripts", required: false)
+    <script src="~/js/global-help-center.js" asp-append-version="true"></script>
+    <script>
+        let sellerNotificationsLoaded = false;
+
+        function toggleProfileMenu() {
+            var menu = document.getElementById("profileMenu");
+            menu.style.display = menu.style.display === "flex" ? "none" : "flex";
+        }
+
+        function toggleSellerNotifDropdown() {
+            const dropdown = document.getElementById("notif-dropdown");
+            if (!dropdown) return;
+
+            dropdown.classList.toggle("open");
+
+            if (dropdown.classList.contains("open") && !sellerNotificationsLoaded) {
+                loadSellerNotifications();
+            }
+        }
+
+        function formatSellerNotifTime(value) {
+            const createdAt = value ? new Date(value) : new Date();
+            const deltaMs = Date.now() - createdAt.getTime();
+            const minutes = Math.floor(deltaMs / 60000);
+            const hours = Math.floor(deltaMs / 3600000);
+            const days = Math.floor(deltaMs / 86400000);
+
+            if (minutes < 1) return "Just now";
+            if (hours < 1) return `${minutes}m ago`;
+            if (days < 1) return `${hours}h ago`;
+            if (days < 7) return `${days}d ago`;
+            return createdAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+
+        function titleCaseWords(value) {
+            return String(value || "")
+                .split(/\s+/)
+                .filter(Boolean)
+                .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+                .join(" ");
+        }
+
+        function prettifyNotificationCode(value) {
+            return String(value || "")
+                .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+                .replace(/[_-]+/g, " ")
+                .replace(/\s+/g, " ")
+                .trim();
+        }
+
+        function normalizeSellerNotificationMessage(value) {
+            const text = String(value || "").trim();
+            if (!text) return "";
+
+            return text
+                .replace(/\?(\d[\d,]*\.\d{2})/g, "\u20B1$1")
+                .replace(/\bPHP\s+(\d[\d,]*\.\d{2})\b/g, "\u20B1$1")
+                .replace(/\s+/g, " ")
+                .replace(/\bno image attach\b/gi, "No image attached")
+                .trim();
+        }
+
+        function getNotificationTitle(item) {
+            const rawTitle = String(item?.title || "").trim();
+            const message = normalizeSellerNotificationMessage(item?.message || "");
+            const prettyTitle = prettifyNotificationCode(rawTitle);
+
+            if (prettyTitle && !/^notification$/i.test(prettyTitle)) {
+                return titleCaseWords(prettyTitle);
+            }
+
+            if (/approved and is now live/i.test(message)) {
+                return "Product Approved";
+            }
+
+            if (/rejected\./i.test(message)) {
+                return "Product Rejected";
+            }
+
+            if (/pending approval/i.test(message)) {
+                return "Product Submitted";
+            }
+
+            const category = String(item?.category || "").toLowerCase();
+            switch (category) {
+                case "productapproval":
+                case "product_approval":
+                    return "Product Approved";
+                case "productrejection":
+                case "product_rejection":
+                    return "Product Rejected";
+                case "order": return "Order Update";
+                case "refund": return "Refund Update";
+                case "return": return "Return Update";
+                case "cancellation": return "Cancellation Update";
+                case "message": return "New Message";
+                case "payout": return "Payout Update";
+                case "inventory": return "Inventory Alert";
+                case "system": return "System Update";
+                default: return "Notification";
+            }
+        }
+
+        function getNotificationCategoryLabel(item) {
+            const title = getNotificationTitle(item);
+            if (/^product /i.test(title)) {
+                return "Product";
+            }
+
+            const category = String(item?.category || "").trim().toLowerCase();
+            switch (category) {
+                case "productapproval":
+                case "productrejection":
+                case "product_approval":
+                case "product_rejection":
+                    return "Product";
+                case "order":
+                    return "Order";
+                case "refund":
+                    return "Refund";
+                case "return":
+                    return "Return";
+                case "cancellation":
+                    return "Cancellation";
+                case "message":
+                    return "Message";
+                case "payout":
+                    return "Payout";
+                case "inventory":
+                    return "Inventory";
+                case "system":
+                    return "System";
+                default:
+                    return "Notification";
+            }
+        }
+
+        function renderSellerNotifications(items) {
+            const list = document.getElementById("notif-list");
+            const dot = document.getElementById("notif-dot");
+            if (!list || !dot) return;
+
+            if (!items || items.length === 0) {
+                list.innerHTML = '<li class="notif-empty">No notifications yet.</li>';
+                dot.classList.remove("active");
+                return;
+            }
+
+            list.innerHTML = items.map(item => {
+                const title = getNotificationTitle(item);
+                const message = normalizeSellerNotificationMessage(item.message || "");
+                const href = item.linkTarget || "#";
+                const unreadClass = item.isRead ? "" : " unread";
+                const orderMeta = item.orderId ? `<span class="notif-order">Order #${item.orderId}</span>` : "";
+                const linkMeta = item.linkType ? `<span class="notif-link">Open ${String(item.linkType).replace(/_/g, " ")}</span>` : "";
+                const category = getNotificationCategoryLabel(item);
+
+                return `
+                    <li>
+                        <a class="notif-item${unreadClass}" href="${href}" data-notification-id="${item.notificationId}" onclick="handleSellerNotificationClick(event, this)">
+                            <div class="notif-item-head">
+                                <span class="notif-category">${category}</span>
+                                <span class="notif-time">${formatSellerNotifTime(item.createdAt)}</span>
+                            </div>
+                            <div class="notif-title">${title}</div>
+                            <div class="notif-text">${message}</div>
+                            <div class="notif-footer">
+                                ${orderMeta || '<span></span>'}
+                                ${linkMeta}
+                            </div>
+                        </a>
+                    </li>
+                `;
+            }).join("");
+
+            const hasUnread = items.some(item => !item.isRead);
+            dot.classList.toggle("active", hasUnread);
+        }
+
+        async function loadSellerNotifications() {
+            const list = document.getElementById("notif-list");
+            if (list) {
+                list.innerHTML = '<li class="notif-empty">Loading notifications...</li>';
+            }
+
+            try {
+                const response = await fetch('/api/seller/notifications?take=12', {
+                    credentials: 'same-origin'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Failed to load notifications (${response.status})`);
+                }
+
+                const items = await response.json();
+                sellerNotificationsLoaded = true;
+                renderSellerNotifications(items);
+            } catch (error) {
+                if (list) {
+                    list.innerHTML = '<li class="notif-empty">Unable to load notifications.</li>';
+                }
+            }
+        }
+
+        async function refreshSellerNotificationCount() {
+            const dot = document.getElementById("notif-dot");
+            if (!dot) return;
+
+            try {
+                const response = await fetch('/api/seller/notifications/unread-count', {
+                    credentials: 'same-origin'
+                });
+                if (!response.ok) return;
+
+                const data = await response.json();
+                dot.classList.toggle("active", Number(data.unreadCount || 0) > 0);
+            } catch (error) {
+            }
+        }
+
+        async function markAllSellerNotificationsRead() {
+            try {
+                const response = await fetch('/api/seller/notifications/read-all', {
+                    method: 'POST',
+                    credentials: 'same-origin'
+                });
+                if (!response.ok) {
+                    throw new Error('Failed to mark notifications as read');
+                }
+                await loadSellerNotifications();
+                await refreshSellerNotificationCount();
+            } catch (error) {
+            }
+        }
+
+        async function handleSellerNotificationClick(event, element) {
+            const id = element?.dataset?.notificationId;
+            const href = element?.getAttribute('href') || '#';
+
+            if (id) {
+                try {
+                    await fetch(`/api/seller/notifications/${id}/read`, {
+                        method: 'POST',
+                        credentials: 'same-origin'
+                    });
+                } catch (error) {
+                }
+            }
+
+            if (href && href !== '#') {
+                window.location.href = href;
+            }
+
+            event.preventDefault();
+        }
+
+        window.onclick = function(event) {
+            if (!event.target.closest('.profile-dropdown')) {
+                var menu = document.getElementById("profileMenu");
+                if(menu) menu.style.display = "none";
+            }
+
+            if (!event.target.closest('#notif-wrap')) {
+                const dropdown = document.getElementById("notif-dropdown");
+                if (dropdown) {
+                    dropdown.classList.remove("open");
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            refreshSellerNotificationCount();
+        });
+        </script>
+<script src="~/js/modal.js"></script>
+@section Styles{
+    <link rel="stylesheet" href="~/css/modal.css" />
+    <link rel="stylesheet" href="~/css/payoutAccounts.css" />
+}
+
+</body>
+</html>
+
+
+
+
+
+

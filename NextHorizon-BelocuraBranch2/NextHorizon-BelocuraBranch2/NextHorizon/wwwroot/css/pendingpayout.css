@@ -1,0 +1,109 @@
+/* ===== Section Layout ===== */
+.section {
+    margin-bottom: 30px;
+}
+
+.section-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1a1a2e;
+    margin-bottom: 20px;
+}
+
+/* ===== Table Wrapper ===== */
+.table-container {
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border: 2px solid #000;
+}
+
+/* ===== Orders Table ===== */
+.orders-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.orders-table th,
+.orders-table td {
+    padding: 14px 16px;
+    text-align: left;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 14px;
+}
+
+/* Table header */
+.orders-table thead th {
+    background-color: #000; /* black header */
+    color: #fff;            /* white text */
+    font-weight: 600;
+    border-bottom: 2px solid #000;
+    text-transform: uppercase;
+}
+
+/* Table body */
+.orders-table tbody td {
+    background-color: #fff;
+    color: #000;
+}
+
+/* Row hover */
+.orders-table tr:hover {
+    background-color: #f0f0f0;
+}
+
+/* Status badge */
+.badge {
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.badge.status {
+    background-color: #f0f0f0;
+    color: #444;
+}
+
+.badge.status.process {
+    background-color: #facc15; /* yellow */
+    color: #1a1a1a;            /* black text */
+}
+
+.badge.status.complete {
+    background-color: #27ae60; /* green */
+    color: #fff;               /* white text */
+}
+
+/* Back button */
+.page-actions {
+    margin-bottom: 16px;
+}
+
+/* Minimalist Back Button (like My Balance) */
+.link-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #1a1a1a;         /* dark text */
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    background: transparent; /* transparent background */
+    border: none;            /* no border */
+    padding: 0;              /* no extra padding */
+    transition: color 0.2s ease;
+}
+
+.link-btn i {
+    font-size: 14px;
+}
+
+.link-btn:hover {
+    color: white;            /* subtle hover effect */
+}
+.orders-table tbody tr.selected {
+    background-color: #e0f7fa; /* light blue highlight */
+}

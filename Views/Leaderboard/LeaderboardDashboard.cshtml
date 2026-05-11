@@ -1,0 +1,338 @@
+@model MyAspNetApp.Models.ViewModels.LeaderboardPageViewModel
+@{
+    ViewData["Title"] = "Leaderboard Dashboard";
+}
+
+@section Styles {
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+    --gray-50:#FAFAFA; --gray-100:#F5F5F3; --gray-200:#E8E8E6;
+    --gray-400:#999; --gray-600:#555; --border:rgba(0,0,0,0.08);
+    --font-display:'Bebas Neue',sans-serif; --font-body:'DM Sans',sans-serif;
+    --radius-md:12px; --radius-lg:18px;
+}
+html,body{font-family:var(--font-body);background:#fff;color:#000;overflow-x:hidden;}
+
+.hero{position:relative;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px 80px;background:#fff;overflow:hidden;}
+.hero::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(0,0,0,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,0.04) 1px,transparent 1px);background-size:60px 60px;mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,black,transparent);pointer-events:none;}
+.season-label{font-size:11px;letter-spacing:4px;color:var(--gray-400);text-transform:uppercase;margin-bottom:16px;opacity:.8;position:relative;z-index:1;}
+.hero-title{font-family:var(--font-display);font-size:clamp(72px,14vw,140px);line-height:.88;letter-spacing:4px;text-align:center;color:#000;margin-bottom:12px;position:relative;z-index:1;}
+.hero-sub{font-size:11px;letter-spacing:6px;color:var(--gray-400);text-transform:uppercase;margin-bottom:56px;position:relative;z-index:1;}
+
+.podium-wrap{display:flex;align-items:flex-end;gap:12px;position:relative;z-index:2;margin-bottom:44px;}
+.podium-card{display:flex;flex-direction:column;align-items:center;position:relative;}
+.p-avatar-ring{position:relative;margin-bottom:-1px;z-index:2;}
+.p-avatar{width:88px;height:88px;border-radius:50%;object-fit:cover;display:block;border:3px solid #fff;box-shadow:0 4px 16px rgba(0,0,0,.12);}
+.p-avatar.first{width:108px;height:108px;}
+.p-avatar-empty{width:88px;height:88px;border-radius:50%;display:block;border:3px solid #fff;box-shadow:0 4px 16px rgba(0,0,0,.12);background:var(--gray-100);}
+.p-avatar-empty.first{width:108px;height:108px;}
+.p-crown{position:absolute;top:-26px;left:50%;transform:translateX(-50%);font-size:20px;}
+.p-medal{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;position:absolute;top:-12px;right:-6px;border:2px solid #fff;z-index:3;box-shadow:0 2px 8px rgba(0,0,0,.15);}
+.p-medal.gold{background:#000;color:#fff;}
+.p-medal.silver{background:#555;color:#fff;}
+.p-medal.bronze{background:#888;color:#fff;}
+.p-pillar{width:130px;border-radius:12px 12px 0 0;display:flex;flex-direction:column;align-items:center;padding:16px 8px 20px;position:relative;}
+.p-pillar.first{height:200px;width:150px;background:#000;}
+.p-pillar.second{height:158px;background:var(--gray-200);border:1px solid rgba(0,0,0,.1);}
+.p-pillar.third{height:128px;background:var(--gray-100);border:1px solid rgba(0,0,0,.08);}
+.p-rank{font-family:var(--font-display);font-size:40px;line-height:1;margin-bottom:4px;}
+.p-pillar.first .p-rank{color:#fff;} .p-pillar.second .p-rank,.p-pillar.third .p-rank{color:#000;}
+.p-name{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;text-align:center;line-height:1.3;margin-bottom:4px;}
+.p-pillar.first .p-name{color:rgba(255,255,255,.85);} .p-pillar.second .p-name,.p-pillar.third .p-name{color:#000;}
+.p-stat{font-size:10px;}
+.p-pillar.first .p-stat{color:rgba(255,255,255,.5);} .p-pillar.second .p-stat,.p-pillar.third .p-stat{color:var(--gray-400);}
+
+.toggle-row{display:flex;gap:6px;background:var(--gray-100);border:1px solid var(--border);border-radius:100px;padding:4px;position:relative;z-index:2;}
+.toggle-btn{padding:8px 24px;border-radius:100px;font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;cursor:pointer;border:none;transition:all .2s;color:var(--gray-600);background:transparent;font-family:var(--font-body);}
+.toggle-btn.active{background:#000;color:#fff;}
+
+.lb-section{background:#fff;padding:64px 0 0;border-top:1px solid var(--border);}
+.lb-header{padding:0 40px 36px;display:flex;justify-content:space-between;align-items:flex-end;}
+.lb-header-left{display:flex;flex-direction:column;gap:4px;}
+.lb-eyebrow{font-size:10px;letter-spacing:5px;color:var(--gray-400);text-transform:uppercase;}
+.lb-title-row{display:flex;align-items:baseline;gap:16px;}
+.lb-title{font-family:var(--font-display);font-size:clamp(40px,5vw,64px);letter-spacing:3px;color:#000;line-height:1;}
+.lb-view-link{font-size:10px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--gray-600);text-decoration:none;border-bottom:1px solid rgba(0,0,0,.3);padding-bottom:1px;transition:color .2s;}
+.lb-view-link:hover{color:#000;}
+.lb-nav-btns{display:flex;gap:8px;}
+.lb-nav{width:42px;height:42px;border-radius:50%;border:1.5px solid #000;background:#fff;color:#000;cursor:pointer;display:grid;place-items:center;font-size:16px;transition:all .2s;}
+.lb-nav:hover{background:#000;color:#fff;}
+
+.scroll-track{display:flex;gap:20px;padding:0 40px 52px;overflow-x:auto;scroll-behavior:smooth;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+.scroll-track::-webkit-scrollbar{display:none;}
+
+.lb-card{flex:0 0 290px;position:relative;cursor:pointer;border-radius:var(--radius-lg);overflow:hidden;border:1px solid var(--border);background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.05);scroll-snap-align:start;transition:transform .3s cubic-bezier(.22,.68,0,1.2),box-shadow .3s,border-color .3s;}
+.lb-card:hover{transform:translateY(-8px);box-shadow:0 16px 40px rgba(0,0,0,.1);border-color:rgba(0,0,0,.2);}
+.lb-card-img-wrap{position:relative;border-radius:10px;margin:8px 8px 0;overflow:hidden;aspect-ratio:3/4;background:var(--gray-100);}
+.lb-card-img{width:100%;height:100%;object-fit:cover;display:block;filter:saturate(.75) contrast(1.05);transition:transform .4s,filter .3s;}
+.lb-card:hover .lb-card-img{transform:scale(1.05);filter:saturate(1);}
+.lb-card-img-empty{height:100%;display:grid;place-items:center;padding:24px;color:var(--gray-400);font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;text-align:center;}
+.lb-card-overlay{position:absolute;inset:0;background:linear-gradient(0deg,rgba(0,0,0,.85) 0%,rgba(0,0,0,.2) 50%,transparent 100%);border-radius:inherit;}
+.lb-card-rank-badge{position:absolute;top:14px;left:14px;background:rgba(0,0,0,.75);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.15);border-radius:100px;padding:6px 14px;font-family:var(--font-display);font-size:19px;letter-spacing:1.2px;color:#fff;z-index:2;}
+.lb-card.rank-1 .lb-card-rank-badge{background:#fff;color:#000;border-color:#fff;}
+.lb-card-avatar{position:absolute;bottom:76px;left:50%;transform:translateX(-50%);width:68px;height:68px;border-radius:50%;border:2px solid rgba(255,255,255,.2);object-fit:cover;z-index:3;box-shadow:0 4px 16px rgba(0,0,0,.4);}
+.lb-card-avatar-empty{position:absolute;bottom:76px;left:50%;transform:translateX(-50%);width:68px;height:68px;border-radius:50%;border:2px solid rgba(255,255,255,.2);background:var(--gray-100);z-index:3;box-shadow:0 4px 16px rgba(0,0,0,.4);}
+.lb-card-info{position:absolute;bottom:0;left:0;right:0;padding:0 16px 20px;z-index:3;}
+.lb-card-name{font-size:14px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase;text-align:center;color:#fff;margin-bottom:6px;line-height:1.25;}
+.lb-card-stat{font-size:12px;color:rgba(255,255,255,.72);text-align:center;font-weight:500;line-height:1.35;}
+.lb-card.rank-1 .lb-card-img-wrap::after{content:'';position:absolute;top:0;left:-100%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.08),transparent);animation:shimmer 3s infinite;pointer-events:none;z-index:1;}
+@@keyframes shimmer{0%{left:-100%}55%,100%{left:120%}}
+
+.slide-table-section{background:#fff;border-top:1px solid var(--border);}
+.slide-table-outer{overflow-x:auto;scrollbar-width:thin;scrollbar-color:rgba(0,0,0,.12) transparent;-webkit-overflow-scrolling:touch;cursor:grab;}
+.slide-table-outer:active{cursor:grabbing;}
+.slide-table-outer::-webkit-scrollbar{height:4px;}
+.slide-table-outer::-webkit-scrollbar-thumb{background:rgba(0,0,0,.12);border-radius:100px;}
+.slide-table{min-width:700px;width:100%;}
+.st-head{display:grid;grid-template-columns:72px 1fr 140px 140px 100px;padding:18px 40px;border-bottom:2px solid #000;font-size:11px;letter-spacing:2.5px;color:var(--gray-400);text-transform:uppercase;}
+.st-row{display:grid;grid-template-columns:72px 1fr 140px 140px 100px;align-items:center;padding:18px 40px;border-bottom:1px solid var(--border);cursor:pointer;position:relative;transition:background .2s;}
+.st-row:hover{background:var(--gray-50);}
+.st-row.top3{background:var(--gray-50);}
+.st-row.top3::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:#000;}
+.st-rank{font-family:var(--font-display);font-size:32px;color:var(--gray-400);}
+.st-row.top3 .st-rank{color:#000;}
+.st-person{display:flex;align-items:center;gap:16px;}
+.st-avatar{width:48px;height:48px;border-radius:50%;object-fit:cover;border:1px solid var(--border);}
+.st-avatar-empty{width:48px;height:48px;border-radius:50%;border:1px solid var(--border);background:var(--gray-100);display:inline-block;flex:0 0 48px;}
+.st-name{font-size:15px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#000;margin-bottom:3px;line-height:1.2;}
+.st-tag{font-size:12px;color:var(--gray-400);}
+.st-dist{font-size:16px;font-weight:700;color:#000;}
+.st-time{font-size:15px;color:var(--gray-600);}
+.st-change{font-size:13px;font-weight:700;text-align:right;}
+.st-change.up{color:#000;} .st-change.same{color:var(--gray-400);} .st-change.down{color:#888;}
+.st-bar-wrap{grid-column:1/-1;height:2px;background:rgba(0,0,0,.05);border-radius:1px;overflow:hidden;margin-top:8px;display:none;}
+.st-row.top3 .st-bar-wrap{display:block;}
+.st-bar{height:100%;background:#000;border-radius:1px;}
+
+.footer-section{background:#fff;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;padding:28px 40px;gap:16px;}
+.footer-outline-btn{font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#000;background:#fff;border:1.5px solid #000;border-radius:100px;padding:10px 28px;cursor:pointer;transition:all .2s;text-decoration:none;display:inline-block;}
+.footer-outline-btn:hover{background:#000;color:#fff;}
+.footer-fill-btn{font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#fff;background:#000;border:none;border-radius:100px;padding:10px 28px;cursor:pointer;transition:all .2s;text-decoration:none;display:inline-block;}
+.footer-fill-btn:hover{background:#333;}
+.empty-state{margin:0 40px 40px;border:1px dashed rgba(0,0,0,.18);border-radius:var(--radius-lg);padding:28px;text-align:center;color:var(--gray-600);letter-spacing:1px;text-transform:uppercase;font-size:11px;}
+
+@@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+.anim{opacity:0;animation:fadeUp .7s ease forwards;}
+.d1{animation-delay:.1s} .d2{animation-delay:.25s} .d3{animation-delay:.4s} .d4{animation-delay:.55s} .d5{animation-delay:.7s}
+
+@@media(max-width:600px){
+    .lb-header,.scroll-track,.footer-section{padding-left:20px;padding-right:20px;}
+    .st-head,.st-row{padding-left:20px;padding-right:20px;}
+    .lb-card{flex-basis:250px;}
+    .lb-card-avatar{width:58px;height:58px;bottom:66px;}
+    .lb-card-name{font-size:12px;}
+    .lb-card-stat{font-size:11px;}
+}
+</style>
+}
+
+<!-- HERO -->
+<section class="hero">
+    <p class="season-label anim d1">@Model.SeasonLabel - @Model.Subtitle</p>
+    <h1 class="hero-title anim d2">CHAMPIONS</h1>
+    <p class="hero-sub anim d3">Train hard · Stay focused · Progress daily</p>
+
+    @if (Model.TopEntries.Count == 3)
+    {
+        var second = Model.TopEntries[1];
+        var first = Model.TopEntries[0];
+        var third = Model.TopEntries[2];
+        <div class="podium-wrap anim d4">
+            <div class="podium-card">
+                <div class="p-avatar-ring" style="margin-bottom:-6px">
+                    @if (!string.IsNullOrWhiteSpace(second.AvatarUrl))
+                    {
+                        <img class="p-avatar" src="@second.AvatarUrl" alt="@second.AthleteName">
+                    }
+                    else
+                    {
+                        <span class="p-avatar-empty" aria-hidden="true"></span>
+                    }
+                    <div class="p-medal silver">2</div>
+                </div>
+                <div class="p-pillar second">
+                    <div class="p-rank">02</div>
+                    <div class="p-name">@second.AthleteName</div>
+                    <div class="p-stat">@second.DistanceDisplay</div>
+                </div>
+            </div>
+            <div class="podium-card">
+                <div class="p-avatar-ring" style="margin-bottom:-6px;position:relative">
+                    @if (!string.IsNullOrWhiteSpace(first.AvatarUrl))
+                    {
+                        <img class="p-avatar first" src="@first.AvatarUrl" alt="@first.AthleteName">
+                    }
+                    else
+                    {
+                        <span class="p-avatar-empty first" aria-hidden="true"></span>
+                    }
+                    <div class="p-crown">👑</div>
+                    <div class="p-medal gold" style="top:-10px;right:-4px">1</div>
+                </div>
+                <div class="p-pillar first">
+                    <div class="p-rank">01</div>
+                    <div class="p-name">@first.AthleteName</div>
+                    <div class="p-stat">@first.DistanceDisplay</div>
+                </div>
+            </div>
+            <div class="podium-card">
+                <div class="p-avatar-ring" style="margin-bottom:-6px">
+                    @if (!string.IsNullOrWhiteSpace(third.AvatarUrl))
+                    {
+                        <img class="p-avatar" src="@third.AvatarUrl" alt="@third.AthleteName">
+                    }
+                    else
+                    {
+                        <span class="p-avatar-empty" aria-hidden="true"></span>
+                    }
+                    <div class="p-medal bronze">3</div>
+                </div>
+                <div class="p-pillar third">
+                    <div class="p-rank">03</div>
+                    <div class="p-name">@third.AthleteName</div>
+                    <div class="p-stat">@third.DistanceDisplay</div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="empty-state anim d4">No leaderboard records found in the database yet.</div>
+    }
+
+    <div class="toggle-row anim d5">
+        <button class="toggle-btn" onclick="setFilter('region',this)">Region</button>
+        <button class="toggle-btn active" onclick="setFilter('national',this)">National</button>
+        <button class="toggle-btn" onclick="setFilter('global',this)">Global</button>
+    </div>
+</section>
+
+<!-- CARD SCROLL -->
+<section class="lb-section">
+    <div class="lb-header">
+        <div class="lb-header-left">
+            <span class="lb-eyebrow">Top Performers</span>
+            <div class="lb-title-row">
+                <h2 class="lb-title">LEADERBOARD</h2>
+                <a href="#" class="lb-view-link">View All -></a>
+            </div>
+        </div>
+        <div class="lb-nav-btns">
+            <button class="lb-nav" id="navPrev">←</button>
+            <button class="lb-nav" id="navNext">→</button>
+        </div>
+    </div>
+
+    @if (Model.HasEntries)
+    {
+        <div class="scroll-track" id="cardTrack">
+            @foreach (var entry in Model.Entries)
+            {
+                <div class="lb-card @(entry.Rank == 1 ? "rank-1" : string.Empty)">
+                    <div class="lb-card-img-wrap">
+                        @if (!string.IsNullOrWhiteSpace(entry.CoverImageUrl))
+                        {
+                            <img class="lb-card-img" src="@entry.CoverImageUrl" alt="@entry.AthleteName">
+                        }
+                        else
+                        {
+                            <div class="lb-card-img-empty">No database cover image</div>
+                        }
+                        <div class="lb-card-overlay"></div>
+                        <div class="lb-card-rank-badge">#@entry.Rank</div>
+                        @if (!string.IsNullOrWhiteSpace(entry.AvatarUrl))
+                        {
+                            <img class="lb-card-avatar" src="@entry.AvatarUrl" alt="@entry.AthleteName">
+                        }
+                        else
+                        {
+                            <span class="lb-card-avatar-empty" aria-hidden="true"></span>
+                        }
+                        <div class="lb-card-info">
+                            <div class="lb-card-name">@entry.AthleteName</div>
+                            <div class="lb-card-stat">@entry.DistanceDisplay · @entry.DurationDisplay</div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">No leaderboard records found in the database yet.</div>
+    }
+</section>
+
+<!-- SLIDING TABLE -->
+<section class="slide-table-section">
+    <div class="slide-table-outer" id="tableOuter">
+        <div class="slide-table">
+            <div class="st-head">
+                <div>Rank</div><div>Athlete</div><div>Distance</div><div>Time</div><div style="text-align:right">Change</div>
+            </div>
+            @if (Model.HasEntries)
+            {
+                @foreach (var entry in Model.Entries)
+                {
+                    <div class="st-row @(entry.Rank <= 3 ? "top3" : string.Empty)">
+                        <div class="st-rank">@entry.Rank</div>
+                        <div class="st-person">
+                            @if (!string.IsNullOrWhiteSpace(entry.AvatarUrl))
+                            {
+                                <img class="st-avatar" src="@entry.AvatarUrl" alt="@entry.AthleteName">
+                            }
+                            else
+                            {
+                                <span class="st-avatar-empty" aria-hidden="true"></span>
+                            }
+                            <div><div class="st-name">@entry.AthleteName</div><div class="st-tag">@entry.Tag</div></div>
+                        </div>
+                        <div class="st-dist">@entry.DistanceDisplay</div><div class="st-time">@entry.DurationDisplay</div>
+                        <div class="st-change @entry.ChangeCssClass" style="text-align:right">@entry.ChangeDisplay</div>
+                        @if (entry.Rank <= 3)
+                        {
+                            <div class="st-bar-wrap"><div class="st-bar" style="width:@(entry.ProgressPercent)%"></div></div>
+                        }
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="empty-state">No leaderboard records found in the database yet.</div>
+            }
+        </div>
+    </div>
+</section>
+
+<!-- FOOTER -->
+<div class="footer-section">
+    <a href="#" class="footer-outline-btn">View All Rankings</a>
+    <a asp-controller="Home" asp-action="UploadActivity" class="footer-fill-btn">Upload Your Activity</a>
+</div>
+
+@section Scripts {
+<script>
+function setFilter(type, btn) {
+    document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+}
+
+const track = document.getElementById('cardTrack');
+document.getElementById('navPrev')?.addEventListener('click', () => track?.scrollBy({ left: -280, behavior: 'smooth' }));
+document.getElementById('navNext')?.addEventListener('click', () => track?.scrollBy({ left:  280, behavior: 'smooth' }));
+
+const outer = document.getElementById('tableOuter');
+let isDown = false, startX, scrollLeft;
+outer?.addEventListener('mousedown', e => { isDown = true; startX = e.pageX - outer.offsetLeft; scrollLeft = outer.scrollLeft; });
+outer?.addEventListener('mouseleave', () => { isDown = false; });
+outer?.addEventListener('mouseup', () => { isDown = false; });
+outer?.addEventListener('mousemove', e => {
+    if (!isDown) return;
+    e.preventDefault();
+    const x = e.pageX - outer.offsetLeft;
+    outer.scrollLeft = scrollLeft - (x - startX) * 1.5;
+});
+</script>
+}
