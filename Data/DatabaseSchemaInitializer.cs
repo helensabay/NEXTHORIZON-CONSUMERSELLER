@@ -145,6 +145,26 @@ internal static class DatabaseSchemaInitializer
                 CREATE INDEX IX_OrderItems_OrderId ON dbo.OrderItems(OrderId);
             END;
 
+            IF OBJECT_ID(N'dbo.returns', N'U') IS NOT NULL AND COL_LENGTH(N'dbo.returns', N'ResolutionType') IS NULL
+            BEGIN
+                ALTER TABLE dbo.returns ADD ResolutionType NVARCHAR(50) NOT NULL CONSTRAINT DF_returns_ResolutionType DEFAULT(N'Refund');
+            END;
+
+            IF OBJECT_ID(N'dbo.returns', N'U') IS NOT NULL AND COL_LENGTH(N'dbo.returns', N'ReplacementOrderId') IS NULL
+            BEGIN
+                ALTER TABLE dbo.returns ADD ReplacementOrderId INT NULL;
+            END;
+
+            IF OBJECT_ID(N'dbo.Returns', N'U') IS NOT NULL AND COL_LENGTH(N'dbo.Returns', N'ResolutionType') IS NULL
+            BEGIN
+                ALTER TABLE dbo.Returns ADD ResolutionType NVARCHAR(50) NOT NULL CONSTRAINT DF_Returns_ResolutionType DEFAULT(N'Refund');
+            END;
+
+            IF OBJECT_ID(N'dbo.Returns', N'U') IS NOT NULL AND COL_LENGTH(N'dbo.Returns', N'ReplacementOrderId') IS NULL
+            BEGIN
+                ALTER TABLE dbo.Returns ADD ReplacementOrderId INT NULL;
+            END;
+
             IF OBJECT_ID(N'dbo.MemberUploads', N'U') IS NULL
             BEGIN
                 CREATE TABLE dbo.MemberUploads

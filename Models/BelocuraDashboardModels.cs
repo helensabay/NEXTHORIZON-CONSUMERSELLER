@@ -33,6 +33,10 @@ namespace NextHorizon.Models
         public int CancelledOrders { get; set; }
         public int RefundedOrders { get; set; }
         public int ActiveReturnRequests { get; set; }
+        public decimal CodDeliveredRevenue { get; set; }
+        public decimal CodExposure { get; set; }
+        public decimal CodSuccessRate { get; set; }
+        public int CodRtsCount { get; set; }
         public int TotalVisits { get; set; }
         public List<Order> RecentOrders { get; set; } = new();
         public List<Order> Orders { get; set; } = new();
@@ -130,7 +134,7 @@ namespace NextHorizon.Models
         public string? Category { get; set; }
     }
 
-    public class ReturnRequest
+    public partial class ReturnRequest
     {
         public int ReturnId { get; set; }
         public int OrderId { get; set; }

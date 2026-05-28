@@ -173,6 +173,11 @@
                 <div class="card-value">&#8369;@Model.PipelineRevenue.ToString("N2")</div>
                 <div class="metric-note">@Model.OpenOrderCount open orders not booked yet</div>
             </div>
+            <div class="card analytics-stat-card">
+                <span class="card-label">COD Revenue</span>
+                <div class="card-value">&#8369;@Model.CodDeliveredRevenue.ToString("N2")</div>
+                <div class="metric-note">Delivered COD orders counted as recognized revenue</div>
+            </div>
         </div>
     </section>
 
@@ -239,6 +244,31 @@
 
     <section class="section">
         <h2 class="analytics-section-title">Revenue Quality</h2>
+        <div class="cards-grid analytics-quality-grid cod-risk-grid">
+            <div class="card bw-card analytics-stat-card cod-risk-card">
+                <span class="card-label">COD Exposure</span>
+                <div class="card-value">&#8369;@Model.CodExposure.ToString("N2")</div>
+                <div class="metric-note">COD value currently in To Ship or Shipped</div>
+            </div>
+            <div class="card bw-card analytics-stat-card cod-risk-card">
+                <span class="card-label">COD Success Rate</span>
+                <div class="card-value">@Model.CodSuccessRate.ToString("N2")%</div>
+                <div class="metric-note">Delivered COD orders divided by all COD orders</div>
+            </div>
+            <div class="card bw-card analytics-stat-card cod-risk-card">
+                <span class="card-label">COD RTS Count</span>
+                <div class="card-value">@Model.CodRtsCount</div>
+                <div class="metric-note">COD orders marked Failed Delivery</div>
+            </div>
+        </div>
+        @if (Model.CodSuccessRate < 85m && Model.CodExposure > 0)
+        {
+            <div class="bw-card cod-risk-warning">
+                <strong>COD risk warning</strong>
+                <span>Call buyers before shipping active COD orders to reduce failed deliveries and return-to-sender losses.</span>
+            </div>
+        }
+
         <div class="cards-grid analytics-quality-grid">
             <div class="card analytics-stat-card">
                 <span class="card-label">Refunded Amount</span>

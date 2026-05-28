@@ -454,12 +454,17 @@ public class OrderService
         {
             "pending" => "To Pay",
             "placed" => "To Pay",
+            "to pay" => "To Pay",
             "processing" => "To Ship",
+            "to ship" => "To Ship",
             "shipped" => "To Receive",
+            "to receive" => "To Receive",
             "delivered" => "To Review",
+            "to review" => "To Review",
             "completed" => "Completed",
             "returned" => "Returns",
             "return" => "Returns",
+            "returns" => "Returns",
             "cancelled" => "Cancelled",
             "canceled" => "Cancelled",
             _ => "To Pay"
