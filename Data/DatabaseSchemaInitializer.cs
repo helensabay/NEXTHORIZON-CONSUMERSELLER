@@ -113,7 +113,7 @@ internal static class DatabaseSchemaInitializer
                     PostalCode NVARCHAR(30) NULL,
                     DeliveryOption NVARCHAR(50) NULL,
                     PaymentMethod NVARCHAR(50) NULL,
-                    Status NVARCHAR(50) NOT NULL DEFAULT(N'Placed'),
+                    Status NVARCHAR(50) NOT NULL DEFAULT(N'Pending'),
                     Subtotal DECIMAL(18,2) NOT NULL,
                     ShippingFee DECIMAL(18,2) NOT NULL,
                     TotalAmount DECIMAL(18,2) NOT NULL,

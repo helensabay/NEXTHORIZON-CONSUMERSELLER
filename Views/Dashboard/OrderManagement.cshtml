@@ -166,6 +166,7 @@
                 data-return-proof="@order.ReturnProofImage"
                 data-return-note="@order.ReturnNote"
                 data-return-reason="@order.ReturnReason"
+                data-seller-note="@order.SellerNote"
                 data-return-id="@(matchingReturnRequest?.ReturnId ?? 0)"
                 data-buyer="@(matchingReturnRequest?.BuyerName ?? order.FullName ?? string.Empty)"
                 data-reason="@(matchingReturnRequest?.Reason ?? order.ReturnReason ?? string.Empty)"
@@ -214,12 +215,11 @@
                             }
                             else
                             {
-                                <a class="action-menu-item"
-                                asp-controller="Dashboard"
-                                asp-action="OrderDetails"
-                                asp-route-id="@order.OrderID">
+                                <button type="button"
+                                        class="action-menu-item view-details-btn"
+                                        data-order-id="@order.OrderID">
                                     View Details
-                                </a>
+                                </button>
                             }
 
                             @* CONTACT CUSTOMER - always visible *@
@@ -1015,9 +1015,9 @@
         <button type="button" class="bw-close fd-close" onclick="closeReturnedInfoModal()">&times;</button>
         <div class="bw-modal-header fd-premium-header">
             <div>
-                <span class="premium-modal-kicker">Failed Delivery</span>
+                <span id="returnInfoKicker" class="premium-modal-kicker">Failed Delivery</span>
                 <h3>Order #<span id="returnInfoOrderId">00000</span></h3>
-                <p class="premium-modal-subtitle">Review shipment details, evidence, and notes recorded for this failed delivery.</p>
+                <p id="returnInfoSubtitle" class="premium-modal-subtitle">Review shipment details, evidence, and notes recorded for this failed delivery.</p>
             </div>
         </div>
         <div class="bw-info-box bw-fulfillment-box fd-summary-card">
@@ -1048,7 +1048,7 @@
                     <span class="premium-data-label">Tracking #</span>
                     <strong id="returnInfoTracking">---</strong>
                 </div>
-                <div class="fd-detail-card fd-detail-wide">
+                <div id="returnInfoReasonCard" class="fd-detail-card fd-detail-wide">
                     <span class="premium-data-label">Reason</span>
                     <strong id="returnInfoReason">---</strong>
                 </div>
@@ -1065,7 +1065,7 @@
             <div class="bw-note-block fd-note-card">
                 <div class="fd-section-heading">
                     <span class="premium-modal-kicker">Internal Note</span>
-                    <h4>Recorded seller note</h4>
+                    <h4 id="returnInfoNoteHeading">Recorded seller note</h4>
                 </div>
                 <p id="returnInfoNote">---</p>
             </div>
@@ -1178,9 +1178,6 @@
         }
     }, 500);
 </script>
-
-
-
 
 
 

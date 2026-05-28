@@ -23,6 +23,8 @@ namespace MyAspNetApp.Controllers
         [HttpPost]
         public async Task<IActionResult> AddToCart([FromBody] CartItem item)
         {
+            item.Quantity = Math.Max(item.Quantity, 1);
+
             if (item.SellerId <= 0)
             {
                 item.SellerId = await _db.Products
@@ -45,6 +47,12 @@ namespace MyAspNetApp.Controllers
                 item.UnitPrice = resolvedProduct.Price;
             }
 
+            var stockCheck = ValidateCartItemStock(item, variants, dbProducts);
+            if (!stockCheck.IsAvailable)
+            {
+                return BadRequest(new { message = stockCheck.Message });
+            }
+
             var cartSnapshot = ProductData.WithCartLock(cart =>
             {
                 var existingItem = cart.FirstOrDefault(ci =>
@@ -56,7 +64,14 @@ namespace MyAspNetApp.Controllers
 
                 if (existingItem != null)
                 {
-                    existingItem.Quantity += Math.Max(item.Quantity, 1);
+                    var requestedQuantity = existingItem.Quantity + item.Quantity;
+                    var quantityCheck = ValidateCartItemStock(item, variants, dbProducts, requestedQuantity);
+                    if (!quantityCheck.IsAvailable)
+                    {
+                        return null;
+                    }
+
+                    existingItem.Quantity = requestedQuantity;
                     if (item.UnitPrice > 0)
                     {
                         existingItem.UnitPrice = item.UnitPrice;
@@ -64,12 +79,16 @@ namespace MyAspNetApp.Controllers
                 }
                 else
                 {
-                    item.Quantity = Math.Max(item.Quantity, 1);
                     cart.Add(item);
                 }
 
                 return ProductData.GetCartSnapshot();
             });
+
+            if (cartSnapshot == null)
+            {
+                return BadRequest(new { message = "Only the available stock can be added to cart." });
+            }
 
             SyncSharedCartCookie(cartSnapshot);
             return Ok(new { message = "Added to cart", cart = cartSnapshot });
@@ -110,9 +129,19 @@ namespace MyAspNetApp.Controllers
 
         // PUT: api/cart/{productId}
         [HttpPut("{productId}")]
-        public IActionResult UpdateQuantity(int productId, [FromBody] UpdateQuantityRequest request)
+        public async Task<IActionResult> UpdateQuantity(int productId, [FromBody] UpdateQuantityRequest request)
         {
+            var dbProducts = await _db.Products
+                .AsNoTracking()
+                .Where(product => product.ProductId == productId)
+                .ToListAsync();
+            var variants = await _db.ProductVariants
+                .AsNoTracking()
+                .Where(variant => variant.ProductId == productId)
+                .ToListAsync();
+
             List<CartItem>? cartSnapshot = null;
+            string? stockError = null;
             var found = ProductData.WithCartLock(cart =>
             {
                 var item = cart.FirstOrDefault(c => c.ProductId == productId);
@@ -127,6 +156,13 @@ namespace MyAspNetApp.Controllers
                 }
                 else
                 {
+                    var stockCheck = ValidateCartItemStock(item, variants, dbProducts, request.Quantity);
+                    if (!stockCheck.IsAvailable)
+                    {
+                        stockError = stockCheck.Message;
+                        return true;
+                    }
+
                     item.Quantity = request.Quantity;
                 }
 
@@ -137,6 +173,11 @@ namespace MyAspNetApp.Controllers
             if (!found)
             {
                 return NotFound();
+            }
+
+            if (!string.IsNullOrWhiteSpace(stockError))
+            {
+                return BadRequest(new { message = stockError });
             }
 
             SyncSharedCartCookie(cartSnapshot ?? ProductData.GetCartSnapshot());
@@ -221,6 +262,63 @@ namespace MyAspNetApp.Controllers
             }
 
             return ProductData.Products.FirstOrDefault(product => product.Id == cartItem.ProductId);
+        }
+
+        private static (bool IsAvailable, string Message) ValidateCartItemStock(
+            CartItem cartItem,
+            IReadOnlyCollection<DbProductVariant> variants,
+            IReadOnlyCollection<DbProduct> dbProducts,
+            int? requestedQuantity = null)
+        {
+            var quantity = Math.Max(requestedQuantity ?? cartItem.Quantity, 1);
+            var productVariants = variants
+                .Where(variant => variant.ProductId == cartItem.ProductId)
+                .ToList();
+
+            if (productVariants.Count > 0)
+            {
+                var matchingVariant = productVariants.FirstOrDefault(variant =>
+                    (!cartItem.VariantId.HasValue || variant.Id == cartItem.VariantId.Value) &&
+                    string.Equals(variant.Size, cartItem.Size, StringComparison.OrdinalIgnoreCase) &&
+                    (string.IsNullOrWhiteSpace(cartItem.Color) ||
+                     string.Equals(variant.Style, cartItem.Color, StringComparison.OrdinalIgnoreCase)))
+                    ?? (cartItem.VariantId.HasValue
+                        ? productVariants.FirstOrDefault(variant => variant.Id == cartItem.VariantId.Value)
+                        : null);
+
+                if (matchingVariant == null)
+                {
+                    return (false, "Please select an available product option.");
+                }
+
+                if (matchingVariant.Quantity <= 0 ||
+                    string.Equals(matchingVariant.Availability, "Out of Stock", StringComparison.OrdinalIgnoreCase))
+                {
+                    return (false, "This product is out of stock and cannot be ordered.");
+                }
+
+                if (quantity > matchingVariant.Quantity)
+                {
+                    return (false, $"Only {matchingVariant.Quantity} item(s) are available.");
+                }
+
+                return (true, string.Empty);
+            }
+
+            var fallbackProduct = ProductData.Products.FirstOrDefault(product => product.Id == cartItem.ProductId);
+            if (fallbackProduct != null && fallbackProduct.Stock <= 0)
+            {
+                return (false, "This product is out of stock and cannot be ordered.");
+            }
+
+            if (fallbackProduct != null && quantity > fallbackProduct.Stock)
+            {
+                return (false, $"Only {fallbackProduct.Stock} item(s) are available.");
+            }
+
+            return dbProducts.Any(product => product.ProductId == cartItem.ProductId) || fallbackProduct != null
+                ? (true, string.Empty)
+                : (false, "Product not found.");
         }
     }
 

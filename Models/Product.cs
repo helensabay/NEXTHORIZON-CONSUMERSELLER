@@ -209,7 +209,7 @@ public class CheckoutAddressOption
 public class OrderConfirmationViewModel
 {
     public string OrderId { get; set; } = string.Empty;
-    public string OrderStatus { get; set; } = "Placed";
+    public string OrderStatus { get; set; } = "Pending";
     public string FullName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string Phone { get; set; } = string.Empty;
@@ -227,22 +227,33 @@ public class OrderConfirmationViewModel
     public decimal VoucherDiscount { get; set; }
     public decimal Total => Math.Max(0m, Subtotal + ShippingFee - VoucherDiscount);
 
-    public string StatusColor => OrderStatus switch
+    public string NormalizedStatus => NormalizeStatus(OrderStatus);
+
+    public string StatusColor => NormalizedStatus switch
     {
-        "Placed"      => "#f59e0b",
-        "Processing"  => "#3b82f6",
-        "Shipped"     => "#8b5cf6",
-        "Delivered"   => "#22c55e",
-        "Cancelled"   => "#ef4444",
-        _             => "#888"
+        "Pending" => "#f59e0b",
+        "Processing" => "#3b82f6",
+        "Shipped" => "#8b5cf6",
+        "Delivered" => "#22c55e",
+        "Cancelled" => "#ef4444",
+        _ => "#888"
     };
 
-    public int CurrentStep => OrderStatus switch
+    public int CurrentStep => NormalizedStatus switch
     {
-        "Placed"      => 0,
-        "Processing"  => 1,
-        "Shipped"     => 2,
-        "Delivered"   => 3,
-        _             => 0
+        "Pending" => 0,
+        "Processing" => 1,
+        "Shipped" => 2,
+        "Delivered" => 3,
+        _ => 0
     };
+
+    private static string NormalizeStatus(string? status)
+    {
+        return (status ?? string.Empty).Trim() switch
+        {
+            "Placed" => "Pending",
+            var value => value
+        };
+    }
 }

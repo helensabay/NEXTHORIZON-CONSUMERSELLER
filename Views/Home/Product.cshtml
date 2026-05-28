@@ -1180,7 +1180,7 @@ function pdSelectColor(color, el) {
         if (pdMaxStock <= 0) {
             stockEl.innerHTML = '<span class="pd-stock-badge out">Out of Stock</span>';
             if (preorderBlock) preorderBlock.style.display = 'none';
-            if (normalActions) normalActions.style.display = '';
+            if (normalActions) normalActions.style.display = 'none';
         } else if (pdMaxStock <= 5) {
             stockEl.innerHTML = `<span class="pd-stock-badge low">Low Stock — Only ${pdMaxStock} left</span>`;
             if (preorderBlock) preorderBlock.style.display = 'none';
@@ -1237,8 +1237,41 @@ function pdSelectColor(color, el) {
     }
 }
 
+function pdGetSelectedVariant() {
+    const variants = pdProduct?.variants || [];
+    if (!Array.isArray(variants) || variants.length === 0) {
+        return null;
+    }
+
+    const variantId = pdGetSelectedVariantId();
+    if (variantId) {
+        const byId = variants.find(v => Number(v.id) === Number(variantId));
+        if (byId) return byId;
+    }
+
+    const normalizedSize = (pdSelectedSize || '').trim().toLowerCase();
+    const normalizedColor = (pdSelectedColor || '').trim().toLowerCase();
+    return variants.find(v =>
+        (v.size || '').trim().toLowerCase() === normalizedSize &&
+        (!normalizedColor || (v.style || '').trim().toLowerCase() === normalizedColor)) || null;
+}
+
+function pdSelectedStock() {
+    const variant = pdGetSelectedVariant();
+    if (variant) {
+        return Number(variant.quantity ?? variant.stock ?? 0);
+    }
+
+    return Number(pdMaxStock || pdProduct?.stock || 0);
+}
+
+function pdCanOrderSelectedProduct() {
+    return pdSelectedStock() > 0;
+}
+
 function changeQty(delta) {
-    const max = pdMaxStock > 0 ? pdMaxStock : 99;
+    const selectedStock = pdSelectedStock();
+    const max = selectedStock > 0 ? selectedStock : 1;
     pdQty = Math.max(1, Math.min(max, pdQty + delta));
     document.getElementById('pd-qty').textContent = pdQty;
     // Dim the + button when at max
@@ -1249,6 +1282,7 @@ function changeQty(delta) {
 async function pdAddToCart() {
     if (!pdSelectedSize) { toast.info('Please select a size first'); return; }
     if ((pdProduct.availableColors || []).length > 0 && !pdSelectedColor) { toast.info('Please select a color first'); return; }
+    if (!pdCanOrderSelectedProduct()) { toast.info('This product is out of stock and cannot be ordered.'); return; }
     const sellerId = pdGetSellerId();
     const variantId = pdGetSelectedVariantId();
     const btn = document.querySelector('.pd-btn-cart');
@@ -1261,7 +1295,8 @@ async function pdAddToCart() {
             body: JSON.stringify({ productId: pdProduct.id, variantId, color: pdSelectedColor || '', size: pdSelectedSize, quantity: pdQty, sellerId })
         });
         if (!response.ok) {
-            throw new Error('Cart request failed');
+            const error = await response.json().catch(() => null);
+            throw new Error(error?.message || 'Cart request failed');
         }
         btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5"></path></svg> Added!';
         btn.classList.add('pd-btn-added');
@@ -1269,7 +1304,7 @@ async function pdAddToCart() {
         updateCartCount();
         return true;
     } catch (e) {
-        toast.info('Could not add to cart. Try again.');
+        toast.info(e?.message || 'Could not add to cart. Try again.');
         btn.innerHTML = originalHTML;
         btn.classList.remove('pd-btn-added');
         btn.disabled = false;
@@ -1289,6 +1324,7 @@ function pdGetSellerId() {
 function pdBuyNow() {
     if (!pdSelectedSize) { toast.info('Please select a size'); return; }
     if ((pdProduct.availableColors || []).length > 0 && !pdSelectedColor) { toast.info('Please select a color'); return; }
+    if (!pdCanOrderSelectedProduct()) { toast.info('This product is out of stock and cannot be ordered.'); return; }
     const sellerId = pdGetSellerId();
     const variantId = pdGetSelectedVariantId();
     let buyNowUrl = `/Home/BuyNow?productId=${encodeURIComponent(pdProduct.id)}&size=${encodeURIComponent(pdSelectedSize)}&color=${encodeURIComponent(pdSelectedColor || '')}&quantity=${encodeURIComponent(pdQty)}`;

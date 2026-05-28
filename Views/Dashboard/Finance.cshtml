@@ -33,9 +33,8 @@
 <section class="section">
     <h3 class="finance-section-title">Finance Overview</h3>
     <div class="cards-grid performance-grid">
-        <!-- Available Balance Card - Clickable to Withdraw -->
-        <div class="card performance-card clickable-card" 
-             onclick="window.location.href='@Url.Action("Withdraw", "Dashboard")'">
+        <!-- Available Balance Card -->
+        <div class="card performance-card">
             <div class="card-header">
                 <span class="card-label">Available Balance</span>
             </div>
@@ -48,9 +47,8 @@
             </div>
         </div>
 
-        <!-- Pending Payout Card - Clickable to Pending Payouts -->
-        <div class="card performance-card clickable-card" 
-             onclick="window.location.href='@Url.Action("TransactionHistory", "Dashboard", new { status = "Pending" })'">
+        <!-- Pending Payout Card -->
+        <div class="card performance-card">
             <div class="card-header">
                 <span class="card-label">Pending Balance</span>
 

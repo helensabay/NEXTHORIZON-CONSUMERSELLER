@@ -104,6 +104,49 @@ namespace MyAspNetApp.Controllers
             });
         }
 
+        [HttpGet]
+        public async Task<IActionResult> OrderDetails(string id, CancellationToken cancellationToken)
+        {
+            var seller = await ResolveCurrentSellerAsync(cancellationToken);
+            if (seller == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            if (string.IsNullOrWhiteSpace(id) ||
+                !int.TryParse(id.Replace("ORD-", string.Empty, StringComparison.OrdinalIgnoreCase), out var orderId))
+            {
+                return BadRequest("Invalid Order ID");
+            }
+
+            var order = (await LoadOrdersAsync(seller.SellerId, null, null, cancellationToken))
+                .FirstOrDefault(item => item.OrderID == orderId);
+
+            if (order == null)
+            {
+                return NotFound();
+            }
+
+            if (order.logistics_id.HasValue && order.logistics_id.Value > 0)
+            {
+                var courier = (await LoadCouriersAsync(cancellationToken))
+                    .FirstOrDefault(item => item.logistics_id == order.logistics_id.Value);
+
+                order.Courier = string.IsNullOrWhiteSpace(courier?.courier_name)
+                    ? "NextHorizon Partner"
+                    : courier.courier_name;
+            }
+            else if (string.IsNullOrWhiteSpace(order.Courier))
+            {
+                order.Courier = string.IsNullOrWhiteSpace(order.DeliveryOption)
+                    ? "NextHorizon Partner"
+                    : order.DeliveryOption;
+            }
+
+            ViewData["SellerName"] = seller.BusinessName ?? "Seller";
+            return View(order);
+        }
+
         [HttpPost]
         public async Task<IActionResult> SaveOrderNote([FromBody] OrderNoteRequest request, CancellationToken cancellationToken)
         {
@@ -479,8 +522,17 @@ namespace MyAspNetApp.Controllers
 
         private static bool IsOrderStatus(Order order, params string[] statuses)
         {
-            var status = (order.EffectiveStatus ?? order.Status ?? string.Empty).Trim();
+            var status = NormalizeOrderStatus(order.EffectiveStatus ?? order.Status);
             return statuses.Any(item => string.Equals(status, item, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private static string NormalizeOrderStatus(string? status)
+        {
+            return (status ?? string.Empty).Trim() switch
+            {
+                "Placed" => "Pending",
+                var value => value
+            };
         }
 
         private static decimal GetOrderAnalyticsAmount(Order order)
@@ -616,7 +668,7 @@ namespace MyAspNetApp.Controllers
                     {
                         model.PendingOrders = await ExecuteScalarIntAsync(
                             connection,
-                            $"SELECT COUNT(*) FROM {Quote("Orders")} WHERE {Quote(sellerColumn)} = @SellerId AND UPPER(COALESCE({Quote(statusColumn)}, '')) IN ('PENDING', 'TO SHIP', 'PROCESSING', 'ORDER PLACED')",
+                            $"SELECT COUNT(*) FROM {Quote("Orders")} WHERE {Quote(sellerColumn)} = @SellerId AND UPPER(COALESCE({Quote(statusColumn)}, '')) IN ('PENDING', 'PLACED', 'TO SHIP', 'PROCESSING', 'ORDER PLACED')",
                             sellerId,
                             cancellationToken);
                     }
@@ -679,7 +731,7 @@ namespace MyAspNetApp.Controllers
                 await using var reader = await command.ExecuteReaderAsync(cancellationToken);
                 while (await reader.ReadAsync(cancellationToken))
                 {
-                    var status = GetString(reader, "Status");
+                    var status = NormalizeOrderStatus(GetString(reader, "Status"));
                     orders.Add(new Order
                     {
                         OrderID = GetInt(reader, "OrderID"),
@@ -797,55 +849,57 @@ namespace MyAspNetApp.Controllers
                     command.Parameters.Add(new SqlParameter("@EndDateExclusive", SqlDbType.DateTime2) { Value = endDate.Value.AddDays(1) });
                 }
 
-                await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-                while (await reader.ReadAsync(cancellationToken))
                 {
-                    var status = GetString(reader, "Status");
-                    var productName = GetString(reader, "ProductName");
-                    var subtotal = GetDecimal(reader, "Subtotal");
-                    var shipping = GetDecimal(reader, "ShippingFee");
-                    var quantity = Math.Max(1, GetInt(reader, "Quantity"));
-
-                    orders.Add(new Order
+                    await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+                    while (await reader.ReadAsync(cancellationToken))
                     {
-                        OrderID = GetInt(reader, "OrderID"),
-                        OrderDate = GetDate(reader, "OrderDate"),
-                        Status = status,
-                        EffectiveStatus = status,
-                        ProductName = productName,
-                        FullName = GetString(reader, "FullName"),
-                        Quantity = quantity,
-                        Subtotal = subtotal,
-                        ShippingFee = shipping,
-                        Amount = subtotal + shipping,
-                        TotalAmount = subtotal + shipping,
-                        Courier = GetString(reader, "Courier"),
-                        DeliveryOption = GetString(reader, "Courier"),
-                        ConsumerID = GetNullableInt(reader, "ConsumerID"),
-                        PaymentMethod = GetString(reader, "PaymentMethod"),
-                        Email = GetString(reader, "Email"),
-                        PhoneNumber = GetString(reader, "PhoneNumber"),
-                        StreetAddress = GetString(reader, "StreetAddress"),
-                        City = GetString(reader, "City"),
-                        PostalCode = GetString(reader, "PostalCode"),
-                        TrackingNumber = GetString(reader, "TrackingNumber"),
-                        SellerNote = GetString(reader, "SellerNote"),
-                        logistics_id = GetNullableInt(reader, "logistics_id"),
-                        ProductImage = string.Empty,
-                        OrderItems = new List<OrderItem>
+                        var status = NormalizeOrderStatus(GetString(reader, "Status"));
+                        var productName = GetString(reader, "ProductName");
+                        var subtotal = GetDecimal(reader, "Subtotal");
+                        var shipping = GetDecimal(reader, "ShippingFee");
+                        var quantity = Math.Max(1, GetInt(reader, "Quantity"));
+
+                        orders.Add(new Order
                         {
-                            new()
+                            OrderID = GetInt(reader, "OrderID"),
+                            OrderDate = GetDate(reader, "OrderDate"),
+                            Status = status,
+                            EffectiveStatus = status,
+                            ProductName = productName,
+                            FullName = GetString(reader, "FullName"),
+                            Quantity = quantity,
+                            Subtotal = subtotal,
+                            ShippingFee = shipping,
+                            Amount = subtotal + shipping,
+                            TotalAmount = subtotal + shipping,
+                            Courier = GetString(reader, "Courier"),
+                            DeliveryOption = GetString(reader, "Courier"),
+                            ConsumerID = GetNullableInt(reader, "ConsumerID"),
+                            PaymentMethod = GetString(reader, "PaymentMethod"),
+                            Email = GetString(reader, "Email"),
+                            PhoneNumber = GetString(reader, "PhoneNumber"),
+                            StreetAddress = GetString(reader, "StreetAddress"),
+                            City = GetString(reader, "City"),
+                            PostalCode = GetString(reader, "PostalCode"),
+                            TrackingNumber = GetString(reader, "TrackingNumber"),
+                            SellerNote = GetString(reader, "SellerNote"),
+                            logistics_id = GetNullableInt(reader, "logistics_id"),
+                            ProductImage = string.Empty,
+                            OrderItems = new List<OrderItem>
                             {
-                                Quantity = quantity,
-                                UnitPrice = quantity == 0 ? subtotal : subtotal / quantity,
-                                Product = new ProductSummary
+                                new()
                                 {
-                                    ProductName = productName,
-                                    Category = string.Empty
+                                    Quantity = quantity,
+                                    UnitPrice = quantity == 0 ? subtotal : subtotal / quantity,
+                                    Product = new ProductSummary
+                                    {
+                                        ProductName = productName,
+                                        Category = string.Empty
+                                    }
                                 }
                             }
-                        }
-                    });
+                        });
+                    }
                 }
 
                 // Attempt to load detailed order items (including category) if an OrderItems table exists.
@@ -865,37 +919,88 @@ namespace MyAspNetApp.Controllers
                         var oiOrderIdCol = FindColumn(orderItemColumns, "OrderId", "order_id", "OrderID");
                         var oiProductNameCol = FindColumn(orderItemColumns, "ProductName", "product_name", "Product");
                         var oiProductIdCol = FindColumn(orderItemColumns, "ProductId", "ProductID", "product_id");
+                        var oiVariantIdCol = FindColumn(orderItemColumns, "VariantId", "VariantID", "variant_id");
                         var oiCategoryCol = FindColumn(orderItemColumns, "Category", "category");
                         var oiQuantityCol = FindColumn(orderItemColumns, "Quantity", "quantity");
                         var oiUnitPriceCol = FindColumn(orderItemColumns, "UnitPrice", "unit_price", "Price");
+                        var oiProductImageCol = FindColumn(orderItemColumns, "ProductImage", "ProductImagePath", "ImagePath");
 
                         var productColumns = await GetColumnsAsync(connection, "Products", cancellationToken);
                         var pProductIdCol = FindColumn(productColumns, "ProductId", "ProductID", "Id");
                         var pNameCol = FindColumn(productColumns, "ProductName", "Name", "product_name", "name");
                         var pCategoryCol = FindColumn(productColumns, "Category", "category", "ProductCategory");
+                        var pImagePathCol = FindColumn(productColumns, "ImagePath", "ProductImage", "image_path");
+
+                        var variantColumns = await GetColumnsAsync(connection, "ProductVariants", cancellationToken);
+                        var vVariantIdCol = FindColumn(variantColumns, "VariantId", "VariantID", "Id");
+                        var vProductIdCol = FindColumn(variantColumns, "ProductId", "ProductID", "product_id");
+                        var vImagePathCol = FindColumn(variantColumns, "ImagePath", "ProductImage", "image_path");
 
                         // Build select list
-                        var selectList = new List<string>();
-                        selectList.Add(oiOrderIdCol != null ? Quote(oiOrderIdCol) + " AS OrderID" : "0 AS OrderID");
+                        if (oiOrderIdCol == null)
+                        {
+                            return orders;
+                        }
+
+                        var selectList = new List<string>
+                        {
+                            $"{Quote(oiOrderIdCol)} AS OrderID"
+                        };
                         if (oiProductNameCol != null) selectList.Add(Quote(oiProductNameCol) + " AS ProductName");
                         if (oiCategoryCol != null) selectList.Add(Quote(oiCategoryCol) + " AS Category");
                         if (oiQuantityCol != null) selectList.Add(Quote(oiQuantityCol) + " AS Quantity");
                         if (oiUnitPriceCol != null) selectList.Add(Quote(oiUnitPriceCol) + " AS UnitPrice");
+                        if (oiProductImageCol != null) selectList.Add(Quote(oiProductImageCol) + " AS ProductImage");
 
                         string sql;
                         if (oiProductIdCol != null && pProductIdCol != null && pCategoryCol != null)
                         {
-                            // Join with Products to get category or name when missing on order item
-                            var productNameSelect = oiProductNameCol != null ? Quote(oiProductNameCol) : (pNameCol != null ? $"p.{Quote(pNameCol)} AS ProductName" : "'' AS ProductName");
-                            var categorySelect = oiCategoryCol != null ? Quote(oiCategoryCol) : $"p.{Quote(pCategoryCol)} AS Category";
-                            var qtySelect = oiQuantityCol != null ? Quote(oiQuantityCol) : "1 AS Quantity";
-                            var priceSelect = oiUnitPriceCol != null ? Quote(oiUnitPriceCol) : "0 AS UnitPrice";
+                            var variantJoin = string.Empty;
+                            if (vProductIdCol != null && vImagePathCol != null)
+                            {
+                                var variantJoinConditions = new List<string>();
+                                if (oiVariantIdCol != null && vVariantIdCol != null)
+                                {
+                                    variantJoinConditions.Add($"(oi.{Quote(oiVariantIdCol)} IS NOT NULL AND pv.{Quote(vVariantIdCol)} = oi.{Quote(oiVariantIdCol)})");
+                                    variantJoinConditions.Add($"(oi.{Quote(oiVariantIdCol)} IS NULL AND pv.{Quote(vProductIdCol)} = oi.{Quote(oiProductIdCol)})");
+                                }
+                                else
+                                {
+                                    variantJoinConditions.Add($"pv.{Quote(vProductIdCol)} = oi.{Quote(oiProductIdCol)}");
+                                }
+                                variantJoin = $" LEFT JOIN {Quote("ProductVariants")} pv ON {string.Join(" OR ", variantJoinConditions)}";
+                            }
 
-                            sql = $"SELECT {Quote(oiOrderIdCol)} AS OrderID, COALESCE({Quote(oiProductNameCol)}, p.{Quote(pNameCol)}) AS ProductName, COALESCE({(oiCategoryCol != null ? Quote(oiCategoryCol) : "NULL")}, p.{Quote(pCategoryCol)}) AS Category, {qtySelect} AS Quantity, {priceSelect} AS UnitPrice FROM {Quote(orderItemsTable)} oi LEFT JOIN {Quote("Products")} p ON p.{Quote(pProductIdCol)} = oi.{Quote(oiProductIdCol)} WHERE oi.{Quote(oiOrderIdCol)} IN ({orderIds})";
+                            var productNameExpr = (oiProductNameCol, pNameCol) switch
+                            {
+                                ({ } oiName, { } pName) => $"COALESCE(NULLIF(oi.{Quote(oiName)}, ''), p.{Quote(pName)})",
+                                ({ } oiName, null) => $"oi.{Quote(oiName)}",
+                                (null, { } pName) => $"p.{Quote(pName)}",
+                                _ => "''"
+                            };
+                            var categoryExpr = oiCategoryCol != null
+                                ? $"COALESCE(NULLIF(oi.{Quote(oiCategoryCol)}, ''), p.{Quote(pCategoryCol)})"
+                                : $"p.{Quote(pCategoryCol)}";
+                            var qtySelect = oiQuantityCol != null ? $"oi.{Quote(oiQuantityCol)}" : "1";
+                            var priceSelect = oiUnitPriceCol != null ? $"oi.{Quote(oiUnitPriceCol)}" : "0";
+                            var imageCandidates = new List<string>();
+                            if (oiProductImageCol != null) imageCandidates.Add($"NULLIF(oi.{Quote(oiProductImageCol)}, '')");
+                            if (!string.IsNullOrWhiteSpace(variantJoin) && vImagePathCol != null) imageCandidates.Add($"NULLIF(pv.{Quote(vImagePathCol)}, '')");
+                            if (pImagePathCol != null) imageCandidates.Add($"NULLIF(p.{Quote(pImagePathCol)}, '')");
+                            var imageExpr = imageCandidates.Count == 0
+                                ? "''"
+                                : $"COALESCE({string.Join(", ", imageCandidates)}, '')";
+
+                            sql = $"SELECT oi.{Quote(oiOrderIdCol)} AS OrderID, {productNameExpr} AS ProductName, {categoryExpr} AS Category, {qtySelect} AS Quantity, {priceSelect} AS UnitPrice, {imageExpr} AS ProductImage FROM {Quote(orderItemsTable)} oi LEFT JOIN {Quote("Products")} p ON p.{Quote(pProductIdCol)} = oi.{Quote(oiProductIdCol)}{variantJoin} WHERE oi.{Quote(oiOrderIdCol)} IN ({orderIds})";
                         }
                         else
                         {
                             // Fallback: select whatever columns exist on order items
+                            if (oiProductNameCol == null) selectList.Add("'' AS ProductName");
+                            if (oiCategoryCol == null) selectList.Add("'' AS Category");
+                            if (oiQuantityCol == null) selectList.Add("1 AS Quantity");
+                            if (oiUnitPriceCol == null) selectList.Add("0 AS UnitPrice");
+                            if (oiProductImageCol == null) selectList.Add("'' AS ProductImage");
                             sql = $"SELECT {string.Join(", ", selectList)} FROM {Quote(orderItemsTable)} WHERE {Quote(oiOrderIdCol)} IN ({orderIds})";
                         }
 
@@ -912,6 +1017,7 @@ namespace MyAspNetApp.Controllers
                                 var cat = GetString(oiReader, "Category");
                                 var qty = HasColumn(oiReader, "Quantity") ? GetInt(oiReader, "Quantity") : 1;
                                 var unit = HasColumn(oiReader, "UnitPrice") ? GetDecimal(oiReader, "UnitPrice") : 0m;
+                                var productImage = HasColumn(oiReader, "ProductImage") ? GetString(oiReader, "ProductImage") : string.Empty;
 
                                 if (!itemsByOrder.TryGetValue(oid, out var list))
                                 {
@@ -923,6 +1029,7 @@ namespace MyAspNetApp.Controllers
                                 {
                                     Quantity = qty,
                                     UnitPrice = unit,
+                                    ProductImage = productImage,
                                     Product = new ProductSummary
                                     {
                                         ProductName = pname,
@@ -937,6 +1044,9 @@ namespace MyAspNetApp.Controllers
                                 if (itemsByOrder.TryGetValue(order.OrderID, out var fetched))
                                 {
                                     order.OrderItems = fetched;
+                                    order.ProductImage = fetched
+                                        .Select(item => item.ProductImage)
+                                        .FirstOrDefault(path => !string.IsNullOrWhiteSpace(path)) ?? string.Empty;
                                 }
                             }
                         }
@@ -946,6 +1056,8 @@ namespace MyAspNetApp.Controllers
                         }
                     }
                 }
+
+                await EnrichOrderCategoriesByProductNameAsync(connection, sellerId, orders, cancellationToken);
             }
             catch (Exception ex)
             {
@@ -954,6 +1066,73 @@ namespace MyAspNetApp.Controllers
             }
 
             return orders;
+        }
+
+        private async Task EnrichOrderCategoriesByProductNameAsync(
+            SqlConnection connection,
+            int sellerId,
+            List<Order> orders,
+            CancellationToken cancellationToken)
+        {
+            if (orders.Count == 0)
+            {
+                return;
+            }
+
+            try
+            {
+                var columns = await GetColumnsAsync(connection, "Products", cancellationToken);
+                var sellerColumn = FindColumn(columns, "seller_id", "SellerId", "SellerID");
+                var nameColumn = FindColumn(columns, "ProductName", "Name", "product_name", "name");
+                var categoryColumn = FindColumn(columns, "Category", "category", "ProductCategory");
+                if (sellerColumn == null || nameColumn == null || categoryColumn == null)
+                {
+                    return;
+                }
+
+                var categoriesByProductName = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                await using var command = connection.CreateCommand();
+                command.CommandText =
+                    $"SELECT {Quote(nameColumn)} AS ProductName, {Quote(categoryColumn)} AS Category FROM {Quote("Products")} WHERE {Quote(sellerColumn)} = @SellerId AND NULLIF(LTRIM(RTRIM({Quote(categoryColumn)})), '') IS NOT NULL";
+                command.Parameters.Add(new SqlParameter("@SellerId", SqlDbType.Int) { Value = sellerId });
+
+                await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+                while (await reader.ReadAsync(cancellationToken))
+                {
+                    var productName = GetString(reader, "ProductName")?.Trim();
+                    var category = GetString(reader, "Category")?.Trim();
+                    if (!string.IsNullOrWhiteSpace(productName) && !string.IsNullOrWhiteSpace(category))
+                    {
+                        categoriesByProductName[productName] = category;
+                    }
+                }
+
+                foreach (var order in orders)
+                {
+                    foreach (var item in order.OrderItems ?? new List<OrderItem>())
+                    {
+                        var product = item.Product ??= new ProductSummary();
+                        if (!string.IsNullOrWhiteSpace(product.Category))
+                        {
+                            continue;
+                        }
+
+                        var itemProductName = !string.IsNullOrWhiteSpace(product.ProductName)
+                            ? product.ProductName.Trim()
+                            : order.ProductName?.Trim();
+
+                        if (!string.IsNullOrWhiteSpace(itemProductName) &&
+                            categoriesByProductName.TryGetValue(itemProductName, out var category))
+                        {
+                            product.Category = category;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex) when (IsSqlAvailabilityException(ex))
+            {
+                _logger.LogDebug(ex, "Unable to enrich order categories for seller {SellerId}", sellerId);
+            }
         }
 
         private async Task<List<Logistics>> LoadCouriersAsync(CancellationToken cancellationToken)

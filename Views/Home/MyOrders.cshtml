@@ -167,7 +167,7 @@
 
     <div class="status-tabs">
         <button class="status-tab active" onclick="filterOrders('all', this)">All</button>
-        <button class="status-tab" onclick="filterOrders('Placed', this)">Placed</button>
+        <button class="status-tab" onclick="filterOrders('Pending', this)">Pending</button>
         <button class="status-tab" onclick="filterOrders('Processing', this)">Processing</button>
         <button class="status-tab" onclick="filterOrders('Shipped', this)">Shipped</button>
         <button class="status-tab" onclick="filterOrders('Delivered', this)">Delivered</button>
@@ -184,25 +184,36 @@
     }
     else
     {
-        var statuses = new[] { "Placed", "Processing", "Shipped", "Delivered" };
+        var statuses = new[] { "Pending", "Processing", "Shipped", "Delivered" };
 
         <div id="orders-list">
             @foreach (var order in Model)
             {
-                int step = Array.IndexOf(statuses, order.OrderStatus);
+                var orderStatus = order.NormalizedStatus;
+                int step = Array.IndexOf(statuses, orderStatus);
                 if (step < 0) step = 0;
 
-                string icon = order.OrderStatus switch
+                string icon = orderStatus switch
                 {
-                    "Placed"     => "📋",
+                    "Pending"    => "📋",
                     "Processing" => "⚙️",
                     "Shipped"    => "🚚",
                     "Delivered"  => "✅",
                     _            => "📦"
                 };
 
+                if (orderStatus == "Pending")
+                {
+                    icon = "ðŸ“‹";
+                }
+
+                if (orderStatus == "Pending")
+                {
+                    icon = "\U0001F4CB";
+                }
+
                 <a class="order-card"
-                   data-status="@order.OrderStatus"
+                   data-status="@orderStatus"
                    href="/Home/OrderDetail?id=@order.OrderId">
 
                     <div class="order-status-icon">@icon</div>
@@ -227,7 +238,7 @@
                         <span class="status-pill"
                               style="background:@(order.StatusColor)22; color:@order.StatusColor;">
                             <span class="status-dot"></span>
-                            @order.OrderStatus
+                            @orderStatus
                         </span>
                         <span class="view-btn">View Details</span>
                     </div>

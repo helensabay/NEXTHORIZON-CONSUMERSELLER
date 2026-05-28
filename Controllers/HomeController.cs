@@ -1180,18 +1180,27 @@ ORDER BY mu.DistanceKm DESC,
                 return RedirectToAction(nameof(Product), new { id = productId });
             }
 
+            var buyNowItem = new CartItem
+            {
+                ProductId = productId,
+                VariantId = variantId,
+                Color = color?.Trim() ?? string.Empty,
+                Size = size.Trim(),
+                Quantity = Math.Max(1, quantity),
+                SellerId = sellerId ?? 0,
+                UnitPrice = ResolveBuyNowUnitPrice(productId, variantId, size, color)
+            };
+
+            var stockCheck = ValidateCartItemStock(buyNowItem);
+            if (!stockCheck.IsAvailable)
+            {
+                TempData["ProductError"] = stockCheck.Message;
+                return RedirectToAction(nameof(Product), new { id = productId });
+            }
+
             ProductData.ReplaceCart(new[]
             {
-                new CartItem
-                {
-                    ProductId = productId,
-                    VariantId = variantId,
-                    Color = color?.Trim() ?? string.Empty,
-                    Size = size.Trim(),
-                    Quantity = Math.Max(1, quantity),
-                    SellerId = sellerId ?? 0,
-                    UnitPrice = ResolveBuyNowUnitPrice(productId, variantId, size, color)
-                }
+                buyNowItem
             });
 
             SyncSharedCartCookie();
@@ -1255,6 +1264,12 @@ ORDER BY mu.DistanceKm DESC,
 
             ApplySelectedVoucher(vm);
 
+            var stockValidation = ValidateCartStock(ProductData.GetCartSnapshot());
+            if (!stockValidation.IsAvailable)
+            {
+                ModelState.AddModelError(string.Empty, stockValidation.Message);
+            }
+
             ModelState.Remove("CartItems");
             ModelState.Remove("Subtotal");
             ModelState.Remove("ShippingFee");
@@ -1315,7 +1330,7 @@ ORDER BY mu.DistanceKm DESC,
             var confirmVm = new OrderConfirmationViewModel
             {
                 OrderId = insertedOrderId?.ToString() ?? string.Empty,
-                OrderStatus = "Placed",
+                OrderStatus = "Pending",
                 FullName = vm.FullName,
                 Email = vm.Email,
                 Phone = vm.Phone,
@@ -1426,6 +1441,86 @@ ORDER BY mu.DistanceKm DESC,
                     Quantity = ci.Quantity
                 };
             }).Where(i => i.Price > 0).ToList();
+        }
+
+        private (bool IsAvailable, string Message) ValidateCartStock(IReadOnlyCollection<CartItem> cartItems)
+        {
+            foreach (var item in cartItems)
+            {
+                var stockCheck = ValidateCartItemStock(item);
+                if (!stockCheck.IsAvailable)
+                {
+                    return stockCheck;
+                }
+            }
+
+            return (true, string.Empty);
+        }
+
+        private (bool IsAvailable, string Message) ValidateCartItemStock(CartItem cartItem)
+        {
+            List<DbProductVariant> variants;
+            DbProduct? dbProduct = null;
+
+            try
+            {
+                variants = _dbContext.ProductVariants
+                    .AsNoTracking()
+                    .Where(variant => variant.ProductId == cartItem.ProductId)
+                    .ToList();
+
+                dbProduct = _dbContext.Products
+                    .AsNoTracking()
+                    .FirstOrDefault(product => product.ProductId == cartItem.ProductId);
+            }
+            catch (Exception ex) when (IsOptionalCheckoutDataException(ex))
+            {
+                variants = new List<DbProductVariant>();
+            }
+
+            var quantity = Math.Max(cartItem.Quantity, 1);
+            if (variants.Count > 0)
+            {
+                var matchingVariant = ResolveCheckoutVariant(cartItem, variants);
+                if (matchingVariant == null)
+                {
+                    return (false, "Please select an available product option.");
+                }
+
+                var optionLabel = string.Join(" / ", new[] { matchingVariant.Style, matchingVariant.Size }
+                    .Where(value => !string.IsNullOrWhiteSpace(value)));
+
+                if (matchingVariant.Quantity <= 0 ||
+                    string.Equals(matchingVariant.Availability, "Out of Stock", StringComparison.OrdinalIgnoreCase))
+                {
+                    return (false, $"{dbProduct?.ProductName ?? "This product"}{(string.IsNullOrWhiteSpace(optionLabel) ? string.Empty : $" ({optionLabel})")} is out of stock and cannot be ordered.");
+                }
+
+                if (quantity > matchingVariant.Quantity)
+                {
+                    return (false, $"Only {matchingVariant.Quantity} item(s) are available for {dbProduct?.ProductName ?? "this product"}.");
+                }
+
+                return (true, string.Empty);
+            }
+
+            var fallbackProduct = ProductData.Products.FirstOrDefault(product => product.Id == cartItem.ProductId);
+            if (fallbackProduct != null)
+            {
+                if (fallbackProduct.Stock <= 0)
+                {
+                    return (false, $"{fallbackProduct.Name} is out of stock and cannot be ordered.");
+                }
+
+                if (quantity > fallbackProduct.Stock)
+                {
+                    return (false, $"Only {fallbackProduct.Stock} item(s) are available for {fallbackProduct.Name}.");
+                }
+            }
+
+            return dbProduct != null || fallbackProduct != null
+                ? (true, string.Empty)
+                : (false, "Product not found.");
         }
 
         private decimal ResolveBuyNowUnitPrice(int productId, int? variantId, string? size, string? color)
@@ -2264,7 +2359,7 @@ ORDER BY mu.DistanceKm DESC,
                 AddOrderField(postalCodeColumn, "@PostalCode", vm.PostalCode, DbType.String);
                 AddOrderField(deliveryOptionColumn, "@DeliveryOption", vm.DeliveryOption, DbType.String);
                 AddOrderField(paymentMethodColumn, "@PaymentMethod", vm.PaymentMethod, DbType.String);
-                AddOrderField(statusColumn, "@Status", "Placed", DbType.String);
+                AddOrderField(statusColumn, "@Status", "Pending", DbType.String);
                 AddOrderField(subtotalColumn, "@Subtotal", vm.Subtotal, DbType.Decimal);
                 AddOrderField(shippingFeeColumn, "@ShippingFee", vm.ShippingFee, DbType.Decimal);
                 AddOrderField(totalAmountColumn, "@TotalAmount", vm.Total, DbType.Decimal);

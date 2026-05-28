@@ -361,13 +361,8 @@ document.addEventListener('click', function (event) {
     if (viewDetailsBtn) {
         event.preventDefault();
         event.stopPropagation();
-        
-        const orderId = viewDetailsBtn.getAttribute('data-order-id') || viewDetailsBtn.dataset.orderId;
-        if (orderId) {
-            openViewOrderModal(orderId);
-        } else {
-            console.warn("View Details button clicked but missing data-order-id attribute!");
-        }
+
+        openOrderInfoModal(viewDetailsBtn.closest('.order-row'));
         document.querySelectorAll('.action-menu.open').forEach(m => m.classList.remove('open'));
         return;
     }
@@ -1303,6 +1298,11 @@ function closeReturnModal() {
 function openReturnedInfoModal(orderRow) {
     if (!orderRow) return;
 
+    document.getElementById('returnInfoKicker').textContent = 'Failed Delivery';
+    document.getElementById('returnInfoSubtitle').textContent = 'Review shipment details, evidence, and notes recorded for this failed delivery.';
+    document.getElementById('returnInfoReasonCard').style.display = '';
+    document.getElementById('returnInfoNoteHeading').textContent = 'Recorded seller note';
+
     selectedReturnOrderId = orderRow.dataset.orderId || '';
     document.getElementById('returnInfoOrderId').textContent = selectedReturnOrderId;
     document.getElementById('returnInfoCustomer').textContent = orderRow.children[1]?.innerText.trim() || '---';
@@ -1324,6 +1324,32 @@ function openReturnedInfoModal(orderRow) {
         proofImage.removeAttribute('src');
         proofBlock.style.display = 'none';
     }
+
+    document.getElementById('returnedInfoModal').style.display = 'flex';
+}
+
+function openOrderInfoModal(orderRow) {
+    if (!orderRow) return;
+
+    document.getElementById('returnInfoKicker').textContent = 'Order Details';
+    document.getElementById('returnInfoSubtitle').textContent = 'Review customer, item, payment, and shipment details for this order.';
+    document.getElementById('returnInfoReasonCard').style.display = 'none';
+    document.getElementById('returnInfoNoteHeading').textContent = 'Internal seller note';
+
+    selectedReturnOrderId = orderRow.dataset.orderId || '';
+    document.getElementById('returnInfoOrderId').textContent = selectedReturnOrderId;
+    document.getElementById('returnInfoCustomer').textContent = orderRow.children[1]?.innerText.trim() || '---';
+    document.getElementById('returnInfoProduct').textContent = orderRow.children[3]?.innerText.trim() || '---';
+    document.getElementById('returnInfoQuantity').textContent = orderRow.children[4]?.innerText.trim() || '0';
+    document.getElementById('returnInfoTotal').textContent = orderRow.children[5]?.innerText.trim() || '\u20B10.00';
+    document.getElementById('returnInfoCourier').textContent = getDisplayValue(orderRow.dataset.courier, 'NextHorizon Partner');
+    document.getElementById('returnInfoTracking').textContent = getDisplayValue(orderRow.dataset.tracking, 'Awaiting shipment');
+    document.getElementById('returnInfoNote').textContent = orderRow.dataset.sellerNote || 'No internal notes have been added to this order.';
+
+    const proofBlock = document.getElementById('returnInfoProofBlock');
+    const proofImage = document.getElementById('returnInfoProofImage');
+    if (proofImage) proofImage.removeAttribute('src');
+    if (proofBlock) proofBlock.style.display = 'none';
 
     document.getElementById('returnedInfoModal').style.display = 'flex';
 }
@@ -1975,4 +2001,3 @@ document.getElementById('returnDetailsImage')?.addEventListener('click', functio
         window.open(this.src, '_blank');
     }
 });
-

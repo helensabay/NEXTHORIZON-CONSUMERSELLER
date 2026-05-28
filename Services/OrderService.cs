@@ -103,7 +103,7 @@ public class OrderService
                 ? $"o.[{totalAmountCol}]"
                 : "0";
 
-            var statusExpr = statusCol is not null ? $"o.[{statusCol}]" : "N'Placed'";
+            var statusExpr = statusCol is not null ? $"o.[{statusCol}]" : "N'Pending'";
             var paymentExpr = paymentCol is not null ? $"o.[{paymentCol}]" : "N'GCash'";
             var fullNameExpr = fullNameCol is not null ? $"o.[{fullNameCol}]" : "N''";
             var phoneExpr = phoneCol is not null ? $"o.[{phoneCol}]" : "N''";

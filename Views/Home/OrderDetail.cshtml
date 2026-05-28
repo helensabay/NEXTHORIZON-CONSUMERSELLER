@@ -254,7 +254,7 @@
         <span class="status-pill-lg"
               style="background:@(Model.StatusColor)22; color:@Model.StatusColor;">
             <span class="status-dot-lg"></span>
-            @Model.OrderStatus
+            @Model.NormalizedStatus
         </span>
     </div>
 
@@ -263,7 +263,7 @@
         <div class="detail-section">
             <div class="section-title">Order Tracking</div>
             @{
-                var statuses = new[] { "Placed", "Processing", "Shipped", "Delivered" };
+                var statuses = new[] { "Pending", "Processing", "Shipped", "Delivered" };
                 var icons    = new[] { "📋", "⚙️", "🚚", "✅" };
                 int current  = Model.CurrentStep;
             }
@@ -281,15 +281,15 @@
                 }
             </div>
             <p style="font-size:12px;color:#888;margin-top:10px;text-align:center;">
-                @if (Model.OrderStatus == "Placed")
+                @if (Model.NormalizedStatus == "Pending")
                 {
                     <span>Your order has been placed and will be processed soon.</span>
                 }
-                else if (Model.OrderStatus == "Processing")
+                else if (Model.NormalizedStatus == "Processing")
                 {
                     <span>We are preparing your order for shipment.</span>
                 }
-                else if (Model.OrderStatus == "Shipped")
+                else if (Model.NormalizedStatus == "Shipped")
                 {
                     <span>Your order is on its way!</span>
                 }

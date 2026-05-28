@@ -252,6 +252,11 @@
         </div>
     }
 
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div asp-validation-summary="ModelOnly" style="background:#fef2f2;border:1px solid #fca5a5;color:#b91c1c;padding:12px 16px;border-radius:7px;margin-bottom:20px;font-size:13px;"></div>
+    }
+
     <form method="post" asp-controller="Home" asp-action="PlaceOrder">
         @Html.AntiForgeryToken()
 
