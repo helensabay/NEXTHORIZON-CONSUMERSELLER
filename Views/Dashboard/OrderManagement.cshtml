@@ -217,11 +217,10 @@
                             }
                             else
                             {
-                                <button type="button"
-                                        class="action-menu-item view-details-btn"
-                                        data-order-id="@order.OrderID">
+                                <a class="action-menu-item"
+                                   href="@($"/Dashboard/OrderManagement/OrderDetails{order.OrderID}")">
                                     View Details
-                                </button>
+                                </a>
                             }
 
                             @* CONTACT CUSTOMER - always visible *@
@@ -243,6 +242,15 @@
                                 <button class="action-menu-item mark-returned-btn"
                                         data-order-id="@order.OrderID">
                                     Failed Delivery
+                                </button>
+                            }
+                            else if (order.Status == "To Ship")
+                            {
+                                <button class="action-menu-item mark-as-shipped-btn"
+                                        data-order-id="@order.OrderID"
+                                        data-customer="@order.FullName"
+                                        data-courier-name="@resolvedCourierName">
+                                    Mark as Shipped
                                 </button>
                             }
                             else if (order.Status == "Failed Delivery")
@@ -508,7 +516,7 @@
                 <div class="return-section-heading">
                     <span class="return-section-kicker">Replacement Fulfillment</span>
                     <h4>Ship a replacement item</h4>
-                    <p>This will create a ₱0.00 child order in To Ship using the buyer and item details from the original order.</p>
+                    <p>This will create a &#8369;0.00 child order in To Ship using the buyer and item details from the original order.</p>
                 </div>
             </div>
 
@@ -1190,9 +1198,5 @@
         }
     }, 500);
 </script>
-
-
-
-
 
 

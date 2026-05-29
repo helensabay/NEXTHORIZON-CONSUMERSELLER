@@ -267,7 +267,7 @@ body{
 
 .status-badge.pending { background: #111; color: #fff; }
 .status-badge.to-ship { background: #111; color: #fff; }
-.status-badge.shipped { background: #f5f5f5; color: #111; border:1px solid #111; }
+.status-badge.shipped { background: #f5f5f5; color: #fff; }
 .status-badge.delivered { background: #111; color: #fff; }
 .status-badge.cancelled { background: #e9e9e9; color: #111; }
 .status-badge.failed-delivery {
@@ -281,12 +281,12 @@ body{
 .status-badge.return-approved {
     background: #f5f5f5;
     color: #111;
-    border:1px solid #111;
+    
 }
 .status-badge.item-returned {
     background: #f5f5f5;
     color: #111;
-    border:1px solid #111;
+    
 }
 .status-badge.refunded {
     background: #111;

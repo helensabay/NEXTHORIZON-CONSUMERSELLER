@@ -1793,6 +1793,13 @@ function renderReturnDetailsActions(status, returnId, orderId, consumerId, resol
         return;
     }
 
+    if (status === 'Replacement Created') {
+        actions.appendChild(buildReturnStatusNote(replacementOrderId
+            ? `Replacement order #${replacementOrderId} is in To Ship.`
+            : 'The replacement order is in To Ship.'));
+        return;
+    }
+
     if (status === 'Return Rejected') {
         actions.appendChild(buildReturnStatusNote('This return request has been rejected. No further action is available.'));
         return;
@@ -1800,13 +1807,6 @@ function renderReturnDetailsActions(status, returnId, orderId, consumerId, resol
 
     if (status === 'Refunded') {
         actions.appendChild(buildReturnStatusNote('This return request has already been refunded and completed.'));
-        return;
-    }
-
-    if (status === 'Replacement Created') {
-        actions.appendChild(buildReturnStatusNote(replacementOrderId
-            ? `Replacement order #${replacementOrderId} is in To Ship.`
-            : 'The replacement order is in To Ship.'));
         return;
     }
 

@@ -105,8 +105,10 @@ namespace MyAspNetApp.Controllers
             });
         }
 
-        [HttpGet]
-        public async Task<IActionResult> OrderDetails(string id, CancellationToken cancellationToken)
+        [HttpGet("Dashboard/OrderDetails/{id?}")]
+        [HttpGet("Dashboard/OrderManagement/OrderDetails{id}")]
+        [HttpGet("Dashboard/OrderManagement/OrderDetails/{id?}")]
+        public async Task<IActionResult> OrderDetails(string? id, CancellationToken cancellationToken)
         {
             var seller = await ResolveCurrentSellerAsync(cancellationToken);
             if (seller == null)
@@ -114,8 +116,7 @@ namespace MyAspNetApp.Controllers
                 return RedirectToAction("Login", "Account");
             }
 
-            if (string.IsNullOrWhiteSpace(id) ||
-                !int.TryParse(id.Replace("ORD-", string.Empty, StringComparison.OrdinalIgnoreCase), out var orderId))
+            if (!TryParseOrderDetailsId(id, out var orderId))
             {
                 return BadRequest("Invalid Order ID");
             }
@@ -148,6 +149,29 @@ namespace MyAspNetApp.Controllers
             return View(order);
         }
 
+        private static bool TryParseOrderDetailsId(string? value, out int orderId)
+        {
+            orderId = 0;
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return false;
+            }
+
+            var normalized = value
+                .Trim()
+                .Replace("ORD-", string.Empty, StringComparison.OrdinalIgnoreCase)
+                .Replace("OrderDetails", string.Empty, StringComparison.OrdinalIgnoreCase)
+                .Trim('/', ' ');
+
+            if (int.TryParse(normalized, out orderId))
+            {
+                return true;
+            }
+
+            var digits = new string(normalized.Where(char.IsDigit).ToArray());
+            return !string.IsNullOrWhiteSpace(digits) && int.TryParse(digits, out orderId);
+        }
+
         [HttpPost]
         public async Task<IActionResult> SaveOrderNote([FromBody] OrderNoteRequest request, CancellationToken cancellationToken)
         {
@@ -161,9 +185,85 @@ namespace MyAspNetApp.Controllers
         }
 
         [HttpPost]
-        public IActionResult AcceptOrder([FromBody] AcceptOrderRequest request)
+        public async Task<IActionResult> AcceptOrder([FromBody] AcceptOrderRequest request, CancellationToken cancellationToken)
         {
-            return Json(new { success = true, message = "Order accepted." });
+            var seller = await ResolveCurrentSellerAsync(cancellationToken);
+            if (seller == null)
+            {
+                return Json(new { success = false, message = "Session expired. Please sign in again." });
+            }
+
+            if (request.OrderId <= 0)
+            {
+                return BadRequest(new { success = false, message = "Invalid order ID." });
+            }
+
+            if (request.Courier <= 0)
+            {
+                return BadRequest(new { success = false, message = "Please select a courier before accepting this order." });
+            }
+
+            try
+            {
+                await using var connection = new SqlConnection(_context.Database.GetConnectionString());
+                await connection.OpenAsync(cancellationToken);
+
+                var columns = await GetColumnsAsync(connection, "Orders", cancellationToken);
+                var sellerColumn = FindColumn(columns, "seller_id", "SellerId", "SellerID");
+                var orderIdColumn = FindColumn(columns, "OrderID", "OrderId");
+                var statusColumn = FindColumn(columns, "Status", "status", "FulfillmentStatus");
+                var logisticsColumn = FindColumn(columns, "logistics_id", "LogisticsId", "CourierId");
+                var courierColumn = FindColumn(columns, "Courier", "DeliveryOption");
+
+                if (sellerColumn == null || orderIdColumn == null || statusColumn == null)
+                {
+                    return StatusCode(StatusCodes.Status500InternalServerError, new
+                    {
+                        success = false,
+                        message = "Orders table is missing required columns."
+                    });
+                }
+
+                var assignments = new List<string> { $"{Quote(statusColumn)} = @Status" };
+                if (logisticsColumn != null)
+                {
+                    assignments.Add($"{Quote(logisticsColumn)} = @CourierId");
+                }
+                else if (courierColumn != null)
+                {
+                    assignments.Add($"{Quote(courierColumn)} = @CourierName");
+                }
+
+                await using var command = connection.CreateCommand();
+                command.CommandText =
+                    $"UPDATE {Quote("Orders")} SET {string.Join(", ", assignments)} " +
+                    $"WHERE {Quote(orderIdColumn)} = @OrderId AND {Quote(sellerColumn)} = @SellerId";
+                command.Parameters.Add(new SqlParameter("@Status", SqlDbType.NVarChar, 50) { Value = "To Ship" });
+                command.Parameters.Add(new SqlParameter("@CourierId", SqlDbType.Int) { Value = request.Courier });
+                command.Parameters.Add(new SqlParameter("@CourierName", SqlDbType.NVarChar, 100)
+                {
+                    Value = await ResolveCourierNameAsync(connection, request.Courier, cancellationToken) ?? $"Courier #{request.Courier}"
+                });
+                command.Parameters.Add(new SqlParameter("@OrderId", SqlDbType.Int) { Value = request.OrderId });
+                command.Parameters.Add(new SqlParameter("@SellerId", SqlDbType.Int) { Value = seller.SellerId });
+
+                var rowsAffected = await command.ExecuteNonQueryAsync(cancellationToken);
+                if (rowsAffected == 0)
+                {
+                    return NotFound(new { success = false, message = "Order not found for this seller." });
+                }
+
+                return Json(new { success = true, message = "Order accepted and moved to To Ship.", status = "To Ship" });
+            }
+            catch (Exception ex) when (IsSqlAvailabilityException(ex))
+            {
+                _logger.LogWarning(ex, "Unable to accept order {OrderId} for seller {SellerId}", request.OrderId, seller.SellerId);
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, new
+                {
+                    success = false,
+                    message = "Unable to update the order right now. Please try again."
+                });
+            }
         }
 
         [HttpPost]
@@ -173,15 +273,174 @@ namespace MyAspNetApp.Controllers
         }
 
         [HttpPost]
-        public IActionResult MarkOrderShipped([FromForm] MarkShippedRequest request)
+        public async Task<IActionResult> MarkOrderShipped([FromForm] MarkShippedRequest request, CancellationToken cancellationToken)
         {
-            return Json(new { success = true, message = "Order marked as shipped." });
+            var seller = await ResolveCurrentSellerAsync(cancellationToken);
+            if (seller == null)
+            {
+                return Json(new { success = false, message = "Session expired. Please sign in again." });
+            }
+
+            if (request.OrderId <= 0)
+            {
+                return BadRequest(new { success = false, message = "Invalid order ID." });
+            }
+
+            if (string.IsNullOrWhiteSpace(request.TrackingNumber))
+            {
+                return BadRequest(new { success = false, message = "Tracking number is required." });
+            }
+
+            try
+            {
+                await using var connection = new SqlConnection(_context.Database.GetConnectionString());
+                await connection.OpenAsync(cancellationToken);
+
+                var columns = await GetColumnsAsync(connection, "Orders", cancellationToken);
+                var sellerColumn = FindColumn(columns, "seller_id", "SellerId", "SellerID");
+                var orderIdColumn = FindColumn(columns, "OrderID", "OrderId");
+                var statusColumn = FindColumn(columns, "Status", "status", "FulfillmentStatus");
+                var trackingColumn = FindColumn(columns, "TrackingNumber", "tracking_number");
+
+                if (sellerColumn == null || orderIdColumn == null || statusColumn == null)
+                {
+                    return StatusCode(StatusCodes.Status500InternalServerError, new
+                    {
+                        success = false,
+                        message = "Orders table is missing required columns."
+                    });
+                }
+
+                var assignments = new List<string> { $"{Quote(statusColumn)} = @Status" };
+                if (trackingColumn != null)
+                {
+                    assignments.Add($"{Quote(trackingColumn)} = @TrackingNumber");
+                }
+
+                await using var command = connection.CreateCommand();
+                command.CommandText =
+                    $"UPDATE {Quote("Orders")} SET {string.Join(", ", assignments)} " +
+                    $"WHERE {Quote(orderIdColumn)} = @OrderId AND {Quote(sellerColumn)} = @SellerId";
+                command.Parameters.Add(new SqlParameter("@Status", SqlDbType.NVarChar, 50) { Value = "Shipped" });
+                command.Parameters.Add(new SqlParameter("@TrackingNumber", SqlDbType.NVarChar, 100) { Value = request.TrackingNumber.Trim() });
+                command.Parameters.Add(new SqlParameter("@OrderId", SqlDbType.Int) { Value = request.OrderId });
+                command.Parameters.Add(new SqlParameter("@SellerId", SqlDbType.Int) { Value = seller.SellerId });
+
+                var rowsAffected = await command.ExecuteNonQueryAsync(cancellationToken);
+                if (rowsAffected == 0)
+                {
+                    return NotFound(new { success = false, message = "Order not found for this seller." });
+                }
+
+                return Json(new { success = true, message = "Order marked as shipped.", status = "Shipped" });
+            }
+            catch (Exception ex) when (IsSqlAvailabilityException(ex))
+            {
+                _logger.LogWarning(ex, "Unable to mark order {OrderId} as shipped for seller {SellerId}", request.OrderId, seller.SellerId);
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, new
+                {
+                    success = false,
+                    message = "Unable to update the order right now. Please try again."
+                });
+            }
         }
 
         [HttpPost]
-        public IActionResult MarkOrderReturned([FromForm] MarkReturnedRequest request)
+        public async Task<IActionResult> MarkOrderReturned([FromForm] MarkReturnedRequest request, CancellationToken cancellationToken)
         {
-            return Json(new { success = true, message = "Order marked as failed delivery." });
+            var seller = await ResolveCurrentSellerAsync(cancellationToken);
+            if (seller == null)
+            {
+                return Json(new { success = false, message = "Session expired. Please sign in again." });
+            }
+
+            if (request.OrderId <= 0)
+            {
+                return BadRequest(new { success = false, message = "Invalid order ID." });
+            }
+
+            if (string.IsNullOrWhiteSpace(request.ReturnReason))
+            {
+                return BadRequest(new { success = false, message = "Return reason is required." });
+            }
+
+            try
+            {
+                await using var connection = new SqlConnection(_context.Database.GetConnectionString());
+                await connection.OpenAsync(cancellationToken);
+
+                var columns = await GetColumnsAsync(connection, "Orders", cancellationToken);
+                var sellerColumn = FindColumn(columns, "seller_id", "SellerId", "SellerID");
+                var orderIdColumn = FindColumn(columns, "OrderID", "OrderId");
+                var statusColumn = FindColumn(columns, "Status", "status", "FulfillmentStatus");
+                var reasonColumn = FindColumn(columns, "ReturnReason", "return_reason", "FailedDeliveryReason");
+                var noteColumn = FindColumn(columns, "ReturnNote", "return_note", "FailedDeliveryNote");
+                var proofColumn = FindColumn(columns, "ReturnProofImage", "ReturnProofUrl", "return_proof", "ProofOfReturn");
+
+                if (sellerColumn == null || orderIdColumn == null || statusColumn == null)
+                {
+                    return StatusCode(StatusCodes.Status500InternalServerError, new
+                    {
+                        success = false,
+                        message = "Orders table is missing required columns."
+                    });
+                }
+
+                var proofUrl = proofColumn == null
+                    ? null
+                    : await SaveReturnProofAsync(request.ReturnProof, cancellationToken);
+
+                var assignments = new List<string> { $"{Quote(statusColumn)} = @Status" };
+                if (reasonColumn != null)
+                {
+                    assignments.Add($"{Quote(reasonColumn)} = @ReturnReason");
+                }
+
+                if (noteColumn != null)
+                {
+                    assignments.Add($"{Quote(noteColumn)} = @ReturnNote");
+                }
+
+                if (proofColumn != null && proofUrl != null)
+                {
+                    assignments.Add($"{Quote(proofColumn)} = @ReturnProof");
+                }
+
+                await using var command = connection.CreateCommand();
+                command.CommandText =
+                    $"UPDATE {Quote("Orders")} SET {string.Join(", ", assignments)} " +
+                    $"WHERE {Quote(orderIdColumn)} = @OrderId AND {Quote(sellerColumn)} = @SellerId";
+                command.Parameters.Add(new SqlParameter("@Status", SqlDbType.NVarChar, 50) { Value = "Failed Delivery" });
+                command.Parameters.Add(new SqlParameter("@ReturnReason", SqlDbType.NVarChar, 200) { Value = request.ReturnReason.Trim() });
+                command.Parameters.Add(new SqlParameter("@ReturnNote", SqlDbType.NVarChar, 1000)
+                {
+                    Value = string.IsNullOrWhiteSpace(request.ReturnNote) ? DBNull.Value : request.ReturnNote.Trim()
+                });
+                command.Parameters.Add(new SqlParameter("@ReturnProof", SqlDbType.NVarChar, 500) { Value = proofUrl ?? (object)DBNull.Value });
+                command.Parameters.Add(new SqlParameter("@OrderId", SqlDbType.Int) { Value = request.OrderId });
+                command.Parameters.Add(new SqlParameter("@SellerId", SqlDbType.Int) { Value = seller.SellerId });
+
+                var rowsAffected = await command.ExecuteNonQueryAsync(cancellationToken);
+                if (rowsAffected == 0)
+                {
+                    return NotFound(new { success = false, message = "Order not found for this seller." });
+                }
+
+                return Json(new { success = true, message = "Order marked as failed delivery.", status = "Failed Delivery" });
+            }
+            catch (Exception ex) when (IsSqlAvailabilityException(ex))
+            {
+                _logger.LogWarning(ex, "Unable to mark order {OrderId} as failed delivery for seller {SellerId}", request.OrderId, seller.SellerId);
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, new
+                {
+                    success = false,
+                    message = "Unable to update the order right now. Please try again."
+                });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
         }
 
         [HttpPost]
@@ -190,106 +449,58 @@ namespace MyAspNetApp.Controllers
             var seller = await ResolveCurrentSellerAsync(cancellationToken);
             if (seller == null)
             {
-                return Json(new { success = false, message = "Session expired." });
+                return Json(new { success = false, message = "Session expired. Please sign in again." });
             }
 
             if (request.ReturnId <= 0)
             {
-                return Json(new { success = false, message = "Invalid return request." });
+                return BadRequest(new { success = false, message = "Invalid return request." });
             }
 
-            var decision = (request.Decision ?? string.Empty).Trim();
-            var resolutionType = NormalizeResolutionType(request.ResolutionType);
-            var approved = string.Equals(decision, "approve", StringComparison.OrdinalIgnoreCase);
-            var rejected = string.Equals(decision, "reject", StringComparison.OrdinalIgnoreCase);
+            var approved = string.Equals(request.Decision, "approve", StringComparison.OrdinalIgnoreCase);
+            var rejected = string.Equals(request.Decision, "reject", StringComparison.OrdinalIgnoreCase);
             if (!approved && !rejected)
             {
-                return Json(new { success = false, message = "Choose a valid return decision." });
+                return BadRequest(new { success = false, message = "Invalid return decision." });
             }
+
+            var resolutionType = string.Equals(request.ResolutionType, "Replacement", StringComparison.OrdinalIgnoreCase)
+                ? "Replacement"
+                : "Refund";
 
             try
             {
                 await using var connection = new SqlConnection(_context.Database.GetConnectionString());
                 await connection.OpenAsync(cancellationToken);
 
-                var returnTable = await ResolveReturnTableAsync(connection, cancellationToken);
-                if (returnTable == null)
+                var updated = await UpdateReturnRequestAsync(
+                    connection,
+                    seller.SellerId,
+                    request.ReturnId,
+                    approved ? "Return Approved" : "Return Rejected",
+                    resolutionType,
+                    request.RejectionReason,
+                    request.RejectionNote,
+                    replacementOrderId: null,
+                    cancellationToken);
+
+                if (!updated)
                 {
-                    return Json(new { success = false, message = "Returns table is unavailable." });
+                    return NotFound(new { success = false, message = "Return request not found for this seller." });
                 }
 
-                var columns = returnTable.Value.Columns;
-                var idColumn = FindColumn(columns, "ReturnId", "return_id", "Id");
-                var sellerColumn = FindColumn(columns, "SellerId", "seller_id", "SellerID");
-                var statusColumn = FindColumn(columns, "Status", "status");
-                if (idColumn == null || sellerColumn == null || statusColumn == null)
-                {
-                    return Json(new { success = false, message = "Returns table is missing required columns." });
-                }
-
-                var decisionReasonColumn = FindColumn(columns, "SellerDecisionReason");
-                var decisionNoteColumn = FindColumn(columns, "SellerDecisionNote");
-                var reviewedAtColumn = FindColumn(columns, "ReviewedAt");
-                var resolutionTypeColumn = FindColumn(columns, "ResolutionType", "resolution_type");
-
-                var assignments = new List<string> { $"{Quote(statusColumn)} = @Status" };
-                await using var command = connection.CreateCommand();
-                command.Parameters.Add(new SqlParameter("@Status", SqlDbType.NVarChar, 50) { Value = approved ? "Return Approved" : "Return Rejected" });
-                command.Parameters.Add(new SqlParameter("@ReturnId", SqlDbType.Int) { Value = request.ReturnId });
-                command.Parameters.Add(new SqlParameter("@SellerId", SqlDbType.Int) { Value = seller.SellerId });
-
-                if (decisionReasonColumn != null)
-                {
-                    assignments.Add($"{Quote(decisionReasonColumn)} = @DecisionReason");
-                    command.Parameters.Add(new SqlParameter("@DecisionReason", SqlDbType.NVarChar, 150)
-                    {
-                        Value = rejected ? NullIfWhiteSpace(request.RejectionReason) : DBNull.Value
-                    });
-                }
-
-                if (decisionNoteColumn != null)
-                {
-                    assignments.Add($"{Quote(decisionNoteColumn)} = @DecisionNote");
-                    command.Parameters.Add(new SqlParameter("@DecisionNote", SqlDbType.NVarChar)
-                    {
-                        Value = rejected ? NullIfWhiteSpace(request.RejectionNote) : DBNull.Value
-                    });
-                }
-
-                if (reviewedAtColumn != null)
-                {
-                    assignments.Add($"{Quote(reviewedAtColumn)} = SYSUTCDATETIME()");
-                }
-
-                if (resolutionTypeColumn != null)
-                {
-                    assignments.Add($"{Quote(resolutionTypeColumn)} = @ResolutionType");
-                    command.Parameters.Add(new SqlParameter("@ResolutionType", SqlDbType.NVarChar, 50)
-                    {
-                        Value = approved ? resolutionType : "Refund"
-                    });
-                }
-
-                command.CommandText =
-                    $"UPDATE {Quote(returnTable.Value.TableName)} SET {string.Join(", ", assignments)} WHERE {Quote(idColumn)} = @ReturnId AND {Quote(sellerColumn)} = @SellerId";
-
-                var affected = await command.ExecuteNonQueryAsync(cancellationToken);
                 return Json(new
                 {
-                    success = affected > 0,
-                    message = affected > 0
-                        ? approved && resolutionType == "Replacement"
-                            ? "Return approved for replacement."
-                            : approved
-                                ? "Return approved for refund."
-                                : "Return request rejected."
-                        : "Return request not found."
+                    success = true,
+                    message = approved ? "Return request approved." : "Return request rejected.",
+                    status = approved ? "Return Approved" : "Return Rejected",
+                    resolutionType
                 });
             }
             catch (Exception ex) when (IsSqlAvailabilityException(ex))
             {
-                _logger.LogWarning(ex, "Unable to review return request {ReturnId}.", request.ReturnId);
-                return Json(new { success = false, message = "Return request could not be updated right now." });
+                _logger.LogWarning(ex, "Unable to review return request {ReturnId}", request.ReturnId);
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, new { success = false, message = "Unable to update the return request right now." });
             }
         }
 
@@ -299,15 +510,27 @@ namespace MyAspNetApp.Controllers
             var seller = await ResolveCurrentSellerAsync(cancellationToken);
             if (seller == null)
             {
-                return Json(new { success = false, message = "Session expired." });
+                return Json(new { success = false, message = "Session expired. Please sign in again." });
             }
 
-            var updated = await UpdateReturnStatusAsync(request.ReturnId, seller.SellerId, "Item Returned", cancellationToken);
-            return Json(new
+            try
             {
-                success = updated,
-                message = updated ? "Return item marked as received." : "Return request not found."
-            });
+                await using var connection = new SqlConnection(_context.Database.GetConnectionString());
+                await connection.OpenAsync(cancellationToken);
+                var updated = await UpdateReturnRequestAsync(connection, seller.SellerId, request.ReturnId, "Item Returned", null, null, null, null, cancellationToken);
+
+                if (!updated)
+                {
+                    return NotFound(new { success = false, message = "Return request not found for this seller." });
+                }
+
+                return Json(new { success = true, message = "Return item marked as received.", status = "Item Returned" });
+            }
+            catch (Exception ex) when (IsSqlAvailabilityException(ex))
+            {
+                _logger.LogWarning(ex, "Unable to mark return item received {ReturnId}", request.ReturnId);
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, new { success = false, message = "Unable to update the return request right now." });
+            }
         }
 
         [HttpPost]
@@ -316,7 +539,7 @@ namespace MyAspNetApp.Controllers
             var seller = await ResolveCurrentSellerAsync(cancellationToken);
             if (seller == null)
             {
-                return Json(new { success = false, message = "Session expired." });
+                return Json(new { success = false, message = "Session expired. Please sign in again." });
             }
 
             try
@@ -324,51 +547,67 @@ namespace MyAspNetApp.Controllers
                 await using var connection = new SqlConnection(_context.Database.GetConnectionString());
                 await connection.OpenAsync(cancellationToken);
 
-                var returnRequest = await LoadReturnRequestForSellerAsync(connection, request.ReturnId, seller.SellerId, cancellationToken);
-                if (returnRequest == null)
+                var returnInfo = await LoadReturnActionInfoAsync(connection, seller.SellerId, request.ReturnId, cancellationToken);
+                if (returnInfo == null)
                 {
-                    return Json(new { success = false, message = "Return request not found." });
+                    return NotFound(new { success = false, message = "Return request not found for this seller." });
                 }
 
-                if (string.Equals(returnRequest.ResolutionType, "Replacement", StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(returnInfo.ResolutionType, "Replacement", StringComparison.OrdinalIgnoreCase))
                 {
-                    if (!string.Equals(returnRequest.Status, "Item Returned", StringComparison.OrdinalIgnoreCase))
+                    var replacementOrderId = returnInfo.ReplacementOrderId;
+                    var createdReplacementOrder = !replacementOrderId.HasValue;
+                    if (!replacementOrderId.HasValue)
                     {
-                        return Json(new
-                        {
-                            success = false,
-                            message = "Mark the returned item as received before creating a replacement order."
-                        });
+                        replacementOrderId = await CreateReplacementOrderAsync(connection, seller.SellerId, returnInfo.OrderId, cancellationToken);
+                        await CreateReplacementBuyerMessageAsync(
+                            connection,
+                            seller.SellerId,
+                            seller.UserId,
+                            returnInfo.OrderId,
+                            replacementOrderId.Value,
+                            cancellationToken);
                     }
 
-                    if (returnRequest.ReplacementOrderId.HasValue && returnRequest.ReplacementOrderId.Value > 0)
+                    var updated = await UpdateReturnRequestAsync(
+                        connection,
+                        seller.SellerId,
+                        request.ReturnId,
+                        "Replacement Created",
+                        "Replacement",
+                        null,
+                        null,
+                        replacementOrderId.Value,
+                        cancellationToken);
+
+                    if (!updated)
                     {
-                        return Json(new
-                        {
-                            success = true,
-                            message = $"Replacement order #{returnRequest.ReplacementOrderId.Value} is already in To Ship."
-                        });
+                        return NotFound(new { success = false, message = "Return request not found for this seller." });
                     }
 
-                    var replacementOrderId = await CreateReplacementOrderAsync(connection, returnRequest.OrderId, seller.SellerId, seller.UserId, request.ReturnId, cancellationToken);
                     return Json(new
                     {
                         success = true,
-                        message = $"Replacement order #{replacementOrderId} was created and moved to To Ship."
+                        message = createdReplacementOrder
+                            ? "Replacement order created and buyer notified."
+                            : "Replacement order is already in To Ship.",
+                        status = "Replacement Created",
+                        replacementOrderId
                     });
                 }
 
-                var updated = await UpdateReturnStatusAsync(request.ReturnId, seller.SellerId, "Refunded", cancellationToken);
-                return Json(new
+                var refundUpdated = await UpdateReturnRequestAsync(connection, seller.SellerId, request.ReturnId, "Refunded", "Refund", null, null, null, cancellationToken);
+                if (!refundUpdated)
                 {
-                    success = updated,
-                    message = updated ? "Refund confirmed." : "Return request not found."
-                });
+                    return NotFound(new { success = false, message = "Return request not found for this seller." });
+                }
+
+                return Json(new { success = true, message = "Refund confirmed.", status = "Refunded" });
             }
             catch (Exception ex) when (IsSqlAvailabilityException(ex))
             {
-                _logger.LogWarning(ex, "Unable to complete return request {ReturnId}.", request.ReturnId);
-                return Json(new { success = false, message = "Return request could not be completed right now." });
+                _logger.LogWarning(ex, "Unable to confirm return refund/replacement {ReturnId}", request.ReturnId);
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, new { success = false, message = "Unable to update the return request right now." });
             }
         }
 
@@ -611,10 +850,13 @@ namespace MyAspNetApp.Controllers
                 .ToList();
             var cancelledOrders = orders.Count(order => IsOrderStatus(order, "Cancelled", "Canceled"));
             var codOrders = nonCancelledOrders
-                .Where(order => IsCodPayment(order.PaymentMethod))
+                .Where(order =>
+                    string.Equals((order.PaymentMethod ?? string.Empty).Trim(), "COD", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals((order.PaymentMethod ?? string.Empty).Trim(), "Cash on Delivery", StringComparison.OrdinalIgnoreCase))
                 .ToList();
-            var totalCodOrders = codOrders.Count;
-            var deliveredCodOrders = codOrders.Count(order => IsOrderStatus(order, "Delivered", "Completed", "Complete"));
+            var codDeliveredOrders = codOrders
+                .Where(order => IsOrderStatus(order, "Completed", "Delivered", "Complete"))
+                .ToList();
             var revenueYears = recognizedOrders
                 .Select(order => order.OrderDate.Year)
                 .Append(now.Year)
@@ -679,15 +921,13 @@ namespace MyAspNetApp.Controllers
                 CancelledOrders = cancelledOrders,
                 RefundedOrders = refundedOrders.Count,
                 ActiveReturnRequests = orders.Count(order => IsOrderStatus(order, "Return", "Return Requested", "Return Approved")),
-                CodDeliveredRevenue = codOrders
-                    .Where(order => IsOrderStatus(order, "Delivered", "Completed", "Complete"))
-                    .Sum(GetOrderAnalyticsAmount),
+                CodDeliveredRevenue = codDeliveredOrders.Sum(GetOrderAnalyticsAmount),
                 CodExposure = codOrders
                     .Where(order => IsOrderStatus(order, "To Ship", "Shipped"))
                     .Sum(GetOrderAnalyticsAmount),
-                CodSuccessRate = totalCodOrders > 0
-                    ? decimal.Round((deliveredCodOrders / (decimal)totalCodOrders) * 100m, 2)
-                    : 0m,
+                CodSuccessRate = codOrders.Count == 0
+                    ? 0m
+                    : decimal.Round((codDeliveredOrders.Count * 100m) / codOrders.Count, 2),
                 CodRtsCount = codOrders.Count(order => IsOrderStatus(order, "Failed Delivery")),
                 TotalVisits = 0,
                 MonthlyRevenueByYear = monthlyRevenueByYear,
@@ -710,13 +950,6 @@ namespace MyAspNetApp.Controllers
         {
             var status = NormalizeOrderStatus(order.EffectiveStatus ?? order.Status);
             return statuses.Any(item => string.Equals(status, item, StringComparison.OrdinalIgnoreCase));
-        }
-
-        private static bool IsCodPayment(string? paymentMethod)
-        {
-            var value = paymentMethod?.Trim();
-            return string.Equals(value, "COD", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(value, "Cash on Delivery", StringComparison.OrdinalIgnoreCase);
         }
 
         private static string NormalizeOrderStatus(string? status)
@@ -1363,58 +1596,150 @@ namespace MyAspNetApp.Controllers
             return couriers;
         }
 
-        private async Task<bool> UpdateReturnStatusAsync(
-            int returnId,
-            int sellerId,
-            string status,
+        private static async Task<string?> ResolveCourierNameAsync(
+            SqlConnection connection,
+            int courierId,
             CancellationToken cancellationToken)
         {
-            if (returnId <= 0)
+            var columns = await GetColumnsAsync(connection, "Logistics", cancellationToken);
+            var idColumn = FindColumn(columns, "logistics_id", "LogisticsId", "Id");
+            var nameColumn = FindColumn(columns, "courier_name", "CourierName", "Name");
+            if (idColumn == null || nameColumn == null)
+            {
+                return null;
+            }
+
+            await using var command = connection.CreateCommand();
+            command.CommandText = $"SELECT TOP (1) {Quote(nameColumn)} FROM {Quote("Logistics")} WHERE {Quote(idColumn)} = @CourierId";
+            command.Parameters.Add(new SqlParameter("@CourierId", SqlDbType.Int) { Value = courierId });
+            var value = await command.ExecuteScalarAsync(cancellationToken);
+            return value == null || value == DBNull.Value ? null : Convert.ToString(value);
+        }
+
+        private static async Task<string?> SaveReturnProofAsync(IFormFile? file, CancellationToken cancellationToken)
+        {
+            if (file == null || file.Length == 0)
+            {
+                return null;
+            }
+
+            var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+            var allowedExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ".jpg",
+                ".jpeg",
+                ".png",
+                ".webp"
+            };
+
+            if (!allowedExtensions.Contains(extension))
+            {
+                throw new InvalidOperationException("Proof image must be JPG, PNG, or WEBP.");
+            }
+
+            if (file.Length > 5 * 1024 * 1024)
+            {
+                throw new InvalidOperationException("Proof image must be 5MB or smaller.");
+            }
+
+            var relativeDirectory = Path.Combine("uploads", "returns");
+            var absoluteDirectory = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", relativeDirectory);
+            Directory.CreateDirectory(absoluteDirectory);
+
+            var fileName = $"{Guid.NewGuid():N}{extension}";
+            var absolutePath = Path.Combine(absoluteDirectory, fileName);
+            await using var stream = System.IO.File.Create(absolutePath);
+            await file.CopyToAsync(stream, cancellationToken);
+
+            return "/" + Path.Combine(relativeDirectory, fileName).Replace('\\', '/');
+        }
+
+        private static async Task<ReturnTableContext?> LoadReturnTableContextAsync(SqlConnection connection, CancellationToken cancellationToken)
+        {
+            var tableName = "returns";
+            var columns = await GetColumnsAsync(connection, tableName, cancellationToken);
+            if (columns.Count == 0)
+            {
+                tableName = "Returns";
+                columns = await GetColumnsAsync(connection, tableName, cancellationToken);
+            }
+
+            var idColumn = FindColumn(columns, "ReturnId", "return_id", "Id");
+            var orderColumn = FindColumn(columns, "OrderId", "order_id", "OrderID");
+            var sellerColumn = FindColumn(columns, "SellerId", "seller_id", "SellerID");
+            return idColumn == null || orderColumn == null || sellerColumn == null
+                ? null
+                : new ReturnTableContext(tableName, columns, idColumn, orderColumn, sellerColumn);
+        }
+
+        private static async Task<bool> UpdateReturnRequestAsync(
+            SqlConnection connection,
+            int sellerId,
+            int returnId,
+            string status,
+            string? resolutionType,
+            string? sellerDecisionReason,
+            string? sellerDecisionNote,
+            int? replacementOrderId,
+            CancellationToken cancellationToken)
+        {
+            var context = await LoadReturnTableContextAsync(connection, cancellationToken);
+            if (context == null)
             {
                 return false;
             }
 
-            try
+            var statusColumn = FindColumn(context.Columns, "Status", "status");
+            if (statusColumn == null)
             {
-                await using var connection = new SqlConnection(_context.Database.GetConnectionString());
-                await connection.OpenAsync(cancellationToken);
-
-                var returnTable = await ResolveReturnTableAsync(connection, cancellationToken);
-                if (returnTable == null)
-                {
-                    return false;
-                }
-
-                var columns = returnTable.Value.Columns;
-                var idColumn = FindColumn(columns, "ReturnId", "return_id", "Id");
-                var sellerColumn = FindColumn(columns, "SellerId", "seller_id", "SellerID");
-                var statusColumn = FindColumn(columns, "Status", "status");
-                if (idColumn == null || sellerColumn == null || statusColumn == null)
-                {
-                    return false;
-                }
-
-                var reviewedAtColumn = FindColumn(columns, "ReviewedAt");
-                var assignments = new List<string> { $"{Quote(statusColumn)} = @Status" };
-                if (reviewedAtColumn != null)
-                {
-                    assignments.Add($"{Quote(reviewedAtColumn)} = SYSUTCDATETIME()");
-                }
-
-                await using var command = connection.CreateCommand();
-                command.CommandText =
-                    $"UPDATE {Quote(returnTable.Value.TableName)} SET {string.Join(", ", assignments)} WHERE {Quote(idColumn)} = @ReturnId AND {Quote(sellerColumn)} = @SellerId";
-                command.Parameters.Add(new SqlParameter("@Status", SqlDbType.NVarChar, 50) { Value = status });
-                command.Parameters.Add(new SqlParameter("@ReturnId", SqlDbType.Int) { Value = returnId });
-                command.Parameters.Add(new SqlParameter("@SellerId", SqlDbType.Int) { Value = sellerId });
-
-                return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
-            }
-            catch (Exception ex) when (IsSqlAvailabilityException(ex))
-            {
-                _logger.LogWarning(ex, "Unable to set return request {ReturnId} status to {Status}.", returnId, status);
                 return false;
             }
+
+            var assignments = new List<string> { $"{Quote(statusColumn)} = @Status" };
+            var resolutionColumn = FindColumn(context.Columns, "ResolutionType");
+            var decisionReasonColumn = FindColumn(context.Columns, "SellerDecisionReason");
+            var decisionNoteColumn = FindColumn(context.Columns, "SellerDecisionNote");
+            var reviewedAtColumn = FindColumn(context.Columns, "ReviewedAt");
+            var replacementColumn = FindColumn(context.Columns, "ReplacementOrderId");
+
+            if (resolutionType != null && resolutionColumn != null)
+            {
+                assignments.Add($"{Quote(resolutionColumn)} = @ResolutionType");
+            }
+
+            if (sellerDecisionReason != null && decisionReasonColumn != null)
+            {
+                assignments.Add($"{Quote(decisionReasonColumn)} = @SellerDecisionReason");
+            }
+
+            if (sellerDecisionNote != null && decisionNoteColumn != null)
+            {
+                assignments.Add($"{Quote(decisionNoteColumn)} = @SellerDecisionNote");
+            }
+
+            if (reviewedAtColumn != null)
+            {
+                assignments.Add($"{Quote(reviewedAtColumn)} = SYSUTCDATETIME()");
+            }
+
+            if (replacementOrderId.HasValue && replacementColumn != null)
+            {
+                assignments.Add($"{Quote(replacementColumn)} = @ReplacementOrderId");
+            }
+
+            await using var command = connection.CreateCommand();
+            command.CommandText =
+                $"UPDATE {Quote(context.TableName)} SET {string.Join(", ", assignments)} " +
+                $"WHERE {Quote(context.IdColumn)} = @ReturnId AND {Quote(context.SellerColumn)} = @SellerId";
+            command.Parameters.Add(new SqlParameter("@Status", SqlDbType.NVarChar, 50) { Value = status });
+            command.Parameters.Add(new SqlParameter("@ResolutionType", SqlDbType.NVarChar, 50) { Value = resolutionType ?? (object)DBNull.Value });
+            command.Parameters.Add(new SqlParameter("@SellerDecisionReason", SqlDbType.NVarChar, 200) { Value = sellerDecisionReason ?? (object)DBNull.Value });
+            command.Parameters.Add(new SqlParameter("@SellerDecisionNote", SqlDbType.NVarChar, 1000) { Value = sellerDecisionNote ?? (object)DBNull.Value });
+            command.Parameters.Add(new SqlParameter("@ReplacementOrderId", SqlDbType.Int) { Value = replacementOrderId ?? (object)DBNull.Value });
+            command.Parameters.Add(new SqlParameter("@ReturnId", SqlDbType.Int) { Value = returnId });
+            command.Parameters.Add(new SqlParameter("@SellerId", SqlDbType.Int) { Value = sellerId });
+
+            return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
         }
 
         private async Task SyncCompletedReplacementReturnsAsync(int sellerId, CancellationToken cancellationToken)
@@ -1424,18 +1749,16 @@ namespace MyAspNetApp.Controllers
                 await using var connection = new SqlConnection(_context.Database.GetConnectionString());
                 await connection.OpenAsync(cancellationToken);
 
-                var returnTable = await ResolveReturnTableAsync(connection, cancellationToken);
-                if (returnTable == null)
+                var context = await LoadReturnTableContextAsync(connection, cancellationToken);
+                if (context == null)
                 {
                     return;
                 }
 
-                var returnColumns = returnTable.Value.Columns;
-                var returnSellerColumn = FindColumn(returnColumns, "SellerId", "seller_id", "SellerID");
-                var returnStatusColumn = FindColumn(returnColumns, "Status", "status");
-                var replacementOrderColumn = FindColumn(returnColumns, "ReplacementOrderId", "replacement_order_id");
-                var reviewedAtColumn = FindColumn(returnColumns, "ReviewedAt");
-                if (returnSellerColumn == null || returnStatusColumn == null || replacementOrderColumn == null)
+                var returnStatusColumn = FindColumn(context.Columns, "Status", "status");
+                var replacementOrderColumn = FindColumn(context.Columns, "ReplacementOrderId", "replacement_order_id");
+                var reviewedAtColumn = FindColumn(context.Columns, "ReviewedAt");
+                if (returnStatusColumn == null || replacementOrderColumn == null)
                 {
                     return;
                 }
@@ -1460,11 +1783,11 @@ namespace MyAspNetApp.Controllers
                     $"""
                     UPDATE r
                     SET {string.Join(", ", assignments)}
-                    FROM {Quote(returnTable.Value.TableName)} r
+                    FROM {Quote(context.TableName)} r
                     INNER JOIN {Quote("Orders")} o
                         ON o.{Quote(orderIdColumn)} = r.{Quote(replacementOrderColumn)}
-                        AND o.{Quote(orderSellerColumn)} = r.{Quote(returnSellerColumn)}
-                    WHERE r.{Quote(returnSellerColumn)} = @SellerId
+                        AND o.{Quote(orderSellerColumn)} = r.{Quote(context.SellerColumn)}
+                    WHERE r.{Quote(context.SellerColumn)} = @SellerId
                         AND UPPER(LTRIM(RTRIM(COALESCE(r.{Quote(returnStatusColumn)}, '')))) = 'REPLACEMENT CREATED'
                         AND UPPER(LTRIM(RTRIM(COALESCE(o.{Quote(orderStatusColumn)}, '')))) IN ('DELIVERED', 'COMPLETED', 'COMPLETE');
                     """;
@@ -1479,43 +1802,28 @@ namespace MyAspNetApp.Controllers
             }
         }
 
-        private async Task<ReturnRequest?> LoadReturnRequestForSellerAsync(
+        private static async Task<ReturnActionInfo?> LoadReturnActionInfoAsync(
             SqlConnection connection,
-            int returnId,
             int sellerId,
+            int returnId,
             CancellationToken cancellationToken)
         {
-            var returnTable = await ResolveReturnTableAsync(connection, cancellationToken);
-            if (returnTable == null)
+            var context = await LoadReturnTableContextAsync(connection, cancellationToken);
+            if (context == null)
             {
                 return null;
             }
 
-            var columns = returnTable.Value.Columns;
-            var idColumn = FindColumn(columns, "ReturnId", "return_id", "Id");
-            var orderColumn = FindColumn(columns, "OrderId", "order_id", "OrderID");
-            var sellerColumn = FindColumn(columns, "SellerId", "seller_id", "SellerID");
-            var statusColumn = FindColumn(columns, "Status", "status");
-            var resolutionTypeColumn = FindColumn(columns, "ResolutionType", "resolution_type");
-            var replacementOrderColumn = FindColumn(columns, "ReplacementOrderId", "replacement_order_id");
-            if (idColumn == null || orderColumn == null || sellerColumn == null)
-            {
-                return null;
-            }
-
-            static string SelectOrDefault(string? column, string alias, string defaultSql)
-                => column == null ? $"{defaultSql} AS {Quote(alias)}" : $"{Quote(column)} AS {Quote(alias)}";
+            var resolutionColumn = FindColumn(context.Columns, "ResolutionType");
+            var replacementColumn = FindColumn(context.Columns, "ReplacementOrderId");
 
             await using var command = connection.CreateCommand();
             command.CommandText = "SELECT " + string.Join(", ", new[]
             {
-                $"{Quote(idColumn)} AS ReturnId",
-                $"{Quote(orderColumn)} AS OrderId",
-                $"{Quote(sellerColumn)} AS SellerId",
-                SelectOrDefault(statusColumn, "Status", "''"),
-                SelectOrDefault(resolutionTypeColumn, "ResolutionType", "'Refund'"),
-                SelectOrDefault(replacementOrderColumn, "ReplacementOrderId", "NULL")
-            }) + $" FROM {Quote(returnTable.Value.TableName)} WHERE {Quote(idColumn)} = @ReturnId AND {Quote(sellerColumn)} = @SellerId";
+                $"{Quote(context.OrderColumn)} AS OrderId",
+                resolutionColumn == null ? "'Refund' AS ResolutionType" : $"{Quote(resolutionColumn)} AS ResolutionType",
+                replacementColumn == null ? "NULL AS ReplacementOrderId" : $"{Quote(replacementColumn)} AS ReplacementOrderId"
+            }) + $" FROM {Quote(context.TableName)} WHERE {Quote(context.IdColumn)} = @ReturnId AND {Quote(context.SellerColumn)} = @SellerId";
             command.Parameters.Add(new SqlParameter("@ReturnId", SqlDbType.Int) { Value = returnId });
             command.Parameters.Add(new SqlParameter("@SellerId", SqlDbType.Int) { Value = sellerId });
 
@@ -1525,426 +1833,174 @@ namespace MyAspNetApp.Controllers
                 return null;
             }
 
-            return new ReturnRequest
-            {
-                ReturnId = GetInt(reader, "ReturnId"),
-                OrderId = GetInt(reader, "OrderId"),
-                SellerId = GetInt(reader, "SellerId"),
-                Status = GetString(reader, "Status"),
-                ResolutionType = NormalizeResolutionType(GetString(reader, "ResolutionType")),
-                ReplacementOrderId = GetNullableInt(reader, "ReplacementOrderId")
-            };
+            return new ReturnActionInfo(
+                GetInt(reader, "OrderId"),
+                GetString(reader, "ResolutionType"),
+                GetNullableInt(reader, "ReplacementOrderId"));
         }
 
-        private async Task<int> CreateReplacementOrderAsync(
+        private static async Task<int> CreateReplacementOrderAsync(
             SqlConnection connection,
-            int originalOrderId,
             int sellerId,
-            int sellerUserId,
-            int returnId,
+            int originalOrderId,
             CancellationToken cancellationToken)
         {
-            var orderColumns = await GetColumnsAsync(connection, "Orders", cancellationToken);
-            var orderItemColumns = await GetColumnsAsync(connection, "OrderItems", cancellationToken);
-            var returnTable = await ResolveReturnTableAsync(connection, cancellationToken);
-            if (orderColumns.Count == 0 || orderItemColumns.Count == 0 || returnTable == null)
-            {
-                throw new InvalidOperationException("Order tables are unavailable.");
-            }
-
-            var orderIdColumn = FindColumn(orderColumns, "OrderID", "OrderId");
-            var sellerColumn = FindColumn(orderColumns, "seller_id", "SellerId", "SellerID");
+            var columns = await GetColumnsAsync(connection, "Orders", cancellationToken);
+            var orderIdColumn = FindColumn(columns, "OrderID", "OrderId");
+            var sellerColumn = FindColumn(columns, "seller_id", "SellerId", "SellerID");
             if (orderIdColumn == null || sellerColumn == null)
             {
                 throw new InvalidOperationException("Orders table is missing required columns.");
             }
 
-            var orderNumberColumn = FindColumn(orderColumns, "OrderNumber", "OrderNo");
-            var userIdColumn = FindColumn(orderColumns, "UserId", "user_id", "UserID");
-            var consumerColumn = FindColumn(orderColumns, "ConsumerID", "ConsumerId", "consumer_id");
-            var fullNameColumn = FindColumn(orderColumns, "FullName", "full_name");
-            var emailColumn = FindColumn(orderColumns, "Email", "email");
-            var phoneColumn = FindColumn(orderColumns, "PhoneNumber", "phone_number", "Phone");
-            var addressColumn = FindColumn(orderColumns, "StreetAddress", "Address", "address");
-            var cityColumn = FindColumn(orderColumns, "City", "city");
-            var postalColumn = FindColumn(orderColumns, "PostalCode", "postal_code");
-            var deliveryColumn = FindColumn(orderColumns, "DeliveryOption", "delivery_option", "Courier");
-            var paymentColumn = FindColumn(orderColumns, "PaymentMethod", "payment_method");
-            var statusColumn = FindColumn(orderColumns, "Status", "status", "FulfillmentStatus");
-            var subtotalColumn = FindColumn(orderColumns, "Subtotal", "subtotal");
-            var shippingColumn = FindColumn(orderColumns, "ShippingFee", "shipping_fee");
-            var totalColumn = FindColumn(orderColumns, "TotalAmount", "total_amount", "Total");
-            var dateColumn = FindColumn(orderColumns, "OrderDate", "CreatedAt", "created_at");
-            var quantityColumn = FindColumn(orderColumns, "Quantity", "quantity");
-            var productColumn = FindColumn(orderColumns, "ProductName", "Product", "product_name");
-            var logisticsColumn = FindColumn(orderColumns, "logistics_id", "LogisticsId", "CourierId");
+            var insertColumns = new List<string>();
+            var selectValues = new List<string>();
 
-            static string SelectOrDefault(string? column, string alias, string defaultSql)
-                => column == null ? $"{defaultSql} AS {Quote(alias)}" : $"{Quote(column)} AS {Quote(alias)}";
-
-            await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
-            try
+            void AddSource(string targetName, params string[] sourceNames)
             {
-                await using var originalCommand = connection.CreateCommand();
-                originalCommand.Transaction = (SqlTransaction)transaction;
-                originalCommand.CommandText = "SELECT " + string.Join(", ", new[]
+                var target = FindColumn(columns, targetName);
+                var source = FindColumn(columns, sourceNames.Prepend(targetName).ToArray());
+                if (target != null && source != null && !string.Equals(target, orderIdColumn, StringComparison.OrdinalIgnoreCase))
                 {
-                    $"{Quote(orderIdColumn)} AS OrderID",
-                    SelectOrDefault(orderNumberColumn, "OrderNumber", "''"),
-                    SelectOrDefault(userIdColumn, "UserId", "NULL"),
-                    SelectOrDefault(consumerColumn, "ConsumerID", "NULL"),
-                    $"{Quote(sellerColumn)} AS SellerId",
-                    SelectOrDefault(fullNameColumn, "FullName", "''"),
-                    SelectOrDefault(emailColumn, "Email", "''"),
-                    SelectOrDefault(phoneColumn, "PhoneNumber", "''"),
-                    SelectOrDefault(addressColumn, "StreetAddress", "''"),
-                    SelectOrDefault(cityColumn, "City", "''"),
-                    SelectOrDefault(postalColumn, "PostalCode", "''"),
-                    SelectOrDefault(deliveryColumn, "DeliveryOption", "''"),
-                    SelectOrDefault(quantityColumn, "Quantity", "1"),
-                    SelectOrDefault(productColumn, "ProductName", "''"),
-                    SelectOrDefault(logisticsColumn, "logistics_id", "NULL")
-                }) + $" FROM {Quote("Orders")} WHERE {Quote(orderIdColumn)} = @OrderId AND {Quote(sellerColumn)} = @SellerId";
-                originalCommand.Parameters.Add(new SqlParameter("@OrderId", SqlDbType.Int) { Value = originalOrderId });
-                originalCommand.Parameters.Add(new SqlParameter("@SellerId", SqlDbType.Int) { Value = sellerId });
-
-                int? sourceUserId;
-                int? sourceConsumerId;
-                int? sourceLogisticsId;
-                string sourceOrderNumber;
-                string fullName;
-                string email;
-                string phoneNumber;
-                string streetAddress;
-                string city;
-                string postalCode;
-                string deliveryOption;
-                int quantity;
-                string productName;
-
-                await using (var reader = await originalCommand.ExecuteReaderAsync(cancellationToken))
-                {
-                    if (!await reader.ReadAsync(cancellationToken))
-                    {
-                        throw new InvalidOperationException("Original order was not found.");
-                    }
-
-                    sourceOrderNumber = GetString(reader, "OrderNumber");
-                    sourceUserId = GetNullableInt(reader, "UserId");
-                    sourceConsumerId = GetNullableInt(reader, "ConsumerID");
-                    sourceLogisticsId = GetNullableInt(reader, "logistics_id");
-                    fullName = GetString(reader, "FullName");
-                    email = GetString(reader, "Email");
-                    phoneNumber = GetString(reader, "PhoneNumber");
-                    streetAddress = GetString(reader, "StreetAddress");
-                    city = GetString(reader, "City");
-                    postalCode = GetString(reader, "PostalCode");
-                    deliveryOption = GetString(reader, "DeliveryOption");
-                    quantity = Math.Max(1, GetInt(reader, "Quantity"));
-                    productName = GetString(reader, "ProductName");
-                }
-
-                await using var insertOrderCommand = connection.CreateCommand();
-                insertOrderCommand.Transaction = (SqlTransaction)transaction;
-                var insertColumns = new List<string>();
-                var insertValues = new List<string>();
-
-                void AddOrderField(string? columnName, string parameterName, object? value, SqlDbType dbType)
-                {
-                    if (string.IsNullOrWhiteSpace(columnName))
-                    {
-                        return;
-                    }
-
-                    insertColumns.Add(Quote(columnName));
-                    insertValues.Add(parameterName);
-                    insertOrderCommand.Parameters.Add(new SqlParameter(parameterName, dbType) { Value = value ?? DBNull.Value });
-                }
-
-                AddOrderField(orderNumberColumn, "@OrderNumber", $"RPL-{originalOrderId}-{DateTime.UtcNow:yyyyMMddHHmmss}", SqlDbType.NVarChar);
-                AddOrderField(userIdColumn, "@UserId", sourceUserId, SqlDbType.Int);
-                AddOrderField(consumerColumn, "@ConsumerId", sourceConsumerId, SqlDbType.Int);
-                AddOrderField(sellerColumn, "@SellerId", sellerId, SqlDbType.Int);
-                AddOrderField(fullNameColumn, "@FullName", fullName, SqlDbType.NVarChar);
-                AddOrderField(emailColumn, "@Email", email, SqlDbType.NVarChar);
-                AddOrderField(phoneColumn, "@PhoneNumber", phoneNumber, SqlDbType.NVarChar);
-                AddOrderField(addressColumn, "@StreetAddress", streetAddress, SqlDbType.NVarChar);
-                AddOrderField(cityColumn, "@City", city, SqlDbType.NVarChar);
-                AddOrderField(postalColumn, "@PostalCode", postalCode, SqlDbType.NVarChar);
-                AddOrderField(deliveryColumn, "@DeliveryOption", deliveryOption, SqlDbType.NVarChar);
-                AddOrderField(paymentColumn, "@PaymentMethod", "Replacement", SqlDbType.NVarChar);
-                AddOrderField(statusColumn, "@Status", "To Ship", SqlDbType.NVarChar);
-                AddOrderField(subtotalColumn, "@Subtotal", 0m, SqlDbType.Decimal);
-                AddOrderField(shippingColumn, "@ShippingFee", 0m, SqlDbType.Decimal);
-                AddOrderField(totalColumn, "@TotalAmount", 0m, SqlDbType.Decimal);
-                AddOrderField(dateColumn, "@OrderDate", DateTime.UtcNow, SqlDbType.DateTime2);
-                AddOrderField(quantityColumn, "@Quantity", quantity, SqlDbType.Int);
-                AddOrderField(productColumn, "@ProductName", productName, SqlDbType.NVarChar);
-                AddOrderField(logisticsColumn, "@LogisticsId", sourceLogisticsId, SqlDbType.Int);
-
-                insertOrderCommand.CommandText =
-                    $"""
-                    INSERT INTO dbo.Orders
-                    (
-                        {string.Join(", ", insertColumns)}
-                    )
-                    VALUES
-                    (
-                        {string.Join(", ", insertValues)}
-                    );
-
-                    SELECT CAST(SCOPE_IDENTITY() AS INT);
-                    """;
-
-                var replacementOrderId = Convert.ToInt32(await insertOrderCommand.ExecuteScalarAsync(cancellationToken));
-
-                await CopyReplacementOrderItemsAsync(
-                    connection,
-                    (SqlTransaction)transaction,
-                    orderItemColumns,
-                    originalOrderId,
-                    replacementOrderId,
-                    sellerId,
-                    cancellationToken);
-
-                await MarkReplacementCreatedAsync(
-                    connection,
-                    (SqlTransaction)transaction,
-                    returnTable.Value.TableName,
-                    returnTable.Value.Columns,
-                    returnId,
-                    sellerId,
-                    replacementOrderId,
-                    cancellationToken);
-
-                await CreateReplacementBuyerMessageAsync(
-                    connection,
-                    (SqlTransaction)transaction,
-                    sourceUserId,
-                    sourceConsumerId,
-                    sellerId,
-                    sellerUserId,
-                    originalOrderId,
-                    replacementOrderId,
-                    cancellationToken);
-
-                await transaction.CommitAsync(cancellationToken);
-                return replacementOrderId;
-            }
-            catch
-            {
-                await transaction.RollbackAsync(cancellationToken);
-                throw;
-            }
-        }
-
-        private static async Task CopyReplacementOrderItemsAsync(
-            SqlConnection connection,
-            SqlTransaction transaction,
-            Dictionary<string, string> orderItemColumns,
-            int originalOrderId,
-            int replacementOrderId,
-            int sellerId,
-            CancellationToken cancellationToken)
-        {
-            var orderIdColumn = FindColumn(orderItemColumns, "OrderId", "OrderID");
-            var productIdColumn = FindColumn(orderItemColumns, "ProductId", "ProductID", "product_id");
-            var sellerIdColumn = FindColumn(orderItemColumns, "SellerId", "SellerID", "seller_id");
-            var sizeColumn = FindColumn(orderItemColumns, "Size", "size");
-            var colorColumn = FindColumn(orderItemColumns, "Color", "color");
-            var quantityColumn = FindColumn(orderItemColumns, "Quantity", "quantity");
-            var unitPriceColumn = FindColumn(orderItemColumns, "UnitPrice", "unit_price", "Price");
-            var productImageColumn = FindColumn(orderItemColumns, "ProductImage", "ProductImagePath", "ImagePath");
-            if (orderIdColumn == null)
-            {
-                throw new InvalidOperationException("OrderItems table is missing its order id column.");
-            }
-
-            static string SelectOrDefault(string? column, string alias, string defaultSql)
-                => column == null ? $"{defaultSql} AS {Quote(alias)}" : $"{Quote(column)} AS {Quote(alias)}";
-
-            var sourceItems = new List<Dictionary<string, object?>>();
-            await using (var selectCommand = connection.CreateCommand())
-            {
-                selectCommand.Transaction = transaction;
-                selectCommand.CommandText = "SELECT " + string.Join(", ", new[]
-                {
-                    SelectOrDefault(productIdColumn, "ProductId", "0"),
-                    SelectOrDefault(sellerIdColumn, "SellerId", "@SellerId"),
-                    SelectOrDefault(sizeColumn, "Size", "NULL"),
-                    SelectOrDefault(colorColumn, "Color", "NULL"),
-                    SelectOrDefault(quantityColumn, "Quantity", "1"),
-                    SelectOrDefault(productImageColumn, "ProductImage", "NULL")
-                }) + $" FROM {Quote("OrderItems")} WHERE {Quote(orderIdColumn)} = @OriginalOrderId";
-                selectCommand.Parameters.Add(new SqlParameter("@OriginalOrderId", SqlDbType.Int) { Value = originalOrderId });
-                selectCommand.Parameters.Add(new SqlParameter("@SellerId", SqlDbType.Int) { Value = sellerId });
-
-                await using var reader = await selectCommand.ExecuteReaderAsync(cancellationToken);
-                while (await reader.ReadAsync(cancellationToken))
-                {
-                    sourceItems.Add(new Dictionary<string, object?>
-                    {
-                        ["ProductId"] = ReadInt(reader, "ProductId"),
-                        ["SellerId"] = ReadInt(reader, "SellerId", sellerId),
-                        ["Size"] = ReadString(reader, "Size"),
-                        ["Color"] = ReadString(reader, "Color"),
-                        ["Quantity"] = Math.Max(1, ReadInt(reader, "Quantity", 1)),
-                        ["ProductImage"] = ReadString(reader, "ProductImage")
-                    });
+                    insertColumns.Add(Quote(target));
+                    selectValues.Add($"o.{Quote(source)}");
                 }
             }
 
-            foreach (var item in sourceItems)
+            void AddConstant(string targetName, string sql)
             {
-                await using var insertCommand = connection.CreateCommand();
-                insertCommand.Transaction = transaction;
-                var insertColumns = new List<string>();
-                var insertValues = new List<string>();
-
-                void AddItemField(string? columnName, string parameterName, object? value, SqlDbType dbType)
+                var target = FindColumn(columns, targetName);
+                if (target != null && !string.Equals(target, orderIdColumn, StringComparison.OrdinalIgnoreCase))
                 {
-                    if (string.IsNullOrWhiteSpace(columnName))
-                    {
-                        return;
-                    }
-
-                    insertColumns.Add(Quote(columnName));
-                    insertValues.Add(parameterName);
-                    insertCommand.Parameters.Add(new SqlParameter(parameterName, dbType) { Value = value ?? DBNull.Value });
+                    insertColumns.Add(Quote(target));
+                    selectValues.Add(sql);
                 }
-
-                AddItemField(orderIdColumn, "@OrderId", replacementOrderId, SqlDbType.Int);
-                AddItemField(productIdColumn, "@ProductId", item["ProductId"], SqlDbType.Int);
-                AddItemField(sellerIdColumn, "@SellerId", sellerId, SqlDbType.Int);
-                AddItemField(sizeColumn, "@Size", item["Size"], SqlDbType.NVarChar);
-                AddItemField(colorColumn, "@Color", item["Color"], SqlDbType.NVarChar);
-                AddItemField(quantityColumn, "@Quantity", item["Quantity"], SqlDbType.Int);
-                AddItemField(unitPriceColumn, "@UnitPrice", 0m, SqlDbType.Decimal);
-                AddItemField(productImageColumn, "@ProductImage", item["ProductImage"], SqlDbType.NVarChar);
-
-                insertCommand.CommandText =
-                    $"""
-                    INSERT INTO dbo.OrderItems
-                    (
-                        {string.Join(", ", insertColumns)}
-                    )
-                    VALUES
-                    (
-                        {string.Join(", ", insertValues)}
-                    );
-                    """;
-
-                await insertCommand.ExecuteNonQueryAsync(cancellationToken);
-            }
-        }
-
-        private static async Task MarkReplacementCreatedAsync(
-            SqlConnection connection,
-            SqlTransaction transaction,
-            string returnTableName,
-            Dictionary<string, string> returnColumns,
-            int returnId,
-            int sellerId,
-            int replacementOrderId,
-            CancellationToken cancellationToken)
-        {
-            var idColumn = FindColumn(returnColumns, "ReturnId", "return_id", "Id");
-            var sellerColumn = FindColumn(returnColumns, "SellerId", "seller_id", "SellerID");
-            var statusColumn = FindColumn(returnColumns, "Status", "status");
-            var replacementOrderColumn = FindColumn(returnColumns, "ReplacementOrderId", "replacement_order_id");
-            var reviewedAtColumn = FindColumn(returnColumns, "ReviewedAt");
-            if (idColumn == null || sellerColumn == null || statusColumn == null)
-            {
-                throw new InvalidOperationException("Returns table is missing required columns.");
             }
 
-            var assignments = new List<string> { $"{Quote(statusColumn)} = @Status" };
-            if (replacementOrderColumn != null)
-            {
-                assignments.Add($"{Quote(replacementOrderColumn)} = @ReplacementOrderId");
-            }
+            AddConstant("OrderNumber", "CONCAT(N'REPL-', CONVERT(NVARCHAR(20), @OriginalOrderId), N'-', FORMAT(SYSUTCDATETIME(), N'yyyyMMddHHmmss'))");
+            AddConstant(sellerColumn, "@SellerId");
+            AddSource("UserId", "UserID", "user_id");
+            AddSource("ConsumerId", "ConsumerID", "consumer_id");
+            AddSource("FullName", "full_name");
+            AddSource("Email", "email");
+            AddSource("PhoneNumber", "phone_number", "Phone");
+            AddSource("StreetAddress", "Address", "address");
+            AddSource("City", "city");
+            AddSource("PostalCode", "postal_code");
+            AddSource("DeliveryOption", "Courier");
+            AddSource("PaymentMethod", "payment_method");
+            AddSource("ProductName", "Product", "product_name");
+            AddSource("Quantity", "quantity");
+            AddSource("logistics_id", "LogisticsId", "CourierId");
+            AddConstant("Status", "N'To Ship'");
+            AddConstant("Subtotal", "0");
+            AddConstant("ShippingFee", "0");
+            AddConstant("TotalAmount", "0");
+            AddConstant("Total", "0");
+            AddConstant("OrderDate", "SYSUTCDATETIME()");
+            AddConstant("CreatedAt", "SYSUTCDATETIME()");
+            AddConstant("EstimatedDeliveryDate", "NULL");
 
-            if (reviewedAtColumn != null)
+            if (insertColumns.Count == 0)
             {
-                assignments.Add($"{Quote(reviewedAtColumn)} = SYSUTCDATETIME()");
+                throw new InvalidOperationException("Orders table does not support replacement order creation.");
             }
 
             await using var command = connection.CreateCommand();
-            command.Transaction = transaction;
             command.CommandText =
-                $"UPDATE {Quote(returnTableName)} SET {string.Join(", ", assignments)} WHERE {Quote(idColumn)} = @ReturnId AND {Quote(sellerColumn)} = @SellerId";
-            command.Parameters.Add(new SqlParameter("@Status", SqlDbType.NVarChar, 50) { Value = "Replacement Created" });
-            command.Parameters.Add(new SqlParameter("@ReplacementOrderId", SqlDbType.Int) { Value = replacementOrderId });
-            command.Parameters.Add(new SqlParameter("@ReturnId", SqlDbType.Int) { Value = returnId });
+                $"INSERT INTO {Quote("Orders")} ({string.Join(", ", insertColumns)}) " +
+                $"OUTPUT INSERTED.{Quote(orderIdColumn)} " +
+                $"SELECT {string.Join(", ", selectValues)} FROM {Quote("Orders")} o " +
+                $"WHERE o.{Quote(orderIdColumn)} = @OriginalOrderId AND o.{Quote(sellerColumn)} = @SellerId";
+            command.Parameters.Add(new SqlParameter("@OriginalOrderId", SqlDbType.Int) { Value = originalOrderId });
             command.Parameters.Add(new SqlParameter("@SellerId", SqlDbType.Int) { Value = sellerId });
 
-            await command.ExecuteNonQueryAsync(cancellationToken);
+            var value = await command.ExecuteScalarAsync(cancellationToken);
+            return value == null || value == DBNull.Value
+                ? throw new InvalidOperationException("Original order not found for replacement.")
+                : Convert.ToInt32(value);
         }
 
         private static async Task CreateReplacementBuyerMessageAsync(
             SqlConnection connection,
-            SqlTransaction transaction,
-            int? buyerUserId,
-            int? consumerId,
             int sellerId,
             int sellerUserId,
             int originalOrderId,
             int replacementOrderId,
             CancellationToken cancellationToken)
         {
-            var resolvedBuyerUserId = buyerUserId.GetValueOrDefault();
-            var resolvedConsumerId = consumerId.GetValueOrDefault();
-            if (resolvedBuyerUserId <= 0 && resolvedConsumerId > 0)
+            if (sellerUserId <= 0)
             {
-                await using var buyerCommand = connection.CreateCommand();
-                buyerCommand.Transaction = transaction;
-                buyerCommand.CommandText =
-                    """
-                    SELECT TOP (1) [user_id]
-                    FROM dbo.Consumers
-                    WHERE [consumer_id] = @ConsumerId;
-                    """;
-                buyerCommand.Parameters.Add(new SqlParameter("@ConsumerId", SqlDbType.Int) { Value = resolvedConsumerId });
-
-                var buyerValue = await buyerCommand.ExecuteScalarAsync(cancellationToken);
-                resolvedBuyerUserId = buyerValue == null || buyerValue == DBNull.Value ? 0 : Convert.ToInt32(buyerValue);
+                return;
             }
 
-            var resolvedSellerUserId = sellerUserId;
-            if (resolvedSellerUserId <= 0)
+            var orderColumns = await GetColumnsAsync(connection, "Orders", cancellationToken);
+            var orderIdColumn = FindColumn(orderColumns, "OrderID", "OrderId");
+            var sellerColumn = FindColumn(orderColumns, "seller_id", "SellerId", "SellerID");
+            var consumerColumn = FindColumn(orderColumns, "ConsumerID", "ConsumerId", "consumer_id");
+            var userColumn = FindColumn(orderColumns, "UserId", "UserID", "user_id");
+            if (orderIdColumn == null || sellerColumn == null)
             {
-                await using var sellerCommand = connection.CreateCommand();
-                sellerCommand.Transaction = transaction;
-                sellerCommand.CommandText =
-                    """
-                    SELECT TOP (1) [user_id]
-                    FROM dbo.Sellers
-                    WHERE [seller_id] = @SellerId;
-                    """;
-                sellerCommand.Parameters.Add(new SqlParameter("@SellerId", SqlDbType.Int) { Value = sellerId });
-
-                var sellerValue = await sellerCommand.ExecuteScalarAsync(cancellationToken);
-                resolvedSellerUserId = sellerValue == null || sellerValue == DBNull.Value ? 0 : Convert.ToInt32(sellerValue);
+                return;
             }
 
-            if (resolvedBuyerUserId <= 0 || resolvedSellerUserId <= 0)
+            static string SelectOrDefault(string? column, string alias, string defaultSql)
+                => column == null ? $"{defaultSql} AS {Quote(alias)}" : $"{Quote(column)} AS {Quote(alias)}";
+
+            int? buyerConsumerId = null;
+            int? buyerUserId = null;
+            await using (var orderCommand = connection.CreateCommand())
+            {
+                orderCommand.CommandText = "SELECT TOP (1) " + string.Join(", ", new[]
+                {
+                    SelectOrDefault(consumerColumn, "ConsumerId", "NULL"),
+                    SelectOrDefault(userColumn, "UserId", "NULL")
+                }) + $" FROM {Quote("Orders")} WHERE {Quote(orderIdColumn)} = @OriginalOrderId AND {Quote(sellerColumn)} = @SellerId";
+                orderCommand.Parameters.Add(new SqlParameter("@OriginalOrderId", SqlDbType.Int) { Value = originalOrderId });
+                orderCommand.Parameters.Add(new SqlParameter("@SellerId", SqlDbType.Int) { Value = sellerId });
+
+                await using var reader = await orderCommand.ExecuteReaderAsync(cancellationToken);
+                if (await reader.ReadAsync(cancellationToken))
+                {
+                    buyerConsumerId = GetNullableInt(reader, "ConsumerId");
+                    buyerUserId = GetNullableInt(reader, "UserId");
+                }
+            }
+
+            if ((!buyerConsumerId.HasValue || buyerConsumerId.Value <= 0) && buyerUserId.HasValue && buyerUserId.Value > 0)
+            {
+                await using var consumerCommand = connection.CreateCommand();
+                consumerCommand.CommandText =
+                    "SELECT TOP (1) consumer_id FROM dbo.Consumers WHERE user_id = @BuyerUserId";
+                consumerCommand.Parameters.Add(new SqlParameter("@BuyerUserId", SqlDbType.Int) { Value = buyerUserId.Value });
+                var value = await consumerCommand.ExecuteScalarAsync(cancellationToken);
+                if (value != null && value != DBNull.Value)
+                {
+                    buyerConsumerId = Convert.ToInt32(value);
+                }
+            }
+
+            if (!buyerConsumerId.HasValue || buyerConsumerId.Value <= 0)
             {
                 return;
             }
 
             await using var command = connection.CreateCommand();
-            command.Transaction = transaction;
             command.CommandText =
                 """
+                IF OBJECT_ID(N'dbo.MessagingConversations', N'U') IS NULL
+                   OR OBJECT_ID(N'dbo.MessagingMessages', N'U') IS NULL
+                BEGIN
+                    RETURN;
+                END;
+
                 DECLARE @ConversationId INT;
-                DECLARE @SentAt DATETIME2 = SYSDATETIME();
 
                 SELECT TOP (1) @ConversationId = ConversationId
                 FROM dbo.MessagingConversations
                 WHERE BuyerUserId = @BuyerUserId
                   AND SellerUserId = @SellerUserId
-                  AND ContextType = 1
-                ORDER BY ConversationId;
+                  AND ContextType = 1;
 
                 IF @ConversationId IS NULL
                 BEGIN
@@ -1953,10 +2009,7 @@ namespace MyAspNetApp.Controllers
                         BuyerUserId,
                         SellerUserId,
                         ContextType,
-                        OrderId,
                         LastMessageAt,
-                        BuyerLastReadAt,
-                        SellerLastReadAt,
                         CreatedAt,
                         UpdatedAt
                     )
@@ -1965,12 +2018,9 @@ namespace MyAspNetApp.Controllers
                         @BuyerUserId,
                         @SellerUserId,
                         1,
-                        NULL,
-                        NULL,
-                        NULL,
-                        NULL,
-                        @SentAt,
-                        @SentAt
+                        SYSUTCDATETIME(),
+                        SYSUTCDATETIME(),
+                        SYSUTCDATETIME()
                     );
 
                     SET @ConversationId = CAST(SCOPE_IDENTITY() AS INT);
@@ -1981,7 +2031,6 @@ namespace MyAspNetApp.Controllers
                     ConversationId,
                     SenderUserId,
                     Body,
-                    AttachmentUrl,
                     SentAt,
                     IsDeleted
                 )
@@ -1990,52 +2039,36 @@ namespace MyAspNetApp.Controllers
                     @ConversationId,
                     @SellerUserId,
                     @Body,
-                    NULL,
-                    @SentAt,
+                    SYSUTCDATETIME(),
                     0
                 );
 
                 UPDATE dbo.MessagingConversations
-                SET LastMessageAt = @SentAt,
-                    UpdatedAt = @SentAt
+                SET LastMessageAt = SYSUTCDATETIME(),
+                    UpdatedAt = SYSUTCDATETIME()
                 WHERE ConversationId = @ConversationId;
                 """;
-
-            var body =
-                $"Replacement order created\n\nYour replacement item for Order #{originalOrderId} has been approved and is now waiting to be shipped.\nReplacement Order: #{replacementOrderId}\nAmount Due: PHP 0.00";
-
-            command.Parameters.Add(new SqlParameter("@BuyerUserId", SqlDbType.Int) { Value = resolvedBuyerUserId });
-            command.Parameters.Add(new SqlParameter("@SellerUserId", SqlDbType.Int) { Value = resolvedSellerUserId });
-            command.Parameters.Add(new SqlParameter("@Body", SqlDbType.NVarChar, 2000) { Value = body });
+            command.Parameters.Add(new SqlParameter("@BuyerUserId", SqlDbType.Int) { Value = buyerConsumerId.Value });
+            command.Parameters.Add(new SqlParameter("@SellerUserId", SqlDbType.Int) { Value = sellerUserId });
+            command.Parameters.Add(new SqlParameter("@Body", SqlDbType.NVarChar, 2000)
+            {
+                Value = $"Replacement order created\n\nYour replacement item for Order #{originalOrderId} has been approved and is now waiting to be shipped.\nReplacement Order: #{replacementOrderId}\nStatus: To Ship\nAmount Due: PHP 0.00"
+            });
 
             await command.ExecuteNonQueryAsync(cancellationToken);
         }
 
-        private async Task<(string TableName, Dictionary<string, string> Columns)?> ResolveReturnTableAsync(
-            SqlConnection connection,
-            CancellationToken cancellationToken)
-        {
-            var columns = await GetColumnsAsync(connection, "returns", cancellationToken);
-            if (columns.Count > 0)
-            {
-                return ("returns", columns);
-            }
+        private sealed record ReturnTableContext(
+            string TableName,
+            Dictionary<string, string> Columns,
+            string IdColumn,
+            string OrderColumn,
+            string SellerColumn);
 
-            columns = await GetColumnsAsync(connection, "Returns", cancellationToken);
-            return columns.Count > 0 ? ("Returns", columns) : null;
-        }
-
-        private static string NormalizeResolutionType(string? resolutionType)
-        {
-            return string.Equals(resolutionType?.Trim(), "Replacement", StringComparison.OrdinalIgnoreCase)
-                ? "Replacement"
-                : "Refund";
-        }
-
-        private static object NullIfWhiteSpace(string? value)
-        {
-            return string.IsNullOrWhiteSpace(value) ? DBNull.Value : value.Trim();
-        }
+        private sealed record ReturnActionInfo(
+            int OrderId,
+            string ResolutionType,
+            int? ReplacementOrderId);
 
         private async Task<List<ReturnRequest>> LoadReturnRequestsAsync(
             int sellerId,
@@ -2067,8 +2100,8 @@ namespace MyAspNetApp.Controllers
                 var decisionReasonColumn = FindColumn(columns, "SellerDecisionReason");
                 var decisionNoteColumn = FindColumn(columns, "SellerDecisionNote");
                 var reviewedAtColumn = FindColumn(columns, "ReviewedAt");
-                var resolutionTypeColumn = FindColumn(columns, "ResolutionType", "resolution_type");
-                var replacementOrderColumn = FindColumn(columns, "ReplacementOrderId", "replacement_order_id");
+                var resolutionTypeColumn = FindColumn(columns, "ResolutionType");
+                var replacementOrderColumn = FindColumn(columns, "ReplacementOrderId");
 
                 if (idColumn == null || orderColumn == null || sellerColumn == null)
                 {
@@ -2102,9 +2135,9 @@ namespace MyAspNetApp.Controllers
                     SelectOrDefault(createdColumn, "CreatedAt", "GETDATE()"),
                     SelectOrDefault(decisionReasonColumn, "SellerDecisionReason", "''"),
                     SelectOrDefault(decisionNoteColumn, "SellerDecisionNote", "''"),
+                    SelectOrDefault(reviewedAtColumn, "ReviewedAt", "NULL"),
                     SelectOrDefault(resolutionTypeColumn, "ResolutionType", "'Refund'"),
-                    SelectOrDefault(replacementOrderColumn, "ReplacementOrderId", "NULL"),
-                    SelectOrDefault(reviewedAtColumn, "ReviewedAt", "NULL")
+                    SelectOrDefault(replacementOrderColumn, "ReplacementOrderId", "NULL")
                 }) + $" FROM {Quote(tableName)} WHERE {string.Join(" AND ", whereParts)} ORDER BY {Quote(createdColumn ?? idColumn)} DESC";
                 command.Parameters.Add(new SqlParameter("@SellerId", SqlDbType.Int) { Value = sellerId });
                 if (startDate.HasValue)
@@ -2132,9 +2165,9 @@ namespace MyAspNetApp.Controllers
                         CreatedAt = GetDate(reader, "CreatedAt"),
                         SellerDecisionReason = GetString(reader, "SellerDecisionReason"),
                         SellerDecisionNote = GetString(reader, "SellerDecisionNote"),
+                        ReviewedAt = GetNullableDate(reader, "ReviewedAt"),
                         ResolutionType = GetString(reader, "ResolutionType"),
                         ReplacementOrderId = GetNullableInt(reader, "ReplacementOrderId"),
-                        ReviewedAt = GetNullableDate(reader, "ReviewedAt"),
                         BuyerName = "Buyer"
                     });
                 }

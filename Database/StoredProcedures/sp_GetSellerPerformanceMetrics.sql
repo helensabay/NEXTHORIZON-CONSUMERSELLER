@@ -38,24 +38,26 @@ BEGIN
         CAST(ISNULL(SUM(ro.Quantity), 0) AS INT) AS TotalUnitsSold,
         CAST(COUNT(ro.OrderDate) AS INT) AS RecognizedOrders,
         CAST(ISNULL(SUM(ro.TotalAmount), 0) AS DECIMAL(18,2)) AS TotalRevenue,
-        CAST(CASE
-            WHEN ISNULL(SUM(CASE WHEN ro.OrderDate >= @YesterdayStart AND ro.OrderDate < @TodayStart THEN ro.TotalAmount ELSE 0 END), 0) = 0
-                THEN 0
-            ELSE
-                ((ISNULL(SUM(CASE WHEN ro.OrderDate >= @TodayStart AND ro.OrderDate < @TomorrowStart THEN ro.TotalAmount ELSE 0 END), 0)
-                  - ISNULL(SUM(CASE WHEN ro.OrderDate >= @YesterdayStart AND ro.OrderDate < @TodayStart THEN ro.TotalAmount ELSE 0 END), 0))
-                  * 100.0)
-                / NULLIF(ISNULL(SUM(CASE WHEN ro.OrderDate >= @YesterdayStart AND ro.OrderDate < @TodayStart THEN ro.TotalAmount ELSE 0 END), 0), 0)
-        END AS DECIMAL(18,2)) AS SalesGrowth,
+        CAST(
+            CASE
+                WHEN ISNULL(SUM(CASE WHEN ro.OrderDate >= @YesterdayStart AND ro.OrderDate < @TodayStart THEN ro.TotalAmount ELSE 0 END), 0) = 0
+                    THEN 0
+                ELSE
+                    ((ISNULL(SUM(CASE WHEN ro.OrderDate >= @TodayStart AND ro.OrderDate < @TomorrowStart THEN ro.TotalAmount ELSE 0 END), 0)
+                    - ISNULL(SUM(CASE WHEN ro.OrderDate >= @YesterdayStart AND ro.OrderDate < @TodayStart THEN ro.TotalAmount ELSE 0 END), 0)) * 100.0)
+                    / NULLIF(ISNULL(SUM(CASE WHEN ro.OrderDate >= @YesterdayStart AND ro.OrderDate < @TodayStart THEN ro.TotalAmount ELSE 0 END), 0), 0)
+            END AS DECIMAL(18,2)) AS SalesGrowth,
         CAST((SELECT ISNULL(SUM(co.TotalAmount), 0) FROM CodOrders co WHERE co.Status IN ('Completed', 'Delivered', 'Complete')) AS DECIMAL(18,2)) AS CodDeliveredRevenue,
         CAST((SELECT ISNULL(SUM(co.TotalAmount), 0) FROM CodOrders co WHERE co.Status IN ('To Ship', 'Shipped')) AS DECIMAL(18,2)) AS CodExposure,
         CAST((SELECT COUNT(1) FROM CodOrders co WHERE co.Status = 'Failed Delivery') AS INT) AS CodRtsCount,
-        CAST(CASE
-            WHEN (SELECT COUNT(1) FROM CodOrders) = 0 THEN 0
-            ELSE ((SELECT COUNT(1) FROM CodOrders co WHERE co.Status IN ('Completed', 'Delivered', 'Complete')) * 100.0)
-                / NULLIF((SELECT COUNT(1) FROM CodOrders), 0)
-        END AS DECIMAL(18,2)) AS CodSuccessRate
+        CAST(
+            CASE
+                WHEN (SELECT COUNT(1) FROM CodOrders) = 0
+                    THEN 0
+                ELSE
+                    ((SELECT COUNT(1) FROM CodOrders co WHERE co.Status IN ('Completed', 'Delivered', 'Complete')) * 100.0)
+                    / NULLIF((SELECT COUNT(1) FROM CodOrders), 0)
+            END AS DECIMAL(18,2)) AS CodSuccessRate
     FROM RecognizedOrders ro;
 END;
-
 GO

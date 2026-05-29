@@ -493,17 +493,26 @@ private string ResolvePostLoginRedirect(string? returnUrl)
 
     if (Url.IsLocalUrl(returnUrl))
     {
-        return returnUrl;
+        return IsSellerAreaReturnUrl(returnUrl) ? ProductsModuleUrl : returnUrl;
     }
 
     if (Uri.TryCreate(returnUrl, UriKind.Absolute, out var absoluteUri) &&
         (string.Equals(absoluteUri.Host, "localhost", StringComparison.OrdinalIgnoreCase) ||
          string.Equals(absoluteUri.Host, Request.Host.Host, StringComparison.OrdinalIgnoreCase)))
     {
-        return absoluteUri.ToString();
+        var localPath = absoluteUri.PathAndQuery;
+        return IsSellerAreaReturnUrl(localPath) ? ProductsModuleUrl : absoluteUri.ToString();
     }
 
     return ProductsModuleUrl;
+}
+
+private static bool IsSellerAreaReturnUrl(string url)
+{
+    return url.StartsWith("/Dashboard", StringComparison.OrdinalIgnoreCase) ||
+        url.StartsWith("/Seller", StringComparison.OrdinalIgnoreCase) ||
+        url.StartsWith("/Promotions", StringComparison.OrdinalIgnoreCase) ||
+        url.StartsWith("/Settings", StringComparison.OrdinalIgnoreCase);
 }
 
   // =========================

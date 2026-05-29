@@ -261,14 +261,6 @@
                 <div class="metric-note">COD orders marked Failed Delivery</div>
             </div>
         </div>
-        @if (Model.CodSuccessRate < 85m && Model.CodExposure > 0)
-        {
-            <div class="bw-card cod-risk-warning">
-                <strong>COD risk warning</strong>
-                <span>Call buyers before shipping active COD orders to reduce failed deliveries and return-to-sender losses.</span>
-            </div>
-        }
-
         <div class="cards-grid analytics-quality-grid">
             <div class="card analytics-stat-card">
                 <span class="card-label">Refunded Amount</span>
