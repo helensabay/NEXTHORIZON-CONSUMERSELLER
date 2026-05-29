@@ -1810,6 +1810,13 @@ function renderReturnDetailsActions(status, returnId, orderId, consumerId, resol
         return;
     }
 
+    if (status === 'Replacement Completed') {
+        actions.appendChild(buildReturnStatusNote(replacementOrderId
+            ? `Replacement order #${replacementOrderId} has been delivered.`
+            : 'The replacement order has been delivered.'));
+        return;
+    }
+
     if (hasReturnId) {
         actions.appendChild(buildReturnStatusNote('This return request is already up to date.'));
     }

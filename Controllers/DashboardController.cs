@@ -57,6 +57,7 @@ namespace MyAspNetApp.Controllers
             ViewBag.StartDate = normalizedStartDate?.ToString("yyyy-MM-dd");
             ViewBag.EndDate = normalizedEndDate?.ToString("yyyy-MM-dd");
             ViewBag.Couriers = await LoadCouriersAsync(cancellationToken);
+            await SyncCompletedReplacementReturnsAsync(seller.SellerId, cancellationToken);
             ViewBag.ReturnRequests = await LoadReturnRequestsAsync(seller.SellerId, normalizedStartDate, normalizedEndDate, cancellationToken);
             ViewData["SellerName"] = seller.BusinessName ?? "Seller";
 
@@ -1413,6 +1414,68 @@ namespace MyAspNetApp.Controllers
             {
                 _logger.LogWarning(ex, "Unable to set return request {ReturnId} status to {Status}.", returnId, status);
                 return false;
+            }
+        }
+
+        private async Task SyncCompletedReplacementReturnsAsync(int sellerId, CancellationToken cancellationToken)
+        {
+            try
+            {
+                await using var connection = new SqlConnection(_context.Database.GetConnectionString());
+                await connection.OpenAsync(cancellationToken);
+
+                var returnTable = await ResolveReturnTableAsync(connection, cancellationToken);
+                if (returnTable == null)
+                {
+                    return;
+                }
+
+                var returnColumns = returnTable.Value.Columns;
+                var returnSellerColumn = FindColumn(returnColumns, "SellerId", "seller_id", "SellerID");
+                var returnStatusColumn = FindColumn(returnColumns, "Status", "status");
+                var replacementOrderColumn = FindColumn(returnColumns, "ReplacementOrderId", "replacement_order_id");
+                var reviewedAtColumn = FindColumn(returnColumns, "ReviewedAt");
+                if (returnSellerColumn == null || returnStatusColumn == null || replacementOrderColumn == null)
+                {
+                    return;
+                }
+
+                var orderColumns = await GetColumnsAsync(connection, "Orders", cancellationToken);
+                var orderIdColumn = FindColumn(orderColumns, "OrderID", "OrderId", "id");
+                var orderSellerColumn = FindColumn(orderColumns, "SellerId", "seller_id", "SellerID");
+                var orderStatusColumn = FindColumn(orderColumns, "Status", "status", "FulfillmentStatus");
+                if (orderIdColumn == null || orderSellerColumn == null || orderStatusColumn == null)
+                {
+                    return;
+                }
+
+                var assignments = new List<string> { $"r.{Quote(returnStatusColumn)} = @CompletedStatus" };
+                if (reviewedAtColumn != null)
+                {
+                    assignments.Add($"r.{Quote(reviewedAtColumn)} = SYSUTCDATETIME()");
+                }
+
+                await using var command = connection.CreateCommand();
+                command.CommandText =
+                    $"""
+                    UPDATE r
+                    SET {string.Join(", ", assignments)}
+                    FROM {Quote(returnTable.Value.TableName)} r
+                    INNER JOIN {Quote("Orders")} o
+                        ON o.{Quote(orderIdColumn)} = r.{Quote(replacementOrderColumn)}
+                        AND o.{Quote(orderSellerColumn)} = r.{Quote(returnSellerColumn)}
+                    WHERE r.{Quote(returnSellerColumn)} = @SellerId
+                        AND UPPER(LTRIM(RTRIM(COALESCE(r.{Quote(returnStatusColumn)}, '')))) = 'REPLACEMENT CREATED'
+                        AND UPPER(LTRIM(RTRIM(COALESCE(o.{Quote(orderStatusColumn)}, '')))) IN ('DELIVERED', 'COMPLETED', 'COMPLETE');
+                    """;
+                command.Parameters.Add(new SqlParameter("@CompletedStatus", SqlDbType.NVarChar, 50) { Value = "Replacement Completed" });
+                command.Parameters.Add(new SqlParameter("@SellerId", SqlDbType.Int) { Value = sellerId });
+
+                await command.ExecuteNonQueryAsync(cancellationToken);
+            }
+            catch (Exception ex) when (IsSqlAvailabilityException(ex))
+            {
+                _logger.LogWarning(ex, "Unable to sync completed replacement returns for seller {SellerId}.", sellerId);
             }
         }
 

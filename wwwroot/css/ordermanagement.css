@@ -1683,6 +1683,11 @@
     color: #0f766e;
 }
 
+.status-badge.replacement-completed {
+    background: #dcfce7;
+    color: #166534;
+}
+
 .return-view-details-btn {
     border: 1px solid #111827;
     background: #fff;

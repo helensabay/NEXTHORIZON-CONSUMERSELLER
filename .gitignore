@@ -1,6 +1,8 @@
 ## .NET gitignore
 bin/
 obj/
+# Ignore custom build verify folders
+_build_verify*/
 
 ## User-specific files
 *.user
