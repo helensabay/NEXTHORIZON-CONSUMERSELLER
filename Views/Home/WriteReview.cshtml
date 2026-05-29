@@ -1,6 +1,7 @@
 @{
     ViewData["Title"] = "Write a Review";
     var productId = ViewData["ProductId"];
+    var orderId = ViewData["OrderId"] ?? 0;
 }
 
 <div class="wr-page">
@@ -239,6 +240,7 @@
 @section Scripts {
 <script>
 const WR_PRODUCT_ID = @productId;
+const WR_ORDER_ID = @orderId;
 const starLabels = ['', 'Poor', 'Fair', 'Good', 'Very Good', 'Excellent'];
 let selectedRating = 0;
 
@@ -366,6 +368,7 @@ document.addEventListener('DOMContentLoaded', function() {
             sizeFit: parseInt(document.getElementById('wr-size').value),
             widthFit: parseInt(document.getElementById('wr-width').value),
             verifiedPurchase: true,
+            orderId: WR_ORDER_ID,
             images: imagePayload
         };
 

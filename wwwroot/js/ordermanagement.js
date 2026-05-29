@@ -1120,7 +1120,7 @@ async function submitDeclineOrder() {
 
         const result = await response.json();
 
-        if (response.ok || result.success) {
+        if (response.ok && result.success) {
             closeDeclineModal();
             showToast(`Order #${orderId} was declined successfully.`, "success");
             setTimeout(() => location.reload(), 1500); 
@@ -1179,12 +1179,15 @@ async function saveOrderNote() {
             body: JSON.stringify({ orderId: parseInt(orderId), note: noteText })
         });
 
-        if (response.ok) {
+        const result = await response.json().catch(() => ({}));
+
+        if (response.ok && result.success !== false) {
             closeAddNotesModal();
-            showToast("Note saved successfully!", "success"); 
+            showToast(result.message || "Note saved successfully!", "success"); 
             
             const orderRow = document.querySelector(`.order-row[data-order-id="${orderId}"]`);
             if (orderRow) {
+                orderRow.dataset.sellerNote = noteText;
                 const customerCell = orderRow.children[1]; 
                 
                 if (customerCell && !customerCell.innerHTML.includes('fa-note-sticky')) {
@@ -1192,7 +1195,7 @@ async function saveOrderNote() {
                 }
             }
         } else {
-            showToast("Error saving note. Please try again.", "error"); 
+            showToast(result.message || "Error saving note. Please try again.", "error"); 
         }
     } catch (error) {
         console.error("Error:", error);
@@ -1298,6 +1301,7 @@ function closeReturnModal() {
 function openReturnedInfoModal(orderRow) {
     if (!orderRow) return;
 
+    const noProofImage = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="720" height="300"%3E%3Crect width="100%25" height="100%25" rx="18" fill="%23f8fafc"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" fill="%2364758b" font-family="Arial" font-size="20"%3ENo failed delivery proof uploaded%3C/text%3E%3C/svg%3E';
     document.getElementById('returnInfoKicker').textContent = 'Failed Delivery';
     document.getElementById('returnInfoSubtitle').textContent = 'Review shipment details, evidence, and notes recorded for this failed delivery.';
     document.getElementById('returnInfoReasonCard').style.display = '';
@@ -1317,13 +1321,14 @@ function openReturnedInfoModal(orderRow) {
     const proofUrl = orderRow.dataset.returnProof || '';
     const proofBlock = document.getElementById('returnInfoProofBlock');
     const proofImage = document.getElementById('returnInfoProofImage');
-    if (proofUrl) {
-        proofImage.src = proofUrl;
-        proofBlock.style.display = 'block';
-    } else {
-        proofImage.removeAttribute('src');
-        proofBlock.style.display = 'none';
-    }
+    proofImage.onerror = function () {
+        proofImage.onerror = null;
+        proofImage.src = noProofImage;
+    };
+    proofImage.src = proofUrl
+        ? `${proofUrl}${proofUrl.includes('?') ? '&' : '?'}v=${Date.now()}`
+        : noProofImage;
+    proofBlock.style.display = 'block';
 
     document.getElementById('returnedInfoModal').style.display = 'flex';
 }

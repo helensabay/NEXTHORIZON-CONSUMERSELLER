@@ -1,4 +1,5 @@
 @using System.Linq
+@using System.Text.Json
 @using MyAspNetApp.Models
 @model List<OrderViewModel>
 
@@ -22,7 +23,7 @@
         <div class="account-details-full-width">
             <div class="order-status-navbar">
                 @{
-                    var statuses = new[] { "All", "To Pay", "To Ship", "To Receive", "Completed", "To Review", "Returns", "Cancelled" };
+                    var statuses = new[] { "All", "To Pay", "To Ship", "To Receive", "To Review", "Returns", "Cancelled" };
                     foreach (var s in statuses)
                     {
                         <a asp-action="MyPurchases" asp-route-status="@s" class="status-item @(currentStatus == s ? "active" : "")">
@@ -76,31 +77,31 @@
 
                             <div class="order-card-footer">
                                 <button class="btn-action btn-outline"
-                                        onclick="viewOrderDetails('@order.OrderNumber','@order.Status','@order.PaymentMethod','@order.SellerName','@order.ReceiverName','@order.PhoneNumber','@Html.Raw((order.ShippingAddress ?? string.Empty).Replace("'", "\\'"))','₱@order.TotalAmount.ToString("N2")','@order.Color','@(order.Size ?? "N/A")','@order.Quantity')">
+                                        type="button"
+                                        onclick='viewOrderDetails(@order.OrderId, @Html.Raw(JsonSerializer.Serialize(order.OrderNumber)), @Html.Raw(JsonSerializer.Serialize(order.Status)), @Html.Raw(JsonSerializer.Serialize(order.PaymentMethod)), @Html.Raw(JsonSerializer.Serialize(order.SellerName)), @Html.Raw(JsonSerializer.Serialize(order.ReceiverName)), @Html.Raw(JsonSerializer.Serialize(order.PhoneNumber)), @Html.Raw(JsonSerializer.Serialize(order.ShippingAddress ?? string.Empty)), @Html.Raw(JsonSerializer.Serialize($"₱{order.TotalAmount:N2}")), @Html.Raw(JsonSerializer.Serialize(order.Color ?? "N/A")), @Html.Raw(JsonSerializer.Serialize(order.Size ?? "N/A")), @order.Quantity)'>
                                     VIEW DETAILS
                                 </button>
 
                                 @if (order.Status == "To Pay")
                                 {
-                                    <button class="btn-action btn-black">COMPLETE PAYMENT</button>
+                                    <button class="btn-action btn-black" type="button" onclick="updatePurchaseStatus(@order.OrderId, 'complete-payment')">COMPLETE PAYMENT</button>
                                 }
                                 else if (order.Status == "To Ship" || order.Status == "To Receive")
                                 {
-                                    <button class="btn-action btn-black"><i class="bi bi-truck"></i> TRACK ORDER</button>
+                                    <button class="btn-action btn-black" type="button" onclick='viewOrderDetails(@order.OrderId, @Html.Raw(JsonSerializer.Serialize(order.OrderNumber)), @Html.Raw(JsonSerializer.Serialize(order.Status)), @Html.Raw(JsonSerializer.Serialize(order.PaymentMethod)), @Html.Raw(JsonSerializer.Serialize(order.SellerName)), @Html.Raw(JsonSerializer.Serialize(order.ReceiverName)), @Html.Raw(JsonSerializer.Serialize(order.PhoneNumber)), @Html.Raw(JsonSerializer.Serialize(order.ShippingAddress ?? string.Empty)), @Html.Raw(JsonSerializer.Serialize($"₱{order.TotalAmount:N2}")), @Html.Raw(JsonSerializer.Serialize(order.Color ?? "N/A")), @Html.Raw(JsonSerializer.Serialize(order.Size ?? "N/A")), @order.Quantity)'><i class="bi bi-truck"></i> TRACK ORDER</button>
                                     @if (order.Status == "To Receive")
                                     {
-                                        <button class="btn-action btn-outline ms-2">CONFIRM RECEIVE</button>
+                                        <button class="btn-action btn-outline ms-2" type="button" onclick="confirmReceive(@order.OrderId)">CONFIRM RECEIVE</button>
                                     }
                                 }
                                 else if (order.Status == "Completed")
                                 {
-                                    <button class="btn-action btn-black">BUY AGAIN</button>
-                                    <button class="btn-action btn-outline">CONFIRM RECEIVE</button>
-                                    <button class="btn-action btn-outline text-danger">REQUEST REFUND</button>
+                                    <a class="btn-action btn-black" href="/Home/Product?id=@order.ProductId">BUY AGAIN</a>
+                                    <button class="btn-action btn-outline text-danger" type="button" onclick="updatePurchaseStatus(@order.OrderId, 'request-refund')">REQUEST REFUND</button>
                                 }
                                 else if (order.Status == "To Review")
                                 {
-                                    <button class="btn-action btn-black">ADD A REVIEW</button>
+                                    <a class="btn-action btn-black" href="/Home/WriteReview?id=@order.ProductId&orderId=@order.OrderId">ADD A REVIEW</a>
                                 }
                                 @* Returns and Cancelled only show View Details. *@
                             </div>

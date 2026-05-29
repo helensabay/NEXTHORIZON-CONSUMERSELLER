@@ -1,0 +1,97 @@
+@model NextHorizon.Models.FinanceViewModel
+
+@{
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+    ViewData["Title"] = "Pending Payout";
+    ViewData["DashboardHeading"] = "Pending Payout";
+    ViewData["SellerName"] = Model?.SellerName ?? "Seller";
+}
+
+@section Styles{
+    <link rel="stylesheet" href="~/css/pendingPayout.css" />
+}
+
+@section Scripts{
+    <script src="~/js/pendingPayout.js"></script>
+}
+
+<div class="page-actions">
+    <a class="link-btn" asp-controller="Dashboard" asp-action="Finance">
+        <i class="fas fa-arrow-left"></i> Back to Finance
+    </a>
+</div>
+
+<section class="section">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3 class="section-title">Pending Payout Transactions</h3>
+        <div style="background: #facc15; padding: 8px 16px; border-radius: 20px; font-weight: 600;">
+            Total Pending: ₱@(Model?.Transactions?.Where(t => t.Status.Equals("Processing", StringComparison.OrdinalIgnoreCase)).Sum(t => t.Amount).ToString("N2") ?? "0.00")
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table class="orders-table">
+            <thead>
+                <tr>
+                    <th>Reference</th>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Method</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Estimated Completion</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model?.Transactions != null && Model.Transactions.Any(t => t.Status.Equals("Processing", StringComparison.OrdinalIgnoreCase)))
+                {
+                    var pendingTransactions = Model.Transactions.Where(t => t.Status.Equals("Processing", StringComparison.OrdinalIgnoreCase));
+                    
+                    @foreach (var tx in pendingTransactions)
+                    {
+                        <tr>
+                            <td>@tx.ReferenceId</td>
+                            <td>@tx.TransactionDate.ToString("MMM dd, yyyy hh:mm tt")</td>
+                            <td>
+                                <span style="display: flex; align-items: center; gap: 5px;">
+                                    @if (tx.Type.Contains("Withdrawal"))
+                                    {
+                                        <i class="fas fa-arrow-up" style="color: #f39c12;"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="fas fa-exchange-alt"></i>
+                                    }
+                                    @tx.Type
+                                </span>
+                            </td>
+                            <td>@tx.Method</td>
+                            <td style="font-weight: 600; color: #f39c12;">
+                                ₱@tx.Amount.ToString("N2")
+                            </td>
+                            <td>
+                                <span class="badge status process">@tx.Status</span>
+                            </td>
+                            <td>
+                                @{
+                                    var estimatedDate = tx.TransactionDate.AddDays(3);
+                                }
+                                <span>@estimatedDate.ToString("MMM dd, yyyy")</span>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 60px 20px;">
+                            <i class="fas fa-clock" style="font-size: 48px; color: #ccc; margin-bottom: 16px; display: block;"></i>
+                            <h5 style="color: #374151; font-size: 18px; margin-bottom: 8px;">No pending payouts</h5>
+                            <p style="color: #6b7280; margin-bottom: 0;">All your transactions have been completed</p>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</section>

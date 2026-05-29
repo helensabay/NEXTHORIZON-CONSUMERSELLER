@@ -1,0 +1,368 @@
+@model NextHorizon.Models.AddPayoutAccountViewModel
+
+@{
+    Layout = "~/Views/Shared/_DashboardLayout.cshtml";
+}
+
+@section Styles{
+    <link rel="stylesheet" href="~/css/addPayoutAccount.css" />
+}
+
+<div class="page-actions">
+    <a class="link-btn" asp-controller="Dashboard" asp-action="PayoutAccounts">
+        ← Back
+    </a>
+</div>
+
+<div class="container mt-4">
+    <div class="page-title">Add New Payout Account</div>
+    
+    <!-- Error Message -->
+    @if (ViewBag.ErrorMessage != null)
+    {
+        <div style="background: #f8d7da; color: #721c24; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
+            @ViewBag.ErrorMessage
+        </div>
+    }
+
+    <form method="post" asp-action="AddPayoutAccount" id="payoutAccountForm">
+        @Html.AntiForgeryToken()
+        <div class="form-wrapper">
+            <!-- ACCOUNT DETAILS -->
+            <div class="form-card">
+                
+                <h4>ACCOUNT DETAILS</h4>
+
+                <div class="form-group">
+                    <label>Account Type</label>
+                    <select id="accountType" name="AccountType" required>
+                        <option value="">Select Account Type</option>
+                        <option value="bank">Online Bank</option>
+                        <option value="ewallet">E-Wallet</option>
+                        <option value="card">Card</option>
+                    </select>
+                </div>
+
+                <!-- Hidden field for BankName that will be set by JavaScript -->
+                <input type="hidden" id="BankName" name="BankName" value="" />
+
+                <!-- CARD FIELDS -->
+                <div id="cardFields" style="display:none;">
+                    <div class="form-group">
+                        <label>Card Number</label>
+                        <input type="text" name="CardNumber" placeholder="Card Number" maxlength="16">
+                    </div>
+
+                    <div class="row">
+                        <div class="form-group">
+                            <label>Expiry Date</label>
+                            <input type="text" name="ExpiryDate" placeholder="MM/YY" maxlength="5">
+                        </div>
+
+                        <div class="form-group">
+                            <label>CVV</label>
+                            <input type="text" name="CVV" placeholder="CVV" maxlength="3">
+                        </div>
+                    </div>
+
+                    <!-- BILLING ADDRESS -->
+                    <div class="form-card" style="margin-top: 20px;">
+                        <h4>BILLING ADDRESS</h4>
+
+                        <div class="form-group">
+                            <label>Region</label>
+                            <input type="text" name="Region" placeholder="Region">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Province</label>
+                            <input type="text" name="Province" placeholder="Province">
+                        </div>
+
+                        <div class="form-group">
+                            <label>City</label>
+                            <input type="text" name="City" placeholder="City">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Barangay</label>
+                            <input type="text" name="Barangay" placeholder="Barangay">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Street Name</label>
+                            <input type="text" name="StreetName" placeholder="Street Name">
+                        </div>
+
+                        <div class="row">
+                            <div class="form-group">
+                                <label>Building</label>
+                                <input type="text" name="Building" placeholder="Building">
+                            </div>
+
+                            <div class="form-group">
+                                <label>House No.</label>
+                                <input type="text" name="HouseNo" placeholder="House No">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Postal Code</label>
+                            <input type="text" name="PostalCode" placeholder="Postal Code">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- EWALLET FIELDS -->
+                <div id="ewalletFields" style="display:none;">
+                    <div class="form-group">
+                        <label>E-Wallet Type</label>
+                        <select id="EWalletType" name="EWalletType">
+                            <option value="GCash">GCash</option>
+                            <option value="PayMaya">PayMaya</option>
+                            <option value="Coins.ph">Coins.ph</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Account Name</label>
+                        <input type="text" name="EwalletAccountName" placeholder="Account Name" id="EwalletAccountName">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Account Number</label>
+                        <input id="ewalletNumber"
+                               type="text"
+                               name="EwalletAccountNumber"
+                               placeholder="09XXXXXXXXX"
+                               maxlength="11">
+                    </div>
+                </div>
+
+                <!-- ONLINE BANK FIELDS -->
+                <div id="bankFields" style="display:none;">
+                    <div class="form-group">
+                        <label>Bank Name</label>
+                        <select id="BankNameSelect" name="BankName">
+                            <option value="">Select Bank</option>
+                            <option value="BDO">BDO</option>
+                            <option value="BPI">BPI</option>
+                            <option value="Metrobank">Metrobank</option>
+                            <option value="UnionBank">UnionBank</option>
+                            <option value="GoTyme Bank">GoTyme Bank</option>
+                            <option value="Tonik Bank">Tonik Bank</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Account Holder Name</label>
+                        <input type="text" name="BankAccountName" placeholder="Account Holder Name" id="BankAccountName">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Account Number</label>
+                        <input type="text" name="BankAccountNumber" placeholder="Account Number" id="BankAccountNumber">
+                    </div>
+                </div>
+
+                <div class="checkbox">
+                    <label class="checkbox-inline">
+                        <input type="checkbox" name="IsDefault" value="true"> 
+                        Set as default payout account
+                    </label>
+                </div>
+
+                <div class="note">
+                    We follow PCI DSS security standards to protect your payment information.
+                </div>
+
+                <div class="buttons">
+                    <button type="button" class="btn btn-cancel" onclick="window.location.href='/Dashboard/PayoutAccounts'">Cancel</button>
+                    <button type="submit" class="btn btn-submit" id="addAccountBtn">Add Account</button>
+                </div>
+
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts{
+    <script src="~/js/addPayoutAccount.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const accountType = document.getElementById('accountType');
+            const cardFields = document.getElementById('cardFields');
+            const ewalletFields = document.getElementById('ewalletFields');
+            const bankFields = document.getElementById('bankFields');
+            const ewalletType = document.getElementById('EWalletType');
+            const bankNameSelect = document.getElementById('BankNameSelect');
+            const bankNameHidden = document.getElementById('BankName');
+            
+            // Function to update hidden BankName field
+            function updateBankName() {
+                const selectedType = accountType.value;
+                
+                if (selectedType === 'ewallet' && ewalletType) {
+                    bankNameHidden.value = ewalletType.value;
+                    console.log('E-wallet BankName set to:', bankNameHidden.value);
+                } else if (selectedType === 'bank' && bankNameSelect) {
+                    bankNameHidden.value = bankNameSelect.value;
+                    console.log('Bank BankName set to:', bankNameHidden.value);
+                } else if (selectedType === 'card') {
+                    bankNameHidden.value = 'Credit Card';
+                    console.log('Card BankName set to:', bankNameHidden.value);
+                } else {
+                    bankNameHidden.value = '';
+                }
+            }
+            
+            // Handle account type change
+            accountType.addEventListener('change', function() {
+                // Hide all fields first
+                cardFields.style.display = 'none';
+                ewalletFields.style.display = 'none';
+                bankFields.style.display = 'none';
+                
+                // Clear all field values
+                clearAllFields();
+                
+                // Show selected fields
+                if (this.value === 'card') {
+                    cardFields.style.display = 'block';
+                } else if (this.value === 'ewallet') {
+                    ewalletFields.style.display = 'block';
+                } else if (this.value === 'bank') {
+                    bankFields.style.display = 'block';
+                }
+                
+                // Update BankName hidden field
+                updateBankName();
+            });
+            
+            // Function to clear all fields
+            function clearAllFields() {
+                // Card fields
+                document.querySelectorAll('[name="CardNumber"], [name="ExpiryDate"], [name="CVV"], [name="Region"], [name="Province"], [name="City"], [name="Barangay"], [name="StreetName"], [name="Building"], [name="HouseNo"], [name="PostalCode"]').forEach(field => {
+                    field.value = '';
+                });
+                
+                // Ewallet fields
+                document.getElementById('EwalletAccountName').value = '';
+                document.getElementById('ewalletNumber').value = '';
+                
+                // Bank fields
+                document.getElementById('BankAccountName').value = '';
+                document.getElementById('BankAccountNumber').value = '';
+                if (bankNameSelect) bankNameSelect.value = '';
+            }
+            
+            // Listen for changes on e-wallet type dropdown
+            if (ewalletType) {
+                ewalletType.addEventListener('change', updateBankName);
+            }
+            
+            // Listen for changes on bank name dropdown
+            if (bankNameSelect) {
+                bankNameSelect.addEventListener('change', updateBankName);
+            }
+            
+            // Form validation and data preparation
+            document.getElementById('payoutAccountForm').addEventListener('submit', function(e) {
+                const accountTypeValue = accountType.value;
+                
+                if (!accountTypeValue) {
+                    e.preventDefault();
+                    alert('Please select an account type');
+                    return false;
+                }
+                
+                // Update BankName one more time before submission
+                updateBankName();
+                
+                // Prepare data based on account type
+                if (accountTypeValue === 'ewallet') {
+                    // Set the common fields from ewallet specific fields
+                    const ewalletAccountName = document.getElementById('EwalletAccountName').value;
+                    const ewalletAccountNumber = document.getElementById('ewalletNumber').value;
+                    
+                    // Create hidden inputs for the common field names
+                    createHiddenInput('AccountName', ewalletAccountName);
+                    createHiddenInput('AccountNumber', ewalletAccountNumber);
+                    
+                    // Validate
+                    if (!ewalletAccountName) {
+                        e.preventDefault();
+                        alert('Please enter account name');
+                        return false;
+                    }
+                    
+                    if (!ewalletAccountNumber || !ewalletAccountNumber.startsWith('09') || ewalletAccountNumber.length !== 11) {
+                        e.preventDefault();
+                        alert('Please enter a valid 11-digit mobile number starting with 09');
+                        return false;
+                    }
+                } 
+                else if (accountTypeValue === 'bank') {
+                    // Set the common fields from bank specific fields
+                    const bankAccountName = document.getElementById('BankAccountName').value;
+                    const bankAccountNumber = document.getElementById('BankAccountNumber').value;
+                    
+                    createHiddenInput('AccountName', bankAccountName);
+                    createHiddenInput('AccountNumber', bankAccountNumber);
+                    
+                    // Validate
+                    if (!bankNameSelect.value) {
+                        e.preventDefault();
+                        alert('Please select a bank name');
+                        return false;
+                    }
+                    
+                    if (!bankAccountName) {
+                        e.preventDefault();
+                        alert('Please enter account holder name');
+                        return false;
+                    }
+                    
+                    if (!bankAccountNumber) {
+                        e.preventDefault();
+                        alert('Please enter account number');
+                        return false;
+                    }
+                } 
+                else if (accountTypeValue === 'card') {
+                    const cardNumber = document.querySelector('[name="CardNumber"]').value;
+                    
+                    createHiddenInput('AccountName', 'Card Holder');
+                    createHiddenInput('AccountNumber', cardNumber);
+                    
+                    if (!cardNumber || cardNumber.length < 16) {
+                        e.preventDefault();
+                        alert('Please enter a valid 16-digit card number');
+                        return false;
+                    }
+                }
+                
+                return true;
+            });
+            
+            // Helper function to create hidden inputs
+            function createHiddenInput(name, value) {
+                const existing = document.querySelector(`input[name="${name}"]:not(#BankName)`);
+                if (existing) {
+                    existing.value = value;
+                } else {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = name;
+                    input.value = value;
+                    document.getElementById('payoutAccountForm').appendChild(input);
+                }
+            }
+            
+            // If there's an initial value, trigger the change event
+            if (accountType.value) {
+                accountType.dispatchEvent(new Event('change'));
+            }
+        });
+    </script>
+}

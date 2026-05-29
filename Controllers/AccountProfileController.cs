@@ -562,6 +562,115 @@ namespace MyAspNetApp.Controllers
             return View(orders);
         }
 
+        [HttpPost]
+        public async Task<IActionResult> UpdatePurchaseDetails([FromBody] UpdatePurchaseDetailsRequest request, CancellationToken cancellationToken)
+        {
+            var userId = GetCurrentUserId();
+            if (!userId.HasValue)
+            {
+                return Unauthorized(new { success = false, message = "Login required." });
+            }
+
+            if (request.OrderId <= 0)
+            {
+                return BadRequest(new { success = false, message = "Invalid order." });
+            }
+
+            if (string.IsNullOrWhiteSpace(request.ReceiverName) ||
+                string.IsNullOrWhiteSpace(request.PhoneNumber) ||
+                string.IsNullOrWhiteSpace(request.ShippingAddress))
+            {
+                return BadRequest(new { success = false, message = "Receiver, phone, and shipping address are required." });
+            }
+
+            var consumerId = await ResolveCurrentConsumerIdAsync(userId.Value, cancellationToken);
+            var updated = await _orderService.UpdateUserPurchaseDetailsAsync(
+                request.OrderId,
+                userId,
+                consumerId,
+                request.ReceiverName,
+                request.PhoneNumber,
+                request.ShippingAddress,
+                request.PaymentMethod ?? "GCash",
+                request.Color,
+                request.Size,
+                request.Quantity,
+                cancellationToken);
+
+            if (!updated)
+            {
+                return BadRequest(new { success = false, message = "This order could not be updated. Only To Pay orders can be edited." });
+            }
+
+            return Ok(new { success = true, message = "Order details saved." });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UpdatePurchaseStatus([FromBody] UpdatePurchaseStatusRequest request, CancellationToken cancellationToken)
+        {
+            var userId = GetCurrentUserId();
+            if (!userId.HasValue)
+            {
+                return Unauthorized(new { success = false, message = "Login required." });
+            }
+
+            if (request.OrderId <= 0)
+            {
+                return BadRequest(new { success = false, message = "Invalid order." });
+            }
+
+            var nextStatus = (request.Action ?? string.Empty).Trim().ToLowerInvariant() switch
+            {
+                "complete-payment" => "To Ship",
+                "confirm-receive" => "Completed",
+                "request-refund" => "Return Requested",
+                "cancel" => "Cancelled",
+                _ => string.Empty
+            };
+
+            if (string.IsNullOrWhiteSpace(nextStatus))
+            {
+                return BadRequest(new { success = false, message = "Unknown purchase action." });
+            }
+
+            var consumerId = await ResolveCurrentConsumerIdAsync(userId.Value, cancellationToken);
+            var updated = await _orderService.UpdateUserPurchaseStatusAsync(request.OrderId, userId, consumerId, nextStatus, cancellationToken);
+            if (!updated)
+            {
+                return NotFound(new { success = false, message = "Order not found for this account." });
+            }
+
+            return Ok(new { success = true, status = nextStatus, message = "Order status updated." });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ConfirmReceive([FromBody] ConfirmReceiveRequest request, CancellationToken cancellationToken)
+        {
+            var userId = GetCurrentUserId();
+            if (!userId.HasValue)
+            {
+                return Unauthorized(new { success = false, message = "Login required." });
+            }
+
+            if (request.OrderId <= 0)
+            {
+                return BadRequest(new { success = false, message = "Invalid order." });
+            }
+
+            var consumerId = await ResolveCurrentConsumerIdAsync(userId.Value, cancellationToken);
+            var updated = await _orderService.ConfirmUserPurchaseReceivedAsync(request.OrderId, userId, consumerId, cancellationToken);
+            if (!updated)
+            {
+                return BadRequest(new
+                {
+                    success = false,
+                    message = "This order could not be confirmed. It may already be confirmed or it does not belong to this account."
+                });
+            }
+
+            return Ok(new { success = true, status = "To Review", message = "Order received. You can now review it." });
+        }
+
         public async Task<IActionResult> OrderItemImage(int orderItemId, int? variantId, CancellationToken cancellationToken)
         {
             var userId = GetCurrentUserId();
@@ -963,6 +1072,29 @@ namespace MyAspNetApp.Controllers
             public decimal DistanceKm { get; set; }
             public int Steps { get; set; }
             public IFormFile? ProofFile { get; set; }
+        }
+
+        public sealed class UpdatePurchaseDetailsRequest
+        {
+            public int OrderId { get; set; }
+            public string ReceiverName { get; set; } = string.Empty;
+            public string PhoneNumber { get; set; } = string.Empty;
+            public string ShippingAddress { get; set; } = string.Empty;
+            public string? PaymentMethod { get; set; }
+            public string? Color { get; set; }
+            public string? Size { get; set; }
+            public int Quantity { get; set; } = 1;
+        }
+
+        public sealed class UpdatePurchaseStatusRequest
+        {
+            public int OrderId { get; set; }
+            public string? Action { get; set; }
+        }
+
+        public sealed class ConfirmReceiveRequest
+        {
+            public int OrderId { get; set; }
         }
 
         public sealed class MemberActivityDto

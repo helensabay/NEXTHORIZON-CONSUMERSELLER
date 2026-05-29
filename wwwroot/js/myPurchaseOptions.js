@@ -1,5 +1,23 @@
 ﻿
-function viewOrderDetails(orderNo, status, payment, seller, receiver, phone, address, total, color, size, qty) {
+let currentOrderId = 0;
+
+function viewOrderDetails(orderId, orderNo, status, payment, seller, receiver, phone, address, total, color, size, qty) {
+    if (arguments.length === 11) {
+        qty = size;
+        size = color;
+        color = total;
+        total = address;
+        address = phone;
+        phone = receiver;
+        receiver = seller;
+        seller = payment;
+        payment = status;
+        status = orderNo;
+        orderNo = orderId;
+        orderId = 0;
+    }
+
+    currentOrderId = parseInt(orderId, 10) || 0;
     // 1. Set ID and Status Header
     document.getElementById('modalOrderNumber').innerText = orderNo;
     document.getElementById('modalStatusText').innerText = status.toUpperCase();
@@ -83,7 +101,7 @@ function toggleOrderEdit() {
 /**
  * Validates and Saves local changes to the UI
  */
-function saveOrderChanges() {
+async function saveOrderChanges() {
     const newName = document.getElementById('inputReceiver').value;
     const newPhone = document.getElementById('inputPhone').value;
     const newAddr = document.getElementById('inputAddress').value;
@@ -92,22 +110,114 @@ function saveOrderChanges() {
     const newSize = document.getElementById('inputSize').value;
     const newQty = document.getElementById('inputQty').value;
 
-    if (!newName || !newPhone || !newAddr) {
+    if (!currentOrderId || !newName || !newPhone || !newAddr) {
         showToast("Please fill in required fields", "error");
         return;
     }
 
-    // Update Display UI
-    document.getElementById('displayReceiver').innerText = newName;
-    document.getElementById('displayPhone').innerText = newPhone;
-    document.getElementById('displayAddress').innerText = newAddr;
-    document.getElementById('displayPayment').innerText = "Payment: " + newPay;
-    document.getElementById('displayColor').innerText = newColor;
-    document.getElementById('displaySize').innerText = newSize;
-    document.getElementById('displayQty').innerText = newQty;
+    try {
+        const response = await fetch('/AccountProfile/UpdatePurchaseDetails', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                orderId: currentOrderId,
+                receiverName: newName,
+                phoneNumber: newPhone,
+                shippingAddress: newAddr,
+                paymentMethod: newPay,
+                color: newColor,
+                size: newSize,
+                quantity: parseInt(newQty, 10) || 1
+            })
+        });
 
-    toggleOrderEdit();
-    showToast("Order details updated locally!");
+        const payload = await readJsonSafe(response);
+        if (!response.ok || payload.success === false) {
+            throw new Error(payload.message || 'Could not save order details.');
+        }
+
+        document.getElementById('displayReceiver').innerText = newName;
+        document.getElementById('displayPhone').innerText = newPhone;
+        document.getElementById('displayAddress').innerText = newAddr;
+        document.getElementById('displayPayment').innerText = "Payment: " + newPay;
+        document.getElementById('displayColor').innerText = newColor;
+        document.getElementById('displaySize').innerText = newSize;
+        document.getElementById('displayQty').innerText = newQty;
+
+        toggleOrderEdit();
+        showToast("Order details saved.");
+    } catch (error) {
+        showToast(error.message || "Could not save order details.", "error");
+    }
+}
+
+async function updatePurchaseStatus(orderId, action) {
+    const parsedOrderId = parseInt(orderId, 10) || 0;
+    if (!parsedOrderId) {
+        showToast("Invalid order.", "error");
+        return;
+    }
+
+    try {
+        const response = await fetch('/AccountProfile/UpdatePurchaseStatus', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ orderId: parsedOrderId, action: action })
+        });
+
+        const payload = await readJsonSafe(response);
+        if (!response.ok || payload.success === false) {
+            throw new Error(payload.message || 'Could not update order.');
+        }
+
+        showToast(payload.message || "Order updated.");
+        window.location.reload();
+    } catch (error) {
+        showToast(error.message || "Could not update order.", "error");
+    }
+}
+
+async function confirmReceive(orderId) {
+    const parsedOrderId = parseInt(orderId, 10) || 0;
+    if (!parsedOrderId) {
+        showToast("Invalid order.", "error");
+        return;
+    }
+
+    try {
+        const response = await fetch('/AccountProfile/ConfirmReceive', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({ orderId: parsedOrderId })
+        });
+
+        const contentType = response.headers.get('content-type') || '';
+        if (!contentType.toLowerCase().includes('application/json')) {
+            throw new Error(response.redirected ? 'Please log in again.' : 'The server did not return a valid response.');
+        }
+
+        const payload = await response.json();
+        if (!response.ok || payload.success === false) {
+            throw new Error(payload.message || 'Could not confirm this order.');
+        }
+
+        showToast(payload.message || "Order received.");
+        window.location.href = '/AccountProfile/MyPurchases?status=To%20Review';
+    } catch (error) {
+        showToast(error.message || "Could not confirm this order.", "error");
+    }
+}
+
+async function readJsonSafe(response) {
+    try {
+        return await response.json();
+    } catch {
+        return {};
+    }
 }
 
 /**

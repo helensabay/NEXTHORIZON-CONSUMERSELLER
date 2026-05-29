@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Data;
 using MyAspNetApp.Data;
 using MyAspNetApp.Models;
 
@@ -9,6 +10,8 @@ namespace MyAspNetApp.Controllers
     [Route("api/products/{productId}/[controller]")]
     public class ReviewsController : ControllerBase
     {
+        private const string SharedUserIdCookie = "NextHorizon.SharedUserId";
+
         private readonly AppDbContext _db;
         private readonly IWebHostEnvironment _env;
 
@@ -109,10 +112,101 @@ namespace MyAspNetApp.Controllers
                 }
 
                 if (savedImageUrls.Count > 0)
+                {
                     await _db.SaveChangesAsync();
+                }
+            }
+
+            if (request.OrderId.HasValue && request.OrderId.Value > 0)
+            {
+                var userId = GetCurrentUserId();
+                var consumerId = userId.HasValue
+                    ? await _db.Consumers
+                        .AsNoTracking()
+                        .Where(x => x.UserId == userId.Value)
+                        .Select(x => (int?)x.ConsumerId)
+                        .FirstOrDefaultAsync()
+                    : null;
+
+                await MarkReviewedOrderCompletedAsync(request.OrderId.Value, productId, userId, consumerId);
             }
 
             return Ok(new { message = "Review added successfully.", reviewId = dbReview.Id });
+        }
+
+        private async Task MarkReviewedOrderCompletedAsync(int orderId, int productId, int? userId, int? consumerId)
+        {
+            if (!userId.HasValue && !consumerId.HasValue)
+            {
+                return;
+            }
+
+            await using var connection = _db.Database.GetDbConnection();
+            var shouldClose = connection.State != ConnectionState.Open;
+            if (shouldClose)
+            {
+                await connection.OpenAsync();
+            }
+
+            try
+            {
+                await using var command = connection.CreateCommand();
+                command.CommandText =
+                    """
+                    UPDATE o
+                    SET o.Status = N'Completed'
+                    FROM dbo.Orders o
+                    WHERE o.OrderId = @OrderId
+                      AND (
+                            (@UserIdText IS NOT NULL AND LTRIM(RTRIM(CONVERT(NVARCHAR(50), o.UserId))) = @UserIdText)
+                            OR (@ConsumerId IS NOT NULL AND o.ConsumerId = @ConsumerId)
+                          )
+                      AND EXISTS
+                          (
+                              SELECT 1
+                              FROM dbo.OrderItems oi
+                              WHERE oi.OrderId = o.OrderId
+                                AND oi.ProductId = @ProductId
+                          );
+                    """;
+                AddParameter(command, "@OrderId", orderId, DbType.Int32);
+                AddParameter(command, "@ProductId", productId, DbType.Int32);
+                AddParameter(command, "@UserIdText", userId?.ToString(), DbType.String);
+                AddParameter(command, "@ConsumerId", consumerId, DbType.Int32);
+                await command.ExecuteNonQueryAsync();
+            }
+            finally
+            {
+                if (shouldClose)
+                {
+                    await connection.CloseAsync();
+                }
+            }
+        }
+
+        private int? GetCurrentUserId()
+        {
+            var sessionUserId = HttpContext.Session.GetInt32("UserId");
+            if (sessionUserId.HasValue)
+            {
+                return sessionUserId.Value;
+            }
+
+            if (int.TryParse(Request.Cookies[SharedUserIdCookie], out var cookieUserId))
+            {
+                return cookieUserId;
+            }
+
+            return null;
+        }
+
+        private static void AddParameter(System.Data.Common.DbCommand command, string name, object? value, DbType dbType)
+        {
+            var parameter = command.CreateParameter();
+            parameter.ParameterName = name;
+            parameter.DbType = dbType;
+            parameter.Value = value ?? DBNull.Value;
+            command.Parameters.Add(parameter);
         }
 
         // POST: api/products/{productId}/reviews/{reviewId}/reply
@@ -209,6 +303,7 @@ namespace MyAspNetApp.Controllers
             public int? SizeFit { get; set; }
             public int? WidthFit { get; set; }
             public List<string>? Images { get; set; }
+            public int? OrderId { get; set; }
         }
 
         public class SellerReplyRequest

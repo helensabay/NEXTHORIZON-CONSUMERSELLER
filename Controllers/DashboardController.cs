@@ -180,7 +180,60 @@ namespace MyAspNetApp.Controllers
                 return Json(new { success = false, message = "Session expired." });
             }
 
-            return Json(new { success = true, message = "Note saved successfully!" });
+            if (request.OrderId <= 0)
+            {
+                return BadRequest(new { success = false, message = "Invalid order ID." });
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Note))
+            {
+                return BadRequest(new { success = false, message = "Note is required." });
+            }
+
+            try
+            {
+                await using var connection = new SqlConnection(_context.Database.GetConnectionString());
+                await connection.OpenAsync(cancellationToken);
+
+                var columns = await GetColumnsAsync(connection, "Orders", cancellationToken);
+                var sellerColumn = FindColumn(columns, "seller_id", "SellerId", "SellerID");
+                var orderIdColumn = FindColumn(columns, "OrderID", "OrderId");
+                var noteColumn = FindColumn(columns, "SellerNote", "seller_note");
+
+                if (sellerColumn == null || orderIdColumn == null || noteColumn == null)
+                {
+                    return StatusCode(StatusCodes.Status500InternalServerError, new
+                    {
+                        success = false,
+                        message = "Orders table is missing the seller note columns."
+                    });
+                }
+
+                await using var command = connection.CreateCommand();
+                command.CommandText =
+                    $"UPDATE {Quote("Orders")} SET {Quote(noteColumn)} = @Note " +
+                    $"WHERE {Quote(orderIdColumn)} = @OrderId AND {Quote(sellerColumn)} = @SellerId";
+                command.Parameters.Add(new SqlParameter("@Note", SqlDbType.NVarChar, 1000) { Value = request.Note.Trim() });
+                command.Parameters.Add(new SqlParameter("@OrderId", SqlDbType.Int) { Value = request.OrderId });
+                command.Parameters.Add(new SqlParameter("@SellerId", SqlDbType.Int) { Value = seller.SellerId });
+
+                var rowsAffected = await command.ExecuteNonQueryAsync(cancellationToken);
+                if (rowsAffected == 0)
+                {
+                    return NotFound(new { success = false, message = "Order not found for this seller." });
+                }
+
+                return Json(new { success = true, message = "Note saved successfully!" });
+            }
+            catch (Exception ex) when (IsSqlAvailabilityException(ex))
+            {
+                _logger.LogWarning(ex, "Unable to save order note for order {OrderId}", request.OrderId);
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, new
+                {
+                    success = false,
+                    message = "Unable to save the note right now. Please try again."
+                });
+            }
         }
 
         [HttpPost]
@@ -266,9 +319,81 @@ namespace MyAspNetApp.Controllers
         }
 
         [HttpPost]
-        public IActionResult DeclineOrder([FromBody] DeclineRequest request)
+        public async Task<IActionResult> DeclineOrder([FromBody] DeclineRequest request, CancellationToken cancellationToken)
         {
-            return Json(new { success = true, message = "Order declined." });
+            var seller = await ResolveCurrentSellerAsync(cancellationToken);
+            if (seller == null)
+            {
+                return Json(new { success = false, message = "Session expired. Please sign in again." });
+            }
+
+            if (request.OrderId <= 0)
+            {
+                return BadRequest(new { success = false, message = "Invalid order ID." });
+            }
+
+            if (string.IsNullOrWhiteSpace(request.Reason))
+            {
+                return BadRequest(new { success = false, message = "Decline reason is required." });
+            }
+
+            try
+            {
+                await using var connection = new SqlConnection(_context.Database.GetConnectionString());
+                await connection.OpenAsync(cancellationToken);
+
+                var columns = await GetColumnsAsync(connection, "Orders", cancellationToken);
+                var sellerColumn = FindColumn(columns, "seller_id", "SellerId", "SellerID");
+                var orderIdColumn = FindColumn(columns, "OrderID", "OrderId");
+                var statusColumn = FindColumn(columns, "Status", "status", "FulfillmentStatus");
+                var reasonColumn = FindColumn(columns, "CancellationReason", "cancellation_reason");
+                var noteColumn = FindColumn(columns, "SellerNote", "seller_note");
+
+                if (sellerColumn == null || orderIdColumn == null || statusColumn == null)
+                {
+                    return StatusCode(StatusCodes.Status500InternalServerError, new
+                    {
+                        success = false,
+                        message = "Orders table is missing required columns."
+                    });
+                }
+
+                var assignments = new List<string> { $"{Quote(statusColumn)} = @Status" };
+                if (reasonColumn != null)
+                {
+                    assignments.Add($"{Quote(reasonColumn)} = @Reason");
+                }
+                else if (noteColumn != null)
+                {
+                    assignments.Add($"{Quote(noteColumn)} = @Reason");
+                }
+
+                await using var command = connection.CreateCommand();
+                command.CommandText =
+                    $"UPDATE {Quote("Orders")} SET {string.Join(", ", assignments)} " +
+                    $"WHERE {Quote(orderIdColumn)} = @OrderId AND {Quote(sellerColumn)} = @SellerId";
+                command.Parameters.Add(new SqlParameter("@Status", SqlDbType.NVarChar, 50) { Value = "Cancelled" });
+                command.Parameters.Add(new SqlParameter("@Reason", SqlDbType.NVarChar, 1000) { Value = request.Reason.Trim() });
+                command.Parameters.Add(new SqlParameter("@OrderId", SqlDbType.Int) { Value = request.OrderId });
+                command.Parameters.Add(new SqlParameter("@SellerId", SqlDbType.Int) { Value = seller.SellerId });
+
+                var rowsAffected = await command.ExecuteNonQueryAsync(cancellationToken);
+                if (rowsAffected == 0)
+                {
+                    return NotFound(new { success = false, message = "Order not found for this seller." });
+                }
+
+                return Json(new { success = true, message = "Order declined.", status = "Cancelled" });
+            }
+            catch (Exception ex) when (IsSqlAvailabilityException(ex))
+            {
+                _logger.LogWarning(ex, "Unable to decline order {OrderId} for seller {SellerId}", request.OrderId, seller.SellerId);
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, new
+                {
+                    success = false,
+                    message = "Unable to decline the order right now. Please try again."
+                });
+            }
         }
 
         [HttpPost]
@@ -363,6 +488,11 @@ namespace MyAspNetApp.Controllers
                 return BadRequest(new { success = false, message = "Return reason is required." });
             }
 
+            if (request.ReturnProof is { Length: 0 })
+            {
+                return BadRequest(new { success = false, message = "The uploaded proof image is empty. Please choose the image again." });
+            }
+
             try
             {
                 await using var connection = new SqlConnection(_context.Database.GetConnectionString());
@@ -375,6 +505,8 @@ namespace MyAspNetApp.Controllers
                 var reasonColumn = FindColumn(columns, "ReturnReason", "return_reason", "FailedDeliveryReason");
                 var noteColumn = FindColumn(columns, "ReturnNote", "return_note", "FailedDeliveryNote");
                 var proofColumn = FindColumn(columns, "ReturnProofImage", "ReturnProofUrl", "return_proof", "ProofOfReturn");
+                var proofDataColumn = FindColumn(columns, "ReturnProofImageData", "ReturnProofData", "ProofOfReturnData");
+                var proofMimeColumn = FindColumn(columns, "ReturnProofImageMimeType", "ReturnProofMimeType", "ProofOfReturnMimeType");
 
                 if (sellerColumn == null || orderIdColumn == null || statusColumn == null)
                 {
@@ -388,6 +520,17 @@ namespace MyAspNetApp.Controllers
                 var proofUrl = proofColumn == null
                     ? null
                     : await SaveReturnProofAsync(request.ReturnProof, cancellationToken);
+                byte[]? proofBytes = null;
+                string? proofMimeType = null;
+                if (proofDataColumn != null && request.ReturnProof != null && request.ReturnProof.Length > 0)
+                {
+                    await using var proofStream = new MemoryStream();
+                    await request.ReturnProof.CopyToAsync(proofStream, cancellationToken);
+                    proofBytes = proofStream.ToArray();
+                    proofMimeType = string.IsNullOrWhiteSpace(request.ReturnProof.ContentType)
+                        ? "image/jpeg"
+                        : request.ReturnProof.ContentType;
+                }
 
                 var assignments = new List<string> { $"{Quote(statusColumn)} = @Status" };
                 if (reasonColumn != null)
@@ -404,6 +547,14 @@ namespace MyAspNetApp.Controllers
                 {
                     assignments.Add($"{Quote(proofColumn)} = @ReturnProof");
                 }
+                if (proofDataColumn != null && proofBytes != null)
+                {
+                    assignments.Add($"{Quote(proofDataColumn)} = @ReturnProofData");
+                }
+                if (proofMimeColumn != null && proofBytes != null)
+                {
+                    assignments.Add($"{Quote(proofMimeColumn)} = @ReturnProofMimeType");
+                }
 
                 await using var command = connection.CreateCommand();
                 command.CommandText =
@@ -416,6 +567,8 @@ namespace MyAspNetApp.Controllers
                     Value = string.IsNullOrWhiteSpace(request.ReturnNote) ? DBNull.Value : request.ReturnNote.Trim()
                 });
                 command.Parameters.Add(new SqlParameter("@ReturnProof", SqlDbType.NVarChar, 500) { Value = proofUrl ?? (object)DBNull.Value });
+                command.Parameters.Add(new SqlParameter("@ReturnProofData", SqlDbType.VarBinary, -1) { Value = proofBytes ?? (object)DBNull.Value });
+                command.Parameters.Add(new SqlParameter("@ReturnProofMimeType", SqlDbType.NVarChar, 100) { Value = proofMimeType ?? (object)DBNull.Value });
                 command.Parameters.Add(new SqlParameter("@OrderId", SqlDbType.Int) { Value = request.OrderId });
                 command.Parameters.Add(new SqlParameter("@SellerId", SqlDbType.Int) { Value = seller.SellerId });
 
@@ -440,6 +593,77 @@ namespace MyAspNetApp.Controllers
             {
                 return BadRequest(new { success = false, message = ex.Message });
             }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> FailedDeliveryProof(int orderId, CancellationToken cancellationToken)
+        {
+            var seller = await ResolveCurrentSellerAsync(cancellationToken);
+            if (seller == null)
+            {
+                return Unauthorized();
+            }
+
+            if (orderId <= 0)
+            {
+                return BadRequest();
+            }
+
+            await using var connection = new SqlConnection(_context.Database.GetConnectionString());
+            await connection.OpenAsync(cancellationToken);
+
+            var columns = await GetColumnsAsync(connection, "Orders", cancellationToken);
+            var sellerColumn = FindColumn(columns, "seller_id", "SellerId", "SellerID");
+            var orderIdColumn = FindColumn(columns, "OrderID", "OrderId");
+            var proofDataColumn = FindColumn(columns, "ReturnProofImageData", "ReturnProofData", "ProofOfReturnData");
+            var proofMimeColumn = FindColumn(columns, "ReturnProofImageMimeType", "ReturnProofMimeType", "ProofOfReturnMimeType");
+            var proofUrlColumn = FindColumn(columns, "ReturnProofImage", "ReturnProofUrl", "return_proof", "ProofOfReturn", "ProofOfShipmentUrl");
+
+            if (sellerColumn == null || orderIdColumn == null)
+            {
+                return NotFound();
+            }
+
+            if (proofDataColumn != null)
+            {
+                await using var command = connection.CreateCommand();
+                command.CommandText =
+                    $"SELECT {Quote(proofDataColumn)} AS ProofData, DATALENGTH({Quote(proofDataColumn)}) AS ProofLength, " +
+                    (proofMimeColumn == null ? "NULL AS ProofMimeType " : $"{Quote(proofMimeColumn)} AS ProofMimeType ") +
+                    $"FROM {Quote("Orders")} WHERE {Quote(orderIdColumn)} = @OrderId AND {Quote(sellerColumn)} = @SellerId";
+                command.Parameters.Add(new SqlParameter("@OrderId", SqlDbType.Int) { Value = orderId });
+                command.Parameters.Add(new SqlParameter("@SellerId", SqlDbType.Int) { Value = seller.SellerId });
+
+                await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+                if (await reader.ReadAsync(cancellationToken)
+                    && !reader.IsDBNull(reader.GetOrdinal("ProofData"))
+                    && GetInt(reader, "ProofLength") > 0)
+                {
+                    var proofData = (byte[])reader["ProofData"];
+                    var mimeType = reader.IsDBNull(reader.GetOrdinal("ProofMimeType"))
+                        ? "image/jpeg"
+                        : Convert.ToString(reader["ProofMimeType"]) ?? "image/jpeg";
+                    return File(proofData, mimeType);
+                }
+            }
+
+            if (proofUrlColumn != null)
+            {
+                await using var command = connection.CreateCommand();
+                command.CommandText =
+                    $"SELECT {Quote(proofUrlColumn)} FROM {Quote("Orders")} " +
+                    $"WHERE {Quote(orderIdColumn)} = @OrderId AND {Quote(sellerColumn)} = @SellerId";
+                command.Parameters.Add(new SqlParameter("@OrderId", SqlDbType.Int) { Value = orderId });
+                command.Parameters.Add(new SqlParameter("@SellerId", SqlDbType.Int) { Value = seller.SellerId });
+
+                var value = Convert.ToString(await command.ExecuteScalarAsync(cancellationToken));
+                if (!string.IsNullOrWhiteSpace(value))
+                {
+                    return Redirect(value);
+                }
+            }
+
+            return NotFound();
         }
 
         [HttpPost]
@@ -636,7 +860,7 @@ namespace MyAspNetApp.Controllers
             try
             {
                 await using var connection = new SqlConnection(_context.Database.GetConnectionString());
-                await using var command = new SqlCommand("sp_GetTransactionDetailsSP", connection)
+                await using var command = new SqlCommand("sp_GetTransactionDetails", connection)
                 {
                     CommandType = CommandType.StoredProcedure,
                     CommandTimeout = 8
@@ -655,12 +879,25 @@ namespace MyAspNetApp.Controllers
                 for (var index = 0; index < reader.FieldCount; index++)
                 {
                     var name = reader.GetName(index);
-                    if (name is "ReferenceId" or "TransactionDate" or "Type" or "Method" or "Amount" or "Status" or "Source")
+                    if (name is "ReferenceId" or "TransactionDate" or "Type" or "Method" or "Amount" or "Status" or "Source" or "AdditionalDetails")
                     {
                         continue;
                     }
 
                     additionalDetails[name] = reader.IsDBNull(index) ? null : Convert.ToString(reader.GetValue(index));
+                }
+
+                var details = ReadString(reader, "AdditionalDetails");
+                if (!string.IsNullOrWhiteSpace(details))
+                {
+                    foreach (var part in details.Split('|', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+                    {
+                        var separator = part.IndexOf(':');
+                        if (separator > 0)
+                        {
+                            additionalDetails[part[..separator].Trim()] = part[(separator + 1)..].Trim();
+                        }
+                    }
                 }
 
                 return Json(new
@@ -684,6 +921,282 @@ namespace MyAspNetApp.Controllers
                 _logger.LogWarning(ex, "Unable to load transaction details for {ReferenceId}.", referenceId);
                 return Json(new { success = false, message = "Transaction details are temporarily unavailable." });
             }
+        }
+
+        public async Task<IActionResult> MyBalance(CancellationToken cancellationToken)
+        {
+            var seller = await ResolveCurrentSellerAsync(cancellationToken);
+            if (seller == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            var finance = await LoadFinanceDashboardDataAsync(seller.SellerId, seller.BusinessName ?? "Seller", cancellationToken);
+            var model = new BalanceDetailsViewModel
+            {
+                SellerName = finance.SellerName,
+                CurrentDate = finance.CurrentDate,
+                AvailableBalance = finance.AvailableBalance,
+                PendingBalance = finance.PendingBalance,
+                TotalEarned = finance.TotalEarned,
+                TotalWithdrawn = finance.TotalWithdrawn,
+                PendingPayoutCount = finance.PendingPayoutCount,
+                TotalPendingWithdrawal = finance.TotalPendingWithdrawal,
+                RecentTransactions = finance.Transactions
+            };
+
+            ViewData["SellerName"] = model.SellerName;
+            return View(model);
+        }
+
+        public async Task<IActionResult> TransactionHistory(
+            int page = 1,
+            string? type = null,
+            string? status = null,
+            DateTime? fromDate = null,
+            DateTime? toDate = null,
+            CancellationToken cancellationToken = default)
+        {
+            var seller = await ResolveCurrentSellerAsync(cancellationToken);
+            if (seller == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            var model = await LoadTransactionHistoryAsync(seller.SellerId, seller.BusinessName ?? "Seller", page, 10, type, status, fromDate, toDate, cancellationToken);
+            ViewData["SellerName"] = model.SellerName;
+            return View(model);
+        }
+
+        public async Task<IActionResult> PendingPayout(CancellationToken cancellationToken)
+        {
+            var seller = await ResolveCurrentSellerAsync(cancellationToken);
+            if (seller == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            var model = await LoadFinanceDashboardDataAsync(seller.SellerId, seller.BusinessName ?? "Seller", cancellationToken);
+            ViewData["SellerName"] = model.SellerName;
+            return View(model);
+        }
+
+        public async Task<IActionResult> PayoutAccounts(CancellationToken cancellationToken)
+        {
+            var seller = await ResolveCurrentSellerAsync(cancellationToken);
+            if (seller == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            ViewData["SellerName"] = seller.BusinessName ?? "Seller";
+            ViewBag.SellerName = seller.BusinessName ?? "Seller";
+            return View(await LoadPayoutAccountsAsync(seller.SellerId, cancellationToken));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SetDefaultPayoutAccount([FromBody] SetDefaultAccountRequest request, CancellationToken cancellationToken)
+        {
+            var seller = await ResolveCurrentSellerAsync(cancellationToken);
+            if (seller == null)
+            {
+                return Unauthorized(new { success = false, message = "Session expired." });
+            }
+
+            try
+            {
+                await using var connection = new SqlConnection(_context.Database.GetConnectionString());
+                await using var command = new SqlCommand("sp_SetDefaultPayoutAccount", connection)
+                {
+                    CommandType = CommandType.StoredProcedure,
+                    CommandTimeout = 8
+                };
+                command.Parameters.AddWithValue("@AccountId", request.AccountId);
+                command.Parameters.AddWithValue("@SellerId", seller.SellerId);
+
+                await connection.OpenAsync(cancellationToken);
+                await command.ExecuteNonQueryAsync(cancellationToken);
+                return Ok(new { success = true });
+            }
+            catch (Exception ex) when (IsSqlAvailabilityException(ex))
+            {
+                _logger.LogWarning(ex, "Unable to set default payout account {AccountId}.", request.AccountId);
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, new { success = false, message = "Unable to update payout account right now." });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> RemovePayoutAccount([FromBody] RemoveAccountRequest request, CancellationToken cancellationToken)
+        {
+            var seller = await ResolveCurrentSellerAsync(cancellationToken);
+            if (seller == null)
+            {
+                return Unauthorized(new { success = false, message = "Session expired." });
+            }
+
+            try
+            {
+                await using var connection = new SqlConnection(_context.Database.GetConnectionString());
+                await using var command = new SqlCommand("sp_RemovePayoutAccount", connection)
+                {
+                    CommandType = CommandType.StoredProcedure,
+                    CommandTimeout = 8
+                };
+                command.Parameters.AddWithValue("@AccountId", request.AccountId);
+                command.Parameters.AddWithValue("@SellerId", seller.SellerId);
+
+                await connection.OpenAsync(cancellationToken);
+                var result = await command.ExecuteScalarAsync(cancellationToken);
+                var rowsAffected = result == null || result == DBNull.Value ? 1 : Convert.ToInt32(result);
+                return Ok(new
+                {
+                    success = rowsAffected > 0,
+                    message = rowsAffected > 0 ? "Account removed successfully" : "Account not found or already removed"
+                });
+            }
+            catch (Exception ex) when (IsSqlAvailabilityException(ex))
+            {
+                _logger.LogWarning(ex, "Unable to remove payout account {AccountId}.", request.AccountId);
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, new { success = false, message = "Unable to remove payout account right now." });
+            }
+        }
+
+        [HttpGet]
+        public IActionResult AddPayoutAccount()
+        {
+            if (!HttpContext.Session.GetInt32("SellerId").HasValue)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            return View(new AddPayoutAccountViewModel());
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddPayoutAccount(AddPayoutAccountViewModel model, CancellationToken cancellationToken)
+        {
+            var seller = await ResolveCurrentSellerAsync(cancellationToken);
+            if (seller == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            try
+            {
+                await using var connection = new SqlConnection(_context.Database.GetConnectionString());
+                await using var command = new SqlCommand("sp_AddPayoutAccount", connection)
+                {
+                    CommandType = CommandType.StoredProcedure,
+                    CommandTimeout = 8
+                };
+
+                command.Parameters.AddWithValue("@SellerId", seller.SellerId);
+                command.Parameters.AddWithValue("@AccountType", model.AccountType ?? string.Empty);
+                command.Parameters.AddWithValue("@AccountName", ResolvePayoutAccountName(model));
+                command.Parameters.AddWithValue("@AccountNumber", ResolvePayoutAccountNumber(model));
+                command.Parameters.AddWithValue("@BankName", ResolvePayoutBankName(model));
+                command.Parameters.AddWithValue("@CardNumber", DbValue(model.CardNumber));
+                command.Parameters.AddWithValue("@CvvCode", DbValue(model.CVV));
+
+                var expiry = (model.ExpiryDate ?? string.Empty).Split('/', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+                command.Parameters.AddWithValue("@ExpirationMonth", expiry.Length > 0 ? expiry[0] : DBNull.Value);
+                command.Parameters.AddWithValue("@ExpirationYear", expiry.Length > 1 ? expiry[1] : DBNull.Value);
+                command.Parameters.AddWithValue("@PostalCode", int.TryParse(model.PostalCode, out var postalCode) ? postalCode : DBNull.Value);
+                command.Parameters.AddWithValue("@Region", DbValue(model.Region));
+                command.Parameters.AddWithValue("@Province", DbValue(model.Province));
+                command.Parameters.AddWithValue("@City", DbValue(model.City));
+                command.Parameters.AddWithValue("@Barangay", DbValue(model.Barangay));
+                command.Parameters.AddWithValue("@StreetName", DbValue(model.StreetName));
+                command.Parameters.AddWithValue("@Building", DbValue(model.Building));
+                command.Parameters.AddWithValue("@HouseNo", DbValue(model.HouseNo));
+                command.Parameters.AddWithValue("@IsDefault", model.IsDefault);
+
+                await connection.OpenAsync(cancellationToken);
+                await command.ExecuteScalarAsync(cancellationToken);
+                TempData["SuccessMessage"] = "Payout account added successfully";
+                return RedirectToAction("PayoutAccounts");
+            }
+            catch (Exception ex) when (IsSqlAvailabilityException(ex))
+            {
+                _logger.LogWarning(ex, "Unable to add payout account for seller {SellerId}.", seller.SellerId);
+                ViewBag.ErrorMessage = "Unable to add payout account right now.";
+                return View(model);
+            }
+        }
+
+        public async Task<IActionResult> Withdraw(CancellationToken cancellationToken)
+        {
+            var seller = await ResolveCurrentSellerAsync(cancellationToken);
+            if (seller == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            ViewData["SellerName"] = seller.BusinessName ?? "Seller";
+            return View(await LoadWithdrawalDetailsAsync(seller.SellerId, seller.BusinessName ?? "Seller", cancellationToken));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ProcessWithdrawal(WithdrawalRequestModel model, CancellationToken cancellationToken)
+        {
+            var seller = await ResolveCurrentSellerAsync(cancellationToken);
+            if (seller == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return View("Withdraw", await LoadWithdrawalDetailsAsync(seller.SellerId, seller.BusinessName ?? "Seller", cancellationToken));
+            }
+
+            try
+            {
+                await using var connection = new SqlConnection(_context.Database.GetConnectionString());
+                await using var command = new SqlCommand("sp_ProcessWithdrawal", connection)
+                {
+                    CommandType = CommandType.StoredProcedure,
+                    CommandTimeout = 8
+                };
+                command.Parameters.AddWithValue("@SellerId", seller.SellerId);
+                command.Parameters.AddWithValue("@Amount", model.Amount);
+                command.Parameters.AddWithValue("@PayoutAccountId", model.PayoutAccountId);
+                var referenceNo = new SqlParameter("@ReferenceNo", SqlDbType.NVarChar, 50)
+                {
+                    Direction = ParameterDirection.Output
+                };
+                command.Parameters.Add(referenceNo);
+
+                await connection.OpenAsync(cancellationToken);
+                await command.ExecuteNonQueryAsync(cancellationToken);
+                TempData["SuccessMessage"] = $"Withdrawal request submitted successfully. Reference: {referenceNo.Value}";
+                return RedirectToAction("Finance");
+            }
+            catch (Exception ex) when (IsSqlAvailabilityException(ex))
+            {
+                _logger.LogWarning(ex, "Unable to process withdrawal for seller {SellerId}.", seller.SellerId);
+                TempData["ErrorMessage"] = "Unable to process withdrawal right now.";
+                return View("Withdraw", await LoadWithdrawalDetailsAsync(seller.SellerId, seller.BusinessName ?? "Seller", cancellationToken));
+            }
+        }
+
+        public async Task<IActionResult> WithdrawalHistory(int page = 1, string? status = null, CancellationToken cancellationToken = default)
+        {
+            var seller = await ResolveCurrentSellerAsync(cancellationToken);
+            if (seller == null)
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            return View(await LoadWithdrawalHistoryAsync(seller.SellerId, page, 10, status, cancellationToken));
+        }
+
+        public IActionResult CancelWithdrawal(string id)
+        {
+            TempData["ErrorMessage"] = "Withdrawal cancellation is not available from this page.";
+            return RedirectToAction("TransactionHistory");
         }
 
         public async Task<IActionResult> Analytics(CancellationToken cancellationToken)
@@ -806,6 +1319,350 @@ namespace MyAspNetApp.Controllers
             }
 
             return model;
+        }
+
+        private async Task<TransactionHistoryViewModel> LoadTransactionHistoryAsync(
+            int sellerId,
+            string sellerName,
+            int pageNumber,
+            int pageSize,
+            string? type,
+            string? status,
+            DateTime? fromDate,
+            DateTime? toDate,
+            CancellationToken cancellationToken)
+        {
+            var model = new TransactionHistoryViewModel
+            {
+                SellerName = string.IsNullOrWhiteSpace(sellerName) ? "Seller" : sellerName,
+                CurrentDate = DateTime.Now,
+                CurrentPage = Math.Max(1, pageNumber),
+                PageSize = Math.Max(1, pageSize),
+                FilterType = type,
+                FilterStatus = status,
+                FilterFromDate = fromDate,
+                FilterToDate = toDate
+            };
+
+            try
+            {
+                await using var connection = new SqlConnection(_context.Database.GetConnectionString());
+                await using var command = new SqlCommand("sp_GetSellerTransactionHistory", connection)
+                {
+                    CommandType = CommandType.StoredProcedure,
+                    CommandTimeout = 8
+                };
+                command.Parameters.AddWithValue("@SellerId", sellerId);
+                command.Parameters.AddWithValue("@PageNumber", model.CurrentPage);
+                command.Parameters.AddWithValue("@PageSize", model.PageSize);
+                if (!string.IsNullOrWhiteSpace(type))
+                {
+                    command.Parameters.AddWithValue("@TransactionType", type);
+                }
+
+                if (!string.IsNullOrWhiteSpace(status))
+                {
+                    command.Parameters.AddWithValue("@Status", status);
+                }
+
+                if (fromDate.HasValue)
+                {
+                    command.Parameters.AddWithValue("@FromDate", fromDate.Value);
+                }
+
+                if (toDate.HasValue)
+                {
+                    command.Parameters.AddWithValue("@ToDate", toDate.Value.Date.AddDays(1).AddTicks(-1));
+                }
+
+                await connection.OpenAsync(cancellationToken);
+                await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+
+                if (await reader.ReadAsync(cancellationToken))
+                {
+                    model.TotalCount = ReadInt(reader, "TotalCount");
+                }
+
+                if (await reader.NextResultAsync(cancellationToken))
+                {
+                    while (await reader.ReadAsync(cancellationToken))
+                    {
+                        model.Transactions.Add(ReadFinanceTransaction(reader));
+                    }
+                }
+
+                return model;
+            }
+            catch (Exception ex) when (IsSqlAvailabilityException(ex))
+            {
+                _logger.LogWarning(ex, "Unable to load transaction history from stored procedure.");
+            }
+
+            var finance = await LoadFinanceDashboardDataAsync(sellerId, sellerName, cancellationToken);
+            var query = finance.Transactions.AsEnumerable();
+            if (!string.IsNullOrWhiteSpace(type))
+            {
+                query = query.Where(item => string.Equals(item.Type, type, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (!string.IsNullOrWhiteSpace(status))
+            {
+                query = query.Where(item => string.Equals(item.Status, status, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (fromDate.HasValue)
+            {
+                query = query.Where(item => item.TransactionDate.Date >= fromDate.Value.Date);
+            }
+
+            if (toDate.HasValue)
+            {
+                query = query.Where(item => item.TransactionDate.Date <= toDate.Value.Date);
+            }
+
+            var filtered = query.ToList();
+            model.TotalCount = filtered.Count;
+            model.Transactions = filtered
+                .Skip((model.CurrentPage - 1) * model.PageSize)
+                .Take(model.PageSize)
+                .ToList();
+            return model;
+        }
+
+        private async Task<List<PayoutAccountViewModel>> LoadPayoutAccountsAsync(int sellerId, CancellationToken cancellationToken)
+        {
+            var accounts = new List<PayoutAccountViewModel>();
+            try
+            {
+                await using var connection = new SqlConnection(_context.Database.GetConnectionString());
+                await using var command = new SqlCommand("sp_GetSellerPayoutAccounts", connection)
+                {
+                    CommandType = CommandType.StoredProcedure,
+                    CommandTimeout = 8
+                };
+                command.Parameters.AddWithValue("@SellerId", sellerId);
+
+                await connection.OpenAsync(cancellationToken);
+                await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+                while (await reader.ReadAsync(cancellationToken))
+                {
+                    accounts.Add(new PayoutAccountViewModel
+                    {
+                        AccountId = ReadInt(reader, "AccountId"),
+                        UserId = ReadInt(reader, "UserId"),
+                        AccountType = ReadString(reader, "AccountType"),
+                        AccountName = ReadString(reader, "AccountName"),
+                        AccountNumber = ReadString(reader, "AccountNumber"),
+                        BankName = ReadString(reader, "BankName", string.Empty),
+                        CardNumber = ReadString(reader, "CardNumber", string.Empty),
+                        LastUsed = HasColumn(reader, "LastUsed") && !reader.IsDBNull(reader.GetOrdinal("LastUsed"))
+                            ? Convert.ToDateTime(reader.GetValue(reader.GetOrdinal("LastUsed")))
+                            : null,
+                        IsDefault = ReadBoolean(reader, "IsDefault"),
+                        Region = ReadString(reader, "Region", string.Empty),
+                        Province = ReadString(reader, "Province", string.Empty),
+                        City = ReadString(reader, "City", string.Empty),
+                        Barangay = ReadString(reader, "Barangay", string.Empty),
+                        StreetName = ReadString(reader, "StreetName", string.Empty),
+                        Building = ReadString(reader, "Building", string.Empty),
+                        HouseNo = ReadString(reader, "HouseNo", string.Empty),
+                        PostalCode = HasColumn(reader, "PostalCode") && !reader.IsDBNull(reader.GetOrdinal("PostalCode"))
+                            ? Convert.ToInt32(reader.GetValue(reader.GetOrdinal("PostalCode")))
+                            : null
+                    });
+                }
+            }
+            catch (Exception ex) when (IsSqlAvailabilityException(ex))
+            {
+                _logger.LogWarning(ex, "Unable to load payout accounts.");
+                TempData["ErrorMessage"] = "Payout accounts are temporarily unavailable.";
+            }
+
+            return accounts;
+        }
+
+        private async Task<WithdrawalDetailsViewModel> LoadWithdrawalDetailsAsync(int sellerId, string sellerName, CancellationToken cancellationToken)
+        {
+            var model = new WithdrawalDetailsViewModel
+            {
+                SellerName = string.IsNullOrWhiteSpace(sellerName) ? "Seller" : sellerName
+            };
+
+            try
+            {
+                await using var connection = new SqlConnection(_context.Database.GetConnectionString());
+                await using var command = new SqlCommand("sp_GetWithdrawalDetails", connection)
+                {
+                    CommandType = CommandType.StoredProcedure,
+                    CommandTimeout = 8
+                };
+                command.Parameters.AddWithValue("@SellerId", sellerId);
+
+                await connection.OpenAsync(cancellationToken);
+                await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+                if (await reader.ReadAsync(cancellationToken))
+                {
+                    model.SellerName = ReadString(reader, "SellerName", model.SellerName);
+                    model.AvailableBalance = ReadDecimal(reader, "AvailableBalance");
+                    model.PendingBalance = ReadDecimal(reader, "PendingBalance");
+                    model.TotalEarned = ReadDecimal(reader, "TotalEarned");
+                    model.TotalWithdrawn = ReadDecimal(reader, "TotalWithdrawn");
+                }
+
+                if (await reader.NextResultAsync(cancellationToken))
+                {
+                    while (await reader.ReadAsync(cancellationToken))
+                    {
+                        model.PayoutAccounts.Add(new PayoutAccountViewModel
+                        {
+                            AccountId = ReadInt(reader, "AccountId"),
+                            AccountType = ReadString(reader, "AccountType"),
+                            AccountName = ReadString(reader, "AccountName"),
+                            AccountNumber = ReadString(reader, "AccountNumber"),
+                            BankName = ReadString(reader, "BankName", string.Empty),
+                            IsDefault = ReadBoolean(reader, "IsDefault")
+                        });
+                    }
+                }
+
+                if (await reader.NextResultAsync(cancellationToken))
+                {
+                    while (await reader.ReadAsync(cancellationToken))
+                    {
+                        model.RecentWithdrawals.Add(new RecentWithdrawalViewModel
+                        {
+                            WithdrawalId = ReadLong(reader, "WithdrawalId"),
+                            Amount = ReadDecimal(reader, "Amount"),
+                            Status = ReadString(reader, "Status"),
+                            RequestedAt = ReadDate(reader, "RequestedAt", DateTime.Now)
+                        });
+                    }
+                }
+            }
+            catch (Exception ex) when (IsSqlAvailabilityException(ex))
+            {
+                _logger.LogWarning(ex, "Unable to load withdrawal details.");
+                var finance = await LoadFinanceDashboardDataAsync(sellerId, sellerName, cancellationToken);
+                model.SellerName = finance.SellerName;
+                model.AvailableBalance = finance.AvailableBalance;
+                model.PendingBalance = finance.PendingBalance;
+                model.TotalEarned = finance.TotalEarned;
+                model.TotalWithdrawn = finance.TotalWithdrawn;
+                model.PayoutAccounts = await LoadPayoutAccountsAsync(sellerId, cancellationToken);
+            }
+
+            return model;
+        }
+
+        private async Task<WithdrawalHistoryViewModel> LoadWithdrawalHistoryAsync(int sellerId, int pageNumber, int pageSize, string? status, CancellationToken cancellationToken)
+        {
+            var model = new WithdrawalHistoryViewModel
+            {
+                CurrentPage = Math.Max(1, pageNumber),
+                PageSize = Math.Max(1, pageSize),
+                FilterStatus = status
+            };
+
+            try
+            {
+                await using var connection = new SqlConnection(_context.Database.GetConnectionString());
+                await using var command = new SqlCommand("sp_GetWithdrawalHistory", connection)
+                {
+                    CommandType = CommandType.StoredProcedure,
+                    CommandTimeout = 8
+                };
+                command.Parameters.AddWithValue("@SellerId", sellerId);
+                command.Parameters.AddWithValue("@PageNumber", model.CurrentPage);
+                command.Parameters.AddWithValue("@PageSize", model.PageSize);
+                if (!string.IsNullOrWhiteSpace(status))
+                {
+                    command.Parameters.AddWithValue("@Status", status);
+                }
+
+                await connection.OpenAsync(cancellationToken);
+                await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+                if (await reader.ReadAsync(cancellationToken))
+                {
+                    model.TotalCount = ReadInt(reader, "TotalCount");
+                }
+
+                if (await reader.NextResultAsync(cancellationToken))
+                {
+                    while (await reader.ReadAsync(cancellationToken))
+                    {
+                        model.Withdrawals.Add(new WithdrawalHistoryItem
+                        {
+                            WithdrawalId = ReadLong(reader, "WithdrawalId"),
+                            Amount = ReadDecimal(reader, "Amount"),
+                            Status = ReadString(reader, "Status"),
+                            RequestedAt = ReadDate(reader, "RequestedAt", DateTime.Now),
+                            ProcessedAt = HasColumn(reader, "ProcessedAt") && !reader.IsDBNull(reader.GetOrdinal("ProcessedAt"))
+                                ? Convert.ToDateTime(reader.GetValue(reader.GetOrdinal("ProcessedAt")))
+                                : null
+                        });
+                    }
+                }
+            }
+            catch (Exception ex) when (IsSqlAvailabilityException(ex))
+            {
+                _logger.LogWarning(ex, "Unable to load withdrawal history.");
+                TempData["ErrorMessage"] = "Withdrawal history is temporarily unavailable.";
+            }
+
+            return model;
+        }
+
+        private static FinanceTransactionViewModel ReadFinanceTransaction(SqlDataReader reader)
+        {
+            return new FinanceTransactionViewModel
+            {
+                ReferenceId = ReadString(reader, "ReferenceId"),
+                TransactionDate = ReadDate(reader, "TransactionDate", DateTime.Now),
+                Type = ReadString(reader, "Type"),
+                Method = ReadString(reader, "Method"),
+                Amount = ReadDecimal(reader, "Amount"),
+                Status = ReadString(reader, "Status")
+            };
+        }
+
+        private static string ResolvePayoutAccountName(AddPayoutAccountViewModel model)
+        {
+            return model.AccountType?.ToLowerInvariant() switch
+            {
+                "ewallet" => model.EwalletAccountName ?? string.Empty,
+                "bank" => model.BankAccountName ?? string.Empty,
+                "card" => model.AccountHolderName ?? model.AccountName ?? "Card Holder",
+                _ => model.AccountName ?? string.Empty
+            };
+        }
+
+        private static string ResolvePayoutAccountNumber(AddPayoutAccountViewModel model)
+        {
+            return model.AccountType?.ToLowerInvariant() switch
+            {
+                "ewallet" => model.EwalletAccountNumber ?? string.Empty,
+                "bank" => model.BankAccountNumber ?? string.Empty,
+                "card" => model.CardNumber ?? string.Empty,
+                _ => model.AccountNumber ?? string.Empty
+            };
+        }
+
+        private static object ResolvePayoutBankName(AddPayoutAccountViewModel model)
+        {
+            var value = model.AccountType?.ToLowerInvariant() switch
+            {
+                "ewallet" => model.EWalletType ?? "E-Wallet",
+                "bank" => model.BankName ?? string.Empty,
+                "card" => "Credit Card",
+                _ => model.BankName ?? string.Empty
+            };
+
+            return string.IsNullOrWhiteSpace(value) ? DBNull.Value : value;
+        }
+
+        private static object DbValue(string? value)
+        {
+            return string.IsNullOrWhiteSpace(value) ? DBNull.Value : value;
         }
 
         private async Task<SellerDashboardViewModel> LoadAnalyticsDashboardDataAsync(
@@ -1209,6 +2066,10 @@ namespace MyAspNetApp.Controllers
                 var postalColumn = FindColumn(columns, "PostalCode", "postal_code");
                 var trackingColumn = FindColumn(columns, "TrackingNumber", "tracking_number");
                 var noteColumn = FindColumn(columns, "SellerNote", "seller_note");
+                var returnReasonColumn = FindColumn(columns, "ReturnReason", "return_reason", "FailedDeliveryReason");
+                var returnNoteColumn = FindColumn(columns, "ReturnNote", "return_note", "FailedDeliveryNote");
+                var returnProofDataColumn = FindColumn(columns, "ReturnProofImageData", "ReturnProofData", "ProofOfReturnData");
+                var returnProofUrlColumn = FindColumn(columns, "ReturnProofImage", "ReturnProofUrl", "return_proof", "ProofOfReturn", "ProofOfShipmentUrl");
                 var logisticsColumn = FindColumn(columns, "logistics_id", "LogisticsId", "CourierId");
 
                 static string SelectOrDefault(string? column, string alias, string defaultSql)
@@ -1234,6 +2095,10 @@ namespace MyAspNetApp.Controllers
                     SelectOrDefault(postalColumn, "PostalCode", "''"),
                     SelectOrDefault(trackingColumn, "TrackingNumber", "''"),
                     SelectOrDefault(noteColumn, "SellerNote", "''"),
+                    SelectOrDefault(returnReasonColumn, "ReturnReason", "''"),
+                    SelectOrDefault(returnNoteColumn, "ReturnNote", "''"),
+                    returnProofDataColumn == null ? "CAST(0 AS BIT) AS HasReturnProofData" : $"CASE WHEN DATALENGTH({Quote(returnProofDataColumn)}) > 0 THEN CAST(1 AS BIT) ELSE CAST(0 AS BIT) END AS HasReturnProofData",
+                    SelectOrDefault(returnProofUrlColumn, "ReturnProofUrl", "''"),
                     SelectOrDefault(logisticsColumn, "logistics_id", "NULL")
                 };
 
@@ -1295,6 +2160,11 @@ namespace MyAspNetApp.Controllers
                             PostalCode = GetString(reader, "PostalCode"),
                             TrackingNumber = GetString(reader, "TrackingNumber"),
                             SellerNote = GetString(reader, "SellerNote"),
+                            ReturnReason = GetString(reader, "ReturnReason"),
+                            ReturnNote = GetString(reader, "ReturnNote"),
+                            ReturnProofImage = GetBoolean(reader, "HasReturnProofData")
+                                ? $"/Dashboard/FailedDeliveryProof?orderId={GetInt(reader, "OrderID")}"
+                                : GetString(reader, "ReturnProofUrl"),
                             logistics_id = GetNullableInt(reader, "logistics_id"),
                             ProductImage = string.Empty,
                             OrderItems = new List<OrderItem>
@@ -2112,6 +2982,28 @@ namespace MyAspNetApp.Controllers
             return reader.IsDBNull(ordinal) ? fallback : Convert.ToInt32(reader.GetValue(ordinal));
         }
 
+        private static long ReadLong(SqlDataReader reader, string name, long fallback = 0)
+        {
+            if (!HasColumn(reader, name))
+            {
+                return fallback;
+            }
+
+            var ordinal = reader.GetOrdinal(name);
+            return reader.IsDBNull(ordinal) ? fallback : Convert.ToInt64(reader.GetValue(ordinal));
+        }
+
+        private static bool ReadBoolean(SqlDataReader reader, string name, bool fallback = false)
+        {
+            if (!HasColumn(reader, name))
+            {
+                return fallback;
+            }
+
+            var ordinal = reader.GetOrdinal(name);
+            return reader.IsDBNull(ordinal) ? fallback : Convert.ToBoolean(reader.GetValue(ordinal));
+        }
+
         private static decimal ReadDecimal(SqlDataReader reader, string name, decimal fallback = 0m)
         {
             if (!HasColumn(reader, name))
@@ -2150,6 +3042,27 @@ namespace MyAspNetApp.Controllers
         {
             var ordinal = reader.GetOrdinal(name);
             return reader.IsDBNull(ordinal) ? 0m : Convert.ToDecimal(reader.GetValue(ordinal));
+        }
+
+        private static bool GetBoolean(SqlDataReader reader, string name)
+        {
+            var ordinal = reader.GetOrdinal(name);
+            if (reader.IsDBNull(ordinal))
+            {
+                return false;
+            }
+
+            return reader.GetValue(ordinal) switch
+            {
+                bool value => value,
+                byte value => value != 0,
+                short value => value != 0,
+                int value => value != 0,
+                long value => value != 0,
+                string value when bool.TryParse(value, out var parsed) => parsed,
+                string value when int.TryParse(value, out var parsed) => parsed != 0,
+                _ => false
+            };
         }
 
         private static DateTime GetDate(SqlDataReader reader, string name)

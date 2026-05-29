@@ -196,6 +196,7 @@ public class OrderService
             command.CommandText =
                 $"""
                 SELECT
+                    o.[{orderIdCol}] AS OrderId,
                     {orderNumberExpr} AS OrderNumber,
                     {statusExpr} AS Status,
                     {paymentExpr} AS PaymentMethod,
@@ -211,6 +212,7 @@ public class OrderService
                     oi.Size AS Size,
                     oi.Quantity AS Quantity,
                     oi.OrderItemId AS OrderItemId,
+                    oi.ProductId AS ProductId,
                     v.VariantId AS VariantId,
                     {productNameExpr} AS ProductName,
                     {resolvedImagePathExpr} AS ImagePath,
@@ -277,6 +279,8 @@ public class OrderService
 
                 results.Add(new OrderViewModel
                 {
+                    OrderId = GetInt32(reader, "OrderId") ?? 0,
+                    ProductId = GetInt32(reader, "ProductId") ?? 0,
                     OrderNumber = GetString(reader, "OrderNumber", "Order"),
                     Status = NormalizeStatus(GetString(reader, "Status")),
                     ProductName = string.IsNullOrWhiteSpace(productName) ? "Order Item" : productName,
@@ -296,6 +300,322 @@ public class OrderService
             }
 
             return results;
+        }
+        finally
+        {
+            if (shouldClose)
+            {
+                await connection.CloseAsync();
+            }
+        }
+    }
+
+    public async Task<bool> UpdateUserPurchaseStatusAsync(int orderId, int? userId, int? consumerId, string status, CancellationToken cancellationToken)
+    {
+        if (orderId <= 0 || (!userId.HasValue && !consumerId.HasValue) || string.IsNullOrWhiteSpace(status))
+        {
+            return false;
+        }
+
+        await using var connection = _dbContext.Database.GetDbConnection();
+        var shouldClose = connection.State != ConnectionState.Open;
+        if (shouldClose)
+        {
+            await connection.OpenAsync(cancellationToken);
+        }
+
+        try
+        {
+            var orderColumns = await LoadColumnLookupAsync(connection, "Orders", cancellationToken);
+            var orderIdCol = FindColumn(orderColumns, "OrderId", "OrderID");
+            var userIdCol = FindColumn(orderColumns, "UserId", "user_id", "UserID");
+            var consumerIdCol = FindColumn(orderColumns, "ConsumerId", "consumer_id", "ConsumerID");
+            var statusCol = FindColumn(orderColumns, "Status", "status", "FulfillmentStatus");
+
+            if (orderIdCol is null || statusCol is null)
+            {
+                return false;
+            }
+
+            var ownershipFilters = BuildOwnershipFilters(userIdCol, consumerIdCol);
+            if (ownershipFilters.Count == 0)
+            {
+                return false;
+            }
+
+            await using var command = connection.CreateCommand();
+            command.CommandText =
+                $"""
+                UPDATE dbo.Orders
+                SET [{statusCol}] = @Status
+                WHERE [{orderIdCol}] = @OrderId
+                  AND ({string.Join(" OR ", ownershipFilters)});
+                """;
+            AddParameter(command, "@Status", status.Trim(), DbType.String);
+            AddParameter(command, "@OrderId", orderId, DbType.Int32);
+            AddParameter(command, "@UserIdText", userId?.ToString(), DbType.String);
+            AddParameter(command, "@ConsumerId", consumerId, DbType.Int32);
+
+            return await command.ExecuteNonQueryAsync(cancellationToken) > 0;
+        }
+        finally
+        {
+            if (shouldClose)
+            {
+                await connection.CloseAsync();
+            }
+        }
+    }
+
+    public async Task<bool> ConfirmUserPurchaseReceivedAsync(int orderId, int? userId, int? consumerId, CancellationToken cancellationToken)
+    {
+        if (orderId <= 0 || (!userId.HasValue && !consumerId.HasValue))
+        {
+            return false;
+        }
+
+        await using var connection = _dbContext.Database.GetDbConnection();
+        var shouldClose = connection.State != ConnectionState.Open;
+        if (shouldClose)
+        {
+            await connection.OpenAsync(cancellationToken);
+        }
+
+        try
+        {
+            var orderColumns = await LoadColumnLookupAsync(connection, "Orders", cancellationToken);
+            var orderIdCol = FindColumn(orderColumns, "OrderId", "OrderID");
+            var userIdCol = FindColumn(orderColumns, "UserId", "user_id", "UserID");
+            var consumerIdCol = FindColumn(orderColumns, "ConsumerId", "consumer_id", "ConsumerID");
+            var statusCol = FindColumn(orderColumns, "Status", "status");
+            var fulfillmentStatusCol = FindColumn(orderColumns, "FulfillmentStatus", "fulfillment_status");
+
+            if (orderIdCol is null || statusCol is null)
+            {
+                return false;
+            }
+
+            var selectColumns = new List<string>
+            {
+                $"[{orderIdCol}] AS OrderId",
+                $"[{statusCol}] AS Status"
+            };
+            if (userIdCol is not null)
+            {
+                selectColumns.Add($"[{userIdCol}] AS OrderUserId");
+            }
+            if (consumerIdCol is not null)
+            {
+                selectColumns.Add($"[{consumerIdCol}] AS OrderConsumerId");
+            }
+            if (fulfillmentStatusCol is not null)
+            {
+                selectColumns.Add($"[{fulfillmentStatusCol}] AS OrderFulfillmentStatus");
+            }
+
+            await using (var command = connection.CreateCommand())
+            {
+                command.CommandText =
+                    $"""
+                    SELECT TOP (1) {string.Join(", ", selectColumns)}
+                    FROM dbo.Orders
+                    WHERE [{orderIdCol}] = @OrderId;
+                    """;
+                AddParameter(command, "@OrderId", orderId, DbType.Int32);
+
+                await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+                if (!await reader.ReadAsync(cancellationToken))
+                {
+                    return false;
+                }
+
+                var currentStatus = NormalizeStatus(GetString(reader, "Status"));
+                var currentFulfillment = fulfillmentStatusCol is null
+                    ? string.Empty
+                    : NormalizeStatus(GetString(reader, "OrderFulfillmentStatus"));
+
+                var ownershipMatches =
+                    (userId.HasValue && string.Equals(GetString(reader, "OrderUserId"), userId.Value.ToString(), StringComparison.OrdinalIgnoreCase)) ||
+                    (consumerId.HasValue && GetInt32(reader, "OrderConsumerId") == consumerId.Value);
+
+                if (!ownershipMatches)
+                {
+                    return false;
+                }
+
+                var canConfirm = currentStatus is "Shipped" or "To Receive" or "Delivered"
+                    || currentFulfillment is "Shipped" or "To Receive" or "Delivered";
+                if (!canConfirm)
+                {
+                    return false;
+                }
+            }
+
+            var assignments = new List<string> { $"[{statusCol}] = @Status" };
+            if (fulfillmentStatusCol is not null)
+            {
+                assignments.Add($"[{fulfillmentStatusCol}] = @FulfillmentStatus");
+            }
+
+            await using var updateCommand = connection.CreateCommand();
+            updateCommand.CommandText =
+                $"""
+                UPDATE dbo.Orders
+                SET {string.Join(", ", assignments)}
+                WHERE [{orderIdCol}] = @OrderId;
+                """;
+            AddParameter(updateCommand, "@Status", "Completed", DbType.String);
+            AddParameter(updateCommand, "@FulfillmentStatus", "Completed", DbType.String);
+            AddParameter(updateCommand, "@OrderId", orderId, DbType.Int32);
+
+            return await updateCommand.ExecuteNonQueryAsync(cancellationToken) > 0;
+        }
+        finally
+        {
+            if (shouldClose)
+            {
+                await connection.CloseAsync();
+            }
+        }
+    }
+
+    public async Task<bool> UpdateUserPurchaseDetailsAsync(
+        int orderId,
+        int? userId,
+        int? consumerId,
+        string receiverName,
+        string phoneNumber,
+        string shippingAddress,
+        string paymentMethod,
+        string? color,
+        string? size,
+        int quantity,
+        CancellationToken cancellationToken)
+    {
+        if (orderId <= 0 || (!userId.HasValue && !consumerId.HasValue))
+        {
+            return false;
+        }
+
+        await using var connection = _dbContext.Database.GetDbConnection();
+        var shouldClose = connection.State != ConnectionState.Open;
+        if (shouldClose)
+        {
+            await connection.OpenAsync(cancellationToken);
+        }
+
+        try
+        {
+            var orderColumns = await LoadColumnLookupAsync(connection, "Orders", cancellationToken);
+            var orderItemColumns = await LoadColumnLookupAsync(connection, "OrderItems", cancellationToken);
+
+            var orderIdCol = FindColumn(orderColumns, "OrderId", "OrderID");
+            var userIdCol = FindColumn(orderColumns, "UserId", "user_id", "UserID");
+            var consumerIdCol = FindColumn(orderColumns, "ConsumerId", "consumer_id", "ConsumerID");
+            var statusCol = FindColumn(orderColumns, "Status", "status", "FulfillmentStatus");
+            var fullNameCol = FindColumn(orderColumns, "FullName", "full_name");
+            var phoneCol = FindColumn(orderColumns, "PhoneNumber", "phone_number");
+            var streetCol = FindColumn(orderColumns, "StreetAddress", "street_address");
+            var cityCol = FindColumn(orderColumns, "City", "city");
+            var postalCodeCol = FindColumn(orderColumns, "PostalCode", "postal_code");
+            var paymentCol = FindColumn(orderColumns, "PaymentMethod", "payment_method");
+
+            var orderItemOrderIdCol = FindColumn(orderItemColumns, "OrderId", "OrderID");
+            var orderItemSortCol = FindColumn(orderItemColumns, "OrderItemId", "OrderItemID");
+            var orderItemSizeCol = FindColumn(orderItemColumns, "Size", "size");
+            var orderItemColorCol = FindColumn(orderItemColumns, "Color", "color");
+            var orderItemQtyCol = FindColumn(orderItemColumns, "Quantity", "quantity");
+
+            if (orderIdCol is null || statusCol is null)
+            {
+                return false;
+            }
+
+            var ownershipFilters = BuildOwnershipFilters(userIdCol, consumerIdCol);
+            if (ownershipFilters.Count == 0)
+            {
+                return false;
+            }
+
+            await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+            try
+            {
+                await using (var command = connection.CreateCommand())
+                {
+                    command.Transaction = transaction;
+                    var assignments = new List<string>();
+                    if (fullNameCol is not null) assignments.Add($"[{fullNameCol}] = @FullName");
+                    if (phoneCol is not null) assignments.Add($"[{phoneCol}] = @PhoneNumber");
+                    if (streetCol is not null) assignments.Add($"[{streetCol}] = @StreetAddress");
+                    if (cityCol is not null) assignments.Add($"[{cityCol}] = NULL");
+                    if (postalCodeCol is not null) assignments.Add($"[{postalCodeCol}] = NULL");
+                    if (paymentCol is not null) assignments.Add($"[{paymentCol}] = @PaymentMethod");
+
+                    if (assignments.Count == 0)
+                    {
+                        return false;
+                    }
+
+                    command.CommandText =
+                        $"""
+                        UPDATE dbo.Orders
+                        SET {string.Join(", ", assignments)}
+                        WHERE [{orderIdCol}] = @OrderId
+                          AND LOWER(LTRIM(RTRIM(CONVERT(NVARCHAR(50), [{statusCol}])))) IN (N'pending', N'placed', N'to pay')
+                          AND ({string.Join(" OR ", ownershipFilters)});
+                        """;
+                    AddParameter(command, "@FullName", receiverName.Trim(), DbType.String);
+                    AddParameter(command, "@PhoneNumber", phoneNumber.Trim(), DbType.String);
+                    AddParameter(command, "@StreetAddress", shippingAddress.Trim(), DbType.String);
+                    AddParameter(command, "@PaymentMethod", NormalizePaymentMethod(paymentMethod), DbType.String);
+                    AddParameter(command, "@OrderId", orderId, DbType.Int32);
+                    AddParameter(command, "@UserIdText", userId?.ToString(), DbType.String);
+                    AddParameter(command, "@ConsumerId", consumerId, DbType.Int32);
+
+                    if (await command.ExecuteNonQueryAsync(cancellationToken) == 0)
+                    {
+                        await transaction.RollbackAsync(cancellationToken);
+                        return false;
+                    }
+                }
+
+                if (orderItemOrderIdCol is not null && (orderItemColorCol is not null || orderItemSizeCol is not null || orderItemQtyCol is not null))
+                {
+                    await using var itemCommand = connection.CreateCommand();
+                    itemCommand.Transaction = transaction;
+                    var itemAssignments = new List<string>();
+                    if (orderItemColorCol is not null) itemAssignments.Add($"[{orderItemColorCol}] = @Color");
+                    if (orderItemSizeCol is not null) itemAssignments.Add($"[{orderItemSizeCol}] = @Size");
+                    if (orderItemQtyCol is not null) itemAssignments.Add($"[{orderItemQtyCol}] = @Quantity");
+
+                    itemCommand.CommandText =
+                        $"""
+                        UPDATE dbo.OrderItems
+                        SET {string.Join(", ", itemAssignments)}
+                        WHERE [{orderItemOrderIdCol}] = @OrderId
+                          AND [{orderItemSortCol ?? orderItemOrderIdCol}] =
+                          (
+                              SELECT TOP (1) [{orderItemSortCol ?? orderItemOrderIdCol}]
+                              FROM dbo.OrderItems
+                              WHERE [{orderItemOrderIdCol}] = @OrderId
+                              ORDER BY [{orderItemSortCol ?? orderItemOrderIdCol}] ASC
+                          );
+                        """;
+                    AddParameter(itemCommand, "@Color", string.IsNullOrWhiteSpace(color) ? DBNull.Value : color.Trim(), DbType.String);
+                    AddParameter(itemCommand, "@Size", string.IsNullOrWhiteSpace(size) ? DBNull.Value : size.Trim(), DbType.String);
+                    AddParameter(itemCommand, "@Quantity", Math.Max(1, quantity), DbType.Int32);
+                    AddParameter(itemCommand, "@OrderId", orderId, DbType.Int32);
+                    await itemCommand.ExecuteNonQueryAsync(cancellationToken);
+                }
+
+                await transaction.CommitAsync(cancellationToken);
+                return true;
+            }
+            catch
+            {
+                await transaction.RollbackAsync(cancellationToken);
+                throw;
+            }
         }
         finally
         {
@@ -351,6 +671,22 @@ public class OrderService
         }
 
         return null;
+    }
+
+    private static List<string> BuildOwnershipFilters(string? userIdCol, string? consumerIdCol)
+    {
+        var filters = new List<string>();
+        if (userIdCol is not null)
+        {
+            filters.Add($"(@UserIdText IS NOT NULL AND LTRIM(RTRIM(CONVERT(NVARCHAR(50), [{userIdCol}]))) = @UserIdText)");
+        }
+
+        if (consumerIdCol is not null)
+        {
+            filters.Add($"(@ConsumerId IS NOT NULL AND [{consumerIdCol}] = @ConsumerId)");
+        }
+
+        return filters;
     }
 
     private static void AddParameter(DbCommand command, string name, object? value, DbType dbType)
@@ -450,7 +786,13 @@ public class OrderService
 
     private static string NormalizeStatus(string? status)
     {
-        return (status ?? string.Empty).Trim().ToLowerInvariant() switch
+        var trimmed = (status ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(trimmed))
+        {
+            return "To Pay";
+        }
+
+        return trimmed.ToLowerInvariant() switch
         {
             "pending" => "To Pay",
             "placed" => "To Pay",
@@ -461,13 +803,20 @@ public class OrderService
             "to receive" => "To Receive",
             "delivered" => "To Review",
             "to review" => "To Review",
-            "completed" => "Completed",
+            "completed" => "To Review",
+            "complete" => "To Review",
+            "return requested" => "Returns",
+            "return approved" => "Returns",
+            "return rejected" => "Returns",
+            "item returned" => "Returns",
+            "refunded" => "Returns",
+            "failed delivery" => "Returns",
             "returned" => "Returns",
             "return" => "Returns",
             "returns" => "Returns",
             "cancelled" => "Cancelled",
             "canceled" => "Cancelled",
-            _ => "To Pay"
+            _ => trimmed
         };
     }
 

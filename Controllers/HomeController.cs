@@ -1129,9 +1129,10 @@ ORDER BY mu.DistanceKm DESC,
         }
 
         // GET: /Home/WriteReview?id=5
-        public IActionResult WriteReview(int id)
+        public IActionResult WriteReview(int id, int? orderId)
         {
             ViewData["ProductId"] = id;
+            ViewData["OrderId"] = orderId;
             return View();
         }
 
