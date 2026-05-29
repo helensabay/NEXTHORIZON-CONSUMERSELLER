@@ -423,6 +423,26 @@ internal static class DatabaseSchemaInitializer
                 IF COL_LENGTH('dbo.MemberUploads', 'ProofUrl') IS NULL AND COL_LENGTH('dbo.MemberUploads', 'proof_url') IS NOT NULL
                     EXEC(N'ALTER TABLE dbo.MemberUploads ADD ProofUrl AS CONVERT(nvarchar(500), [proof_url]);');
             END;
+
+            IF OBJECT_ID(N'dbo.returns', N'U') IS NOT NULL AND COL_LENGTH(N'dbo.returns', N'ResolutionType') IS NULL
+            BEGIN
+                ALTER TABLE dbo.returns ADD ResolutionType NVARCHAR(50) NOT NULL CONSTRAINT DF_returns_ResolutionType DEFAULT(N'Refund');
+            END;
+
+            IF OBJECT_ID(N'dbo.returns', N'U') IS NOT NULL AND COL_LENGTH(N'dbo.returns', N'ReplacementOrderId') IS NULL
+            BEGIN
+                ALTER TABLE dbo.returns ADD ReplacementOrderId INT NULL;
+            END;
+
+            IF OBJECT_ID(N'dbo.Returns', N'U') IS NOT NULL AND COL_LENGTH(N'dbo.Returns', N'ResolutionType') IS NULL
+            BEGIN
+                ALTER TABLE dbo.Returns ADD ResolutionType NVARCHAR(50) NOT NULL CONSTRAINT DF_Returns_ResolutionType DEFAULT(N'Refund');
+            END;
+
+            IF OBJECT_ID(N'dbo.Returns', N'U') IS NOT NULL AND COL_LENGTH(N'dbo.Returns', N'ReplacementOrderId') IS NULL
+            BEGIN
+                ALTER TABLE dbo.Returns ADD ReplacementOrderId INT NULL;
+            END;
             """;
 
         try

@@ -258,12 +258,128 @@ app.Use(async (context, next) =>
 
     await next();
 });
+
+app.Use(async (context, next) =>
+{
+    var path = context.Request.Path;
+    var userType = context.Session.GetString("UserType") ?? string.Empty;
+    var isLoggedIn = context.Session.GetInt32("UserId").HasValue;
+
+    if (IsSellerAreaPath(path))
+    {
+        if (!isLoggedIn)
+        {
+            await RedirectToLoginAsync(context);
+            return;
+        }
+
+        if (!string.Equals(userType, "Seller", StringComparison.OrdinalIgnoreCase))
+        {
+            await RejectRoleAsync(context, "/Home/Storefront", "Seller area is only available to seller accounts.");
+            return;
+        }
+    }
+
+    if (IsCustomerOnlyPath(path))
+    {
+        if (!isLoggedIn)
+        {
+            await RedirectToLoginAsync(context);
+            return;
+        }
+
+        if (!string.Equals(userType, "Consumer", StringComparison.OrdinalIgnoreCase))
+        {
+            await RejectRoleAsync(context, "/Dashboard/SellerDashboard", "Customer area is only available to customer accounts.");
+            return;
+        }
+    }
+
+    if (IsCustomerBrowsingPath(path) && string.Equals(userType, "Seller", StringComparison.OrdinalIgnoreCase))
+    {
+        await RejectRoleAsync(context, "/Dashboard/SellerDashboard", "Customer area is only available to customer accounts.");
+        return;
+    }
+
+    await next();
+});
+
 app.UseAuthorization();
 
 // MVC routing
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
+static bool IsSellerAreaPath(PathString path)
+{
+    return path.StartsWithSegments("/Dashboard", StringComparison.OrdinalIgnoreCase) ||
+        path.StartsWithSegments("/Seller", StringComparison.OrdinalIgnoreCase) ||
+        path.StartsWithSegments("/Promotions", StringComparison.OrdinalIgnoreCase) ||
+        path.StartsWithSegments("/Settings", StringComparison.OrdinalIgnoreCase);
+}
+
+static bool IsCustomerOnlyPath(PathString path)
+{
+    if (path.StartsWithSegments("/AccountProfile", StringComparison.OrdinalIgnoreCase) ||
+        path.StartsWithSegments("/Order", StringComparison.OrdinalIgnoreCase))
+    {
+        return true;
+    }
+
+    return path.StartsWithSegments("/Home/Checkout", StringComparison.OrdinalIgnoreCase) ||
+        path.StartsWithSegments("/Home/BuyNow", StringComparison.OrdinalIgnoreCase) ||
+        path.StartsWithSegments("/Home/PlaceOrder", StringComparison.OrdinalIgnoreCase) ||
+        path.StartsWithSegments("/Home/Cart", StringComparison.OrdinalIgnoreCase) ||
+        path.StartsWithSegments("/Home/MyOrders", StringComparison.OrdinalIgnoreCase) ||
+        path.StartsWithSegments("/Home/OrderDetail", StringComparison.OrdinalIgnoreCase) ||
+        path.StartsWithSegments("/Home/Wishlist", StringComparison.OrdinalIgnoreCase) ||
+        path.StartsWithSegments("/Home/ConsumerMessenger", StringComparison.OrdinalIgnoreCase) ||
+        path.StartsWithSegments("/Home/Challenges", StringComparison.OrdinalIgnoreCase) ||
+        path.StartsWithSegments("/Home/JoinChallenge", StringComparison.OrdinalIgnoreCase) ||
+        path.StartsWithSegments("/Home/UploadChallengeActivity", StringComparison.OrdinalIgnoreCase);
+}
+
+static bool IsCustomerBrowsingPath(PathString path)
+{
+    if (!path.StartsWithSegments("/Home", StringComparison.OrdinalIgnoreCase) &&
+        !path.StartsWithSegments("/Products", StringComparison.OrdinalIgnoreCase) &&
+        !path.StartsWithSegments("/Product", StringComparison.OrdinalIgnoreCase) &&
+        !path.StartsWithSegments("/Cart", StringComparison.OrdinalIgnoreCase) &&
+        !path.StartsWithSegments("/Wishlist", StringComparison.OrdinalIgnoreCase))
+    {
+        return false;
+    }
+
+    return !path.StartsWithSegments("/Home/Error", StringComparison.OrdinalIgnoreCase);
+}
+
+static Task RedirectToLoginAsync(HttpContext context)
+{
+    var returnUrl = Uri.EscapeDataString(context.Request.PathBase + context.Request.Path + context.Request.QueryString);
+    context.Response.Redirect($"/Account/Login?returnUrl={returnUrl}");
+    return Task.CompletedTask;
+}
+
+static async Task RejectRoleAsync(HttpContext context, string redirectUrl, string message)
+{
+    if (IsApiLikeRequest(context))
+    {
+        context.Response.StatusCode = StatusCodes.Status403Forbidden;
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsync(JsonSerializer.Serialize(new { success = false, message }));
+        return;
+    }
+
+    context.Response.Redirect(redirectUrl);
+}
+
+static bool IsApiLikeRequest(HttpContext context)
+{
+    return context.Request.Path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(context.Request.Headers.XRequestedWith, "XMLHttpRequest", StringComparison.OrdinalIgnoreCase) ||
+        context.Request.Headers.Accept.Any(value => value?.Contains("application/json", StringComparison.OrdinalIgnoreCase) == true);
+}
 
 // Ensure the configured HTTP ports are available; if not, pick a nearby free port
 int TryFindFreePort(int startPort, int maxAttempts = 50)

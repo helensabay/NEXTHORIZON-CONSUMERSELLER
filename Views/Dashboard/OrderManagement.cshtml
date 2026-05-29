@@ -174,6 +174,8 @@
                 data-image-url="@(matchingReturnRequest?.ImageUrl ?? string.Empty)"
                 data-seller-decision-reason="@(matchingReturnRequest?.SellerDecisionReason ?? string.Empty)"
                 data-seller-decision-note="@(matchingReturnRequest?.SellerDecisionNote ?? string.Empty)"
+                data-resolution-type="@(matchingReturnRequest?.ResolutionType ?? "Refund")"
+                data-replacement-order-id="@(matchingReturnRequest?.ReplacementOrderId?.ToString() ?? string.Empty)"
                 data-reviewed-at="@(matchingReturnRequest?.ReviewedAt?.ToLocalTime().ToString("MMM dd, yyyy h:mm tt") ?? string.Empty)"
                 data-order-date="@order.OrderDate.ToString("yyyy-MM-dd")">
 
@@ -215,11 +217,10 @@
                             }
                             else
                             {
-                                <button type="button"
-                                        class="action-menu-item view-details-btn"
-                                        data-order-id="@order.OrderID">
+                                <a class="action-menu-item"
+                                   href="@($"/Dashboard/OrderManagement/OrderDetails{order.OrderID}")">
                                     View Details
-                                </button>
+                                </a>
                             }
 
                             @* CONTACT CUSTOMER - always visible *@
@@ -241,6 +242,15 @@
                                 <button class="action-menu-item mark-returned-btn"
                                         data-order-id="@order.OrderID">
                                     Failed Delivery
+                                </button>
+                            }
+                            else if (order.Status == "To Ship")
+                            {
+                                <button class="action-menu-item mark-as-shipped-btn"
+                                        data-order-id="@order.OrderID"
+                                        data-customer="@order.FullName"
+                                        data-courier-name="@resolvedCourierName">
+                                    Mark as Shipped
                                 </button>
                             }
                             else if (order.Status == "Failed Delivery")
@@ -359,6 +369,8 @@
                         data-status="@returnRequest.Status"
                         data-seller-decision-reason="@(returnRequest.SellerDecisionReason ?? string.Empty)"
                         data-seller-decision-note="@(returnRequest.SellerDecisionNote ?? string.Empty)"
+                        data-resolution-type="@returnRequest.ResolutionType"
+                        data-replacement-order-id="@(returnRequest.ReplacementOrderId?.ToString() ?? string.Empty)"
                         data-reviewed-at="@(returnRequest.ReviewedAt?.ToLocalTime().ToString("MMM dd, yyyy h:mm tt") ?? string.Empty)"
                         data-product="@returnProductName"
                         data-quantity="@returnQuantity"
@@ -498,6 +510,14 @@
                     <input type="checkbox" id="restoreStockCheckbox" />
                     <span>Restore stock after refund if the item is still in good condition</span>
                 </label>
+            </div>
+
+            <div id="replacementShipWrap" class="bw-card refund-stock-wrap" style="display:none;">
+                <div class="return-section-heading">
+                    <span class="return-section-kicker">Replacement Fulfillment</span>
+                    <h4>Ship a replacement item</h4>
+                    <p>This will create a &#8369;0.00 child order in To Ship using the buyer and item details from the original order.</p>
+                </div>
             </div>
 
             <div id="sellerReviewCard" class="return-detail-card" style="display:none;">
@@ -1178,9 +1198,5 @@
         }
     }, 500);
 </script>
-
-
-
-
 
 

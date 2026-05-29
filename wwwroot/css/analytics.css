@@ -426,6 +426,38 @@
     color: #111827;
 }
 
+.cod-risk-grid {
+    margin-bottom: 14px;
+}
+
+.cod-risk-card {
+    background: #0f172a;
+    border-color: #0f172a;
+}
+
+.cod-risk-card .card-label,
+.cod-risk-card .metric-note {
+    color: #f8fafc;
+}
+
+.cod-risk-card .card-value {
+    color: #ffffff;
+}
+
+.cod-risk-warning {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 12px;
+    padding: 14px 16px;
+    background: #ffffff;
+    border: 2px solid #111827;
+    color: #111827;
+    font-size: 14px;
+    font-weight: 600;
+}
+
 .analytics-year-snapshot {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));

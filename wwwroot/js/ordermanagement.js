@@ -1650,6 +1650,8 @@ function getMergedReturnDetail(row) {
         status: getDisplayValue(row?.dataset.returnStatus || row?.dataset.displayStatus || row?.dataset.status, 'Return Requested'),
         sellerDecisionReason: row?.dataset.sellerDecisionReason || '',
         sellerDecisionNote: row?.dataset.sellerDecisionNote || '',
+        resolutionType: getDisplayValue(row?.dataset.resolutionType, 'Refund'),
+        replacementOrderId: row?.dataset.replacementOrderId || '',
         reviewedAt: row?.dataset.reviewedAt || '',
         product: getDisplayValue(row?.dataset.product || orderRow?.children[3]?.innerText, 'Product unavailable'),
         quantity: getDisplayValue(row?.dataset.quantity || orderRow?.children[4]?.innerText, '0'),
@@ -1707,11 +1709,16 @@ function openReturnDetailsModalFromRow(row) {
 
     const refundWrap = document.getElementById('refundStockWrap');
     const restoreStockCheckbox = document.getElementById('restoreStockCheckbox');
+    const replacementShipWrap = document.getElementById('replacementShipWrap');
+    const isReplacement = details.resolutionType === 'Replacement';
     restoreStockCheckbox.checked = false;
-    refundWrap.style.display = details.status === 'Item Returned' ? '' : 'none';
+    refundWrap.style.display = details.status === 'Item Returned' && !isReplacement ? '' : 'none';
+    if (replacementShipWrap) {
+        replacementShipWrap.style.display = details.status === 'Item Returned' && isReplacement ? '' : 'none';
+    }
 
     renderReturnSellerReview(details.status, details.sellerDecisionReason, details.sellerDecisionNote, details.reviewedAt);
-    renderReturnDetailsActions(details.status, returnId, details.orderId, details.consumerId);
+    renderReturnDetailsActions(details.status, returnId, details.orderId, details.consumerId, details.resolutionType, details.replacementOrderId);
     document.getElementById('returnDetailsModal').style.display = 'flex';
 }
 
@@ -1732,7 +1739,7 @@ function renderReturnSellerReview(status, sellerDecisionReason, sellerDecisionNo
     reviewedAtElement.textContent = reviewedAt || 'Not recorded.';
 }
 
-function renderReturnDetailsActions(status, returnId, orderId, consumerId) {
+function renderReturnDetailsActions(status, returnId, orderId, consumerId, resolutionType, replacementOrderId) {
     const actions = document.getElementById('returnDetailsActions');
     actions.innerHTML = '';
 
@@ -1740,6 +1747,7 @@ function renderReturnDetailsActions(status, returnId, orderId, consumerId) {
     const hasReturnId = Number.isFinite(parsedReturnId) && parsedReturnId > 0;
     const parsedConsumerId = parseInt(consumerId, 10);
     const canContactCustomer = Number.isFinite(parsedConsumerId) && parsedConsumerId > 0 && !!orderId;
+    const isReplacement = resolutionType === 'Replacement';
 
     if (canContactCustomer) {
         actions.appendChild(buildReturnActionButton('Contact Customer', 'return-btn return-btn-secondary', function () {
@@ -1751,8 +1759,19 @@ function renderReturnDetailsActions(status, returnId, orderId, consumerId) {
         actions.appendChild(buildReturnActionButton('Reject', 'return-btn return-btn-secondary', function () {
             openRejectReturnModal(parsedReturnId, orderId);
         }));
-        actions.appendChild(buildReturnActionButton('Approve', 'return-btn return-btn-primary', function () {
-            updateReturnRequestStatus('/Dashboard/ReviewReturnRequest', { returnId: parsedReturnId, decision: 'approve' });
+        actions.appendChild(buildReturnActionButton('Approve Refund', 'return-btn return-btn-secondary', function () {
+            updateReturnRequestStatus('/Dashboard/ReviewReturnRequest', {
+                returnId: parsedReturnId,
+                decision: 'approve',
+                resolutionType: 'Refund'
+            });
+        }));
+        actions.appendChild(buildReturnActionButton('Approve Replacement', 'return-btn return-btn-primary', function () {
+            updateReturnRequestStatus('/Dashboard/ReviewReturnRequest', {
+                returnId: parsedReturnId,
+                decision: 'approve',
+                resolutionType: 'Replacement'
+            });
         }));
         return;
     }
@@ -1765,12 +1784,19 @@ function renderReturnDetailsActions(status, returnId, orderId, consumerId) {
     }
 
     if (status === 'Item Returned' && hasReturnId) {
-        actions.appendChild(buildReturnActionButton('Confirm Refund', 'return-btn return-btn-primary', function () {
+        actions.appendChild(buildReturnActionButton(isReplacement ? 'Create Replacement Order' : 'Confirm Refund', 'return-btn return-btn-primary', function () {
             updateReturnRequestStatus('/Dashboard/ConfirmReturnRefund', {
                 returnId: parsedReturnId,
                 restoreStock: document.getElementById('restoreStockCheckbox').checked
             });
         }));
+        return;
+    }
+
+    if (status === 'Replacement Created') {
+        actions.appendChild(buildReturnStatusNote(replacementOrderId
+            ? `Replacement order #${replacementOrderId} is in To Ship.`
+            : 'The replacement order is in To Ship.'));
         return;
     }
 
