@@ -1800,6 +1800,8 @@ namespace MyAspNetApp.Controllers
             return (status ?? string.Empty).Trim() switch
             {
                 "Placed" => "Pending",
+                "Complete" => "Delivered",
+                "Completed" => "Delivered",
                 var value => value
             };
         }
