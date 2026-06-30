@@ -367,6 +367,157 @@ public class OrderService
         }
     }
 
+    public async Task<bool> RequestUserPurchaseReturnAsync(
+        int orderId,
+        int? userId,
+        int? consumerId,
+        string reason,
+        IReadOnlyList<string> proofUrls,
+        byte[]? firstProofBytes,
+        string? firstProofMimeType,
+        CancellationToken cancellationToken)
+    {
+        if (orderId <= 0 ||
+            (!userId.HasValue && !consumerId.HasValue) ||
+            string.IsNullOrWhiteSpace(reason) ||
+            proofUrls.Count == 0)
+        {
+            return false;
+        }
+
+        await using var connection = _dbContext.Database.GetDbConnection();
+        var shouldClose = connection.State != ConnectionState.Open;
+        if (shouldClose)
+        {
+            await connection.OpenAsync(cancellationToken);
+        }
+
+        try
+        {
+            var orderColumns = await LoadColumnLookupAsync(connection, "Orders", cancellationToken);
+            var orderItemColumns = await LoadColumnLookupAsync(connection, "OrderItems", cancellationToken);
+            var returnsColumns = await LoadColumnLookupAsync(connection, "returns", cancellationToken);
+            var returnsTableName = "returns";
+            if (returnsColumns.Count == 0)
+            {
+                returnsColumns = await LoadColumnLookupAsync(connection, "Returns", cancellationToken);
+                returnsTableName = "Returns";
+            }
+
+            var orderIdCol = FindColumn(orderColumns, "OrderId", "OrderID");
+            var userIdCol = FindColumn(orderColumns, "UserId", "user_id", "UserID");
+            var consumerIdCol = FindColumn(orderColumns, "ConsumerId", "consumer_id", "ConsumerID");
+            var statusCol = FindColumn(orderColumns, "Status", "status", "FulfillmentStatus");
+            var reasonCol = FindColumn(orderColumns, "ReturnReason", "return_reason", "FailedDeliveryReason");
+            var noteCol = FindColumn(orderColumns, "ReturnNote", "return_note");
+            var proofUrlCol = FindColumn(orderColumns, "ReturnProofImage", "ReturnProofUrl", "return_proof", "ProofOfReturn");
+            var proofUrlsCol = FindColumn(orderColumns, "ReturnProofImages", "ReturnProofUrls", "ReturnProofImagesJson", "ReturnProofUrlsJson");
+            var proofDataCol = FindColumn(orderColumns, "ReturnProofImageData", "ReturnProofData", "ProofOfReturnData");
+            var proofMimeCol = FindColumn(orderColumns, "ReturnProofImageMimeType", "ReturnProofMimeType", "ProofOfReturnMimeType");
+
+            if (orderIdCol is null || statusCol is null)
+            {
+                return false;
+            }
+
+            var ownershipFilters = BuildOwnershipFilters(userIdCol, consumerIdCol);
+            if (ownershipFilters.Count == 0)
+            {
+                return false;
+            }
+
+            var orderItemOrderIdCol = FindColumn(orderItemColumns, "OrderId", "OrderID");
+            var orderItemSellerIdCol = FindColumn(orderItemColumns, "SellerId", "SellerID", "seller_id");
+            var orderSellerCol = FindColumn(orderColumns, "SellerId", "SellerID", "seller_id");
+            var sellerId = await ResolveOrderSellerIdAsync(
+                connection,
+                orderId,
+                orderIdCol,
+                orderSellerCol,
+                orderItemOrderIdCol,
+                orderItemSellerIdCol,
+                cancellationToken);
+
+            var normalizedReason = reason.Trim();
+            var proofJson = System.Text.Json.JsonSerializer.Serialize(proofUrls);
+            var assignments = new List<string> { $"{Quote(statusCol)} = @Status" };
+            if (reasonCol is not null)
+            {
+                assignments.Add($"{Quote(reasonCol)} = @ReturnReason");
+            }
+            if (noteCol is not null)
+            {
+                assignments.Add($"{Quote(noteCol)} = @ReturnNote");
+            }
+            if (proofUrlCol is not null)
+            {
+                assignments.Add($"{Quote(proofUrlCol)} = @ReturnProofUrl");
+            }
+            if (proofUrlsCol is not null)
+            {
+                assignments.Add($"{Quote(proofUrlsCol)} = @ReturnProofUrls");
+            }
+            if (proofDataCol is not null && firstProofBytes is { Length: > 0 })
+            {
+                assignments.Add($"{Quote(proofDataCol)} = @ReturnProofData");
+            }
+            if (proofMimeCol is not null && firstProofBytes is { Length: > 0 })
+            {
+                assignments.Add($"{Quote(proofMimeCol)} = @ReturnProofMimeType");
+            }
+
+            await using (var command = connection.CreateCommand())
+            {
+                command.CommandText =
+                    $"""
+                    UPDATE dbo.Orders
+                    SET {string.Join(", ", assignments)}
+                    WHERE {Quote(orderIdCol)} = @OrderId
+                      AND ({string.Join(" OR ", ownershipFilters)})
+                      AND LTRIM(RTRIM(CONVERT(NVARCHAR(50), {Quote(statusCol)}))) IN (N'Completed', N'Complete', N'To Review', N'Delivered');
+                    """;
+                AddParameter(command, "@Status", "Return Requested", DbType.String);
+                AddParameter(command, "@ReturnReason", normalizedReason, DbType.String);
+                AddParameter(command, "@ReturnNote", $"Buyer uploaded {proofUrls.Count} return proof image(s).", DbType.String);
+                AddParameter(command, "@ReturnProofUrl", proofUrls[0], DbType.String);
+                AddParameter(command, "@ReturnProofUrls", proofJson, DbType.String);
+                AddParameter(command, "@ReturnProofData", firstProofBytes, DbType.Binary);
+                AddParameter(command, "@ReturnProofMimeType", firstProofMimeType, DbType.String);
+                AddParameter(command, "@OrderId", orderId, DbType.Int32);
+                AddParameter(command, "@UserIdText", userId?.ToString(), DbType.String);
+                AddParameter(command, "@ConsumerId", consumerId, DbType.Int32);
+
+                if (await command.ExecuteNonQueryAsync(cancellationToken) == 0)
+                {
+                    return false;
+                }
+            }
+
+            if (returnsColumns.Count > 0 && sellerId.HasValue)
+            {
+                await UpsertReturnRequestAsync(
+                    connection,
+                    returnsTableName,
+                    returnsColumns,
+                    orderId,
+                    userId,
+                    sellerId.Value,
+                    normalizedReason,
+                    proofJson,
+                    cancellationToken);
+            }
+
+            return true;
+        }
+        finally
+        {
+            if (shouldClose)
+            {
+                await connection.CloseAsync();
+            }
+        }
+    }
+
     public async Task<bool> ConfirmUserPurchaseReceivedAsync(int orderId, int? userId, int? consumerId, CancellationToken cancellationToken)
     {
         if (orderId <= 0 || (!userId.HasValue && !consumerId.HasValue))
@@ -625,6 +776,141 @@ public class OrderService
             }
         }
     }
+
+    private static async Task<int?> ResolveOrderSellerIdAsync(
+        DbConnection connection,
+        int orderId,
+        string orderIdColumn,
+        string? orderSellerColumn,
+        string? orderItemOrderIdColumn,
+        string? orderItemSellerColumn,
+        CancellationToken cancellationToken)
+    {
+        if (orderSellerColumn is not null)
+        {
+            await using var orderCommand = connection.CreateCommand();
+            orderCommand.CommandText = $"SELECT TOP (1) {Quote(orderSellerColumn)} FROM dbo.Orders WHERE {Quote(orderIdColumn)} = @OrderId";
+            AddParameter(orderCommand, "@OrderId", orderId, DbType.Int32);
+            var value = await orderCommand.ExecuteScalarAsync(cancellationToken);
+            if (value is not null && value != DBNull.Value && int.TryParse(Convert.ToString(value), out var parsed))
+            {
+                return parsed;
+            }
+        }
+
+        if (orderItemOrderIdColumn is not null && orderItemSellerColumn is not null)
+        {
+            await using var itemCommand = connection.CreateCommand();
+            itemCommand.CommandText = $"SELECT TOP (1) {Quote(orderItemSellerColumn)} FROM dbo.OrderItems WHERE {Quote(orderItemOrderIdColumn)} = @OrderId";
+            AddParameter(itemCommand, "@OrderId", orderId, DbType.Int32);
+            var value = await itemCommand.ExecuteScalarAsync(cancellationToken);
+            if (value is not null && value != DBNull.Value && int.TryParse(Convert.ToString(value), out var parsed))
+            {
+                return parsed;
+            }
+        }
+
+        return null;
+    }
+
+    private static async Task UpsertReturnRequestAsync(
+        DbConnection connection,
+        string tableName,
+        IReadOnlySet<string> columns,
+        int orderId,
+        int? userId,
+        int sellerId,
+        string reason,
+        string proofJson,
+        CancellationToken cancellationToken)
+    {
+        var idCol = FindColumn(columns, "ReturnId", "return_id", "Id");
+        var orderCol = FindColumn(columns, "OrderId", "order_id", "OrderID");
+        var userCol = FindColumn(columns, "UserId", "user_id");
+        var sellerCol = FindColumn(columns, "SellerId", "seller_id", "SellerID");
+        var reasonCol = FindColumn(columns, "Reason", "reason", "ReturnReason");
+        var messageCol = FindColumn(columns, "Message", "message", "ReturnMessage");
+        var statusCol = FindColumn(columns, "Status", "status");
+        var createdCol = FindColumn(columns, "CreatedAt", "created_at");
+
+        if (orderCol is null || sellerCol is null)
+        {
+            return;
+        }
+
+        var assignments = new List<string>();
+        if (reasonCol is not null)
+        {
+            assignments.Add($"{Quote(reasonCol)} = @Reason");
+        }
+        if (messageCol is not null)
+        {
+            assignments.Add($"{Quote(messageCol)} = @Message");
+        }
+        if (statusCol is not null)
+        {
+            assignments.Add($"{Quote(statusCol)} = @Status");
+        }
+
+        if (idCol is not null && assignments.Count > 0)
+        {
+            await using var updateCommand = connection.CreateCommand();
+            updateCommand.CommandText =
+                $"UPDATE {Quote(tableName)} SET {string.Join(", ", assignments)} WHERE {Quote(orderCol)} = @OrderId AND {Quote(sellerCol)} = @SellerId";
+            AddParameter(updateCommand, "@Reason", reason, DbType.String);
+            AddParameter(updateCommand, "@Message", proofJson, DbType.String);
+            AddParameter(updateCommand, "@Status", "Return Requested", DbType.String);
+            AddParameter(updateCommand, "@OrderId", orderId, DbType.Int32);
+            AddParameter(updateCommand, "@SellerId", sellerId, DbType.Int32);
+
+            if (await updateCommand.ExecuteNonQueryAsync(cancellationToken) > 0)
+            {
+                return;
+            }
+        }
+
+        var insertColumns = new List<string> { Quote(orderCol), Quote(sellerCol) };
+        var insertValues = new List<string> { "@OrderId", "@SellerId" };
+        if (userCol is not null)
+        {
+            insertColumns.Add(Quote(userCol));
+            insertValues.Add("@UserId");
+        }
+        if (reasonCol is not null)
+        {
+            insertColumns.Add(Quote(reasonCol));
+            insertValues.Add("@Reason");
+        }
+        if (messageCol is not null)
+        {
+            insertColumns.Add(Quote(messageCol));
+            insertValues.Add("@Message");
+        }
+        if (statusCol is not null)
+        {
+            insertColumns.Add(Quote(statusCol));
+            insertValues.Add("@Status");
+        }
+        if (createdCol is not null)
+        {
+            insertColumns.Add(Quote(createdCol));
+            insertValues.Add("SYSUTCDATETIME()");
+        }
+
+        await using var insertCommand = connection.CreateCommand();
+        insertCommand.CommandText =
+            $"INSERT INTO {Quote(tableName)} ({string.Join(", ", insertColumns)}) VALUES ({string.Join(", ", insertValues)})";
+        AddParameter(insertCommand, "@OrderId", orderId, DbType.Int32);
+        AddParameter(insertCommand, "@SellerId", sellerId, DbType.Int32);
+        AddParameter(insertCommand, "@UserId", userId, DbType.Int32);
+        AddParameter(insertCommand, "@Reason", reason, DbType.String);
+        AddParameter(insertCommand, "@Message", proofJson, DbType.String);
+        AddParameter(insertCommand, "@Status", "Return Requested", DbType.String);
+        await insertCommand.ExecuteNonQueryAsync(cancellationToken);
+    }
+
+    private static string Quote(string identifier)
+        => "[" + identifier.Replace("]", "]]") + "]";
 
     private static async Task<IReadOnlySet<string>> LoadColumnLookupAsync(DbConnection connection, string tableName, CancellationToken cancellationToken)
     {

@@ -644,6 +644,88 @@ namespace MyAspNetApp.Controllers
         }
 
         [HttpPost]
+        public async Task<IActionResult> RequestReturn([FromForm] RequestReturnRequest request, CancellationToken cancellationToken)
+        {
+            var userId = GetCurrentUserId();
+            if (!userId.HasValue)
+            {
+                return Unauthorized(new { success = false, message = "Login required." });
+            }
+
+            if (request.OrderId <= 0)
+            {
+                return BadRequest(new { success = false, message = "Invalid order." });
+            }
+
+            if (string.IsNullOrWhiteSpace(request.ReturnReason))
+            {
+                return BadRequest(new { success = false, message = "Return reason is required." });
+            }
+
+            var proofFiles = request.ReturnProofImages
+                .Where(file => file is { Length: > 0 })
+                .ToList();
+            if (proofFiles.Count == 0)
+            {
+                return BadRequest(new { success = false, message = "Please upload at least one proof image." });
+            }
+
+            try
+            {
+                var proofUrls = new List<string>();
+                byte[]? firstProofBytes = null;
+                string? firstProofMimeType = null;
+
+                foreach (var proofFile in proofFiles)
+                {
+                    ValidateReturnProof(proofFile);
+                    if (firstProofBytes is null)
+                    {
+                        await using var memory = new MemoryStream();
+                        await proofFile.CopyToAsync(memory, cancellationToken);
+                        firstProofBytes = memory.ToArray();
+                        firstProofMimeType = string.IsNullOrWhiteSpace(proofFile.ContentType)
+                            ? "image/jpeg"
+                            : proofFile.ContentType;
+                    }
+
+                    proofUrls.Add(await SaveReturnProofAsync(proofFile, cancellationToken));
+                }
+
+                var consumerId = await ResolveCurrentConsumerIdAsync(userId.Value, cancellationToken);
+                var updated = await _orderService.RequestUserPurchaseReturnAsync(
+                    request.OrderId,
+                    userId,
+                    consumerId,
+                    request.ReturnReason,
+                    proofUrls,
+                    firstProofBytes,
+                    firstProofMimeType,
+                    cancellationToken);
+
+                if (!updated)
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = "This order could not be returned. Only To Review orders can request a return."
+                    });
+                }
+
+                return Ok(new
+                {
+                    success = true,
+                    status = "Return Requested",
+                    message = "Return requested. Status updated to Return Requested."
+                });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { success = false, message = ex.Message });
+            }
+        }
+
+        [HttpPost]
         public async Task<IActionResult> ConfirmReceive([FromBody] ConfirmReceiveRequest request, CancellationToken cancellationToken)
         {
             var userId = GetCurrentUserId();
@@ -1003,6 +1085,43 @@ namespace MyAspNetApp.Controllers
             return $"/uploads/proofs/{fileName}";
         }
 
+        private async Task<string> SaveReturnProofAsync(IFormFile file, CancellationToken cancellationToken)
+        {
+            var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+            var webRoot = string.IsNullOrWhiteSpace(_environment.WebRootPath)
+                ? Path.Combine(_environment.ContentRootPath, "wwwroot")
+                : _environment.WebRootPath;
+            var uploadDirectory = Path.Combine(webRoot, "uploads", "returns");
+            Directory.CreateDirectory(uploadDirectory);
+
+            var fileName = $"{Guid.NewGuid():N}{extension}";
+            var filePath = Path.Combine(uploadDirectory, fileName);
+            await using var stream = System.IO.File.Create(filePath);
+            await file.CopyToAsync(stream, cancellationToken);
+
+            return $"/uploads/returns/{fileName}";
+        }
+
+        private static void ValidateReturnProof(IFormFile file)
+        {
+            var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (extension is not ".jpg" and not ".jpeg" and not ".png" and not ".webp")
+            {
+                throw new InvalidOperationException("Proof images must be JPG, PNG, or WEBP.");
+            }
+
+            if (file.Length > 5 * 1024 * 1024)
+            {
+                throw new InvalidOperationException("Each proof image must be 5MB or smaller.");
+            }
+
+            if (!string.IsNullOrWhiteSpace(file.ContentType) &&
+                !file.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("Proof uploads must be image files.");
+            }
+        }
+
         private async Task<string> ResolveAthleteNameAsync(int userId, CancellationToken cancellationToken)
         {
             var user = await _dbContext.Users
@@ -1090,6 +1209,13 @@ namespace MyAspNetApp.Controllers
         {
             public int OrderId { get; set; }
             public string? Action { get; set; }
+        }
+
+        public sealed class RequestReturnRequest
+        {
+            public int OrderId { get; set; }
+            public string ReturnReason { get; set; } = string.Empty;
+            public List<IFormFile> ReturnProofImages { get; set; } = new();
         }
 
         public sealed class ConfirmReceiveRequest

@@ -102,6 +102,11 @@
                                 else if (order.Status == "To Review")
                                 {
                                     <a class="btn-action btn-black" href="/Home/WriteReview?id=@order.ProductId&orderId=@order.OrderId">ADD A REVIEW</a>
+                                    <button class="btn-action btn-outline text-danger"
+                                            type="button"
+                                            onclick='openReturnRequest(@order.OrderId, @Html.Raw(JsonSerializer.Serialize(order.OrderNumber)), @Html.Raw(JsonSerializer.Serialize(order.ProductName)))'>
+                                        RETURN
+                                    </button>
                                 }
                                 @* Returns and Cancelled only show View Details. *@
                             </div>
@@ -237,6 +242,51 @@
 
         <div class="app-modal-footer">
             <button class="btn-mono-close" onclick="closeOrderDetails()">CLOSE</button>
+        </div>
+    </div>
+</div>
+
+<div id="returnRequestOverlay" class="custom-overlay">
+    <div class="overlay-backdrop" onclick="closeReturnRequest()"></div>
+    <div class="custom-modal-content return-request-modal">
+        <div class="mono-status-banner">
+            <div class="banner-left">
+                <h4 class="m-0">RETURN REQUEST</h4>
+                <p id="returnOrderSubtitle" class="m-0 small">Upload proof images to request a return.</p>
+            </div>
+            <i class="bi bi-arrow-counterclockwise"></i>
+        </div>
+
+        <form id="returnRequestForm" class="app-modal-scrollable" enctype="multipart/form-data">
+            <input type="hidden" id="returnOrderId" name="OrderId" value="0" />
+
+            <div class="app-section">
+                <label class="mono-label" for="returnReason">Reason</label>
+                <select id="returnReason" name="ReturnReason" class="mono-select" required>
+                    <option value="">Select a reason</option>
+                    <option value="Damaged or defective item">Damaged or defective item</option>
+                    <option value="Wrong item received">Wrong item received</option>
+                    <option value="Missing item or incomplete order">Missing item or incomplete order</option>
+                    <option value="Item does not match description">Item does not match description</option>
+                    <option value="Wrong size or fit">Wrong size or fit</option>
+                </select>
+
+                <label class="mono-label mt-3" for="returnProofImages">Proof Images</label>
+                <input id="returnProofImages"
+                       name="ReturnProofImages"
+                       class="mono-input"
+                       type="file"
+                       accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                       multiple
+                       required />
+                <p class="return-help-text">Upload one or more images. JPG, PNG, or WEBP only. Max 5MB each.</p>
+                <div id="returnProofPreview" class="return-proof-preview"></div>
+            </div>
+        </form>
+
+        <div class="app-modal-footer return-modal-footer">
+            <button class="btn-mono-cancel" type="button" onclick="closeReturnRequest()">CANCEL</button>
+            <button id="submitReturnRequestBtn" class="btn-mono-save" type="button" onclick="submitReturnRequest()">SUBMIT RETURN</button>
         </div>
     </div>
 </div>

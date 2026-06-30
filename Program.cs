@@ -66,9 +66,9 @@ if (string.IsNullOrWhiteSpace(connectionStringBuilder.ConnectionString))
     throw new InvalidOperationException("Resolved DefaultConnection is empty.");
 }
 
-if (connectionStringBuilder.ConnectTimeout <= 0 || connectionStringBuilder.ConnectTimeout > 10)
+if (connectionStringBuilder.ConnectTimeout <= 0 || connectionStringBuilder.ConnectTimeout > 5)
 {
-    connectionStringBuilder.ConnectTimeout = 10;
+    connectionStringBuilder.ConnectTimeout = 5;
 }
 
 if (connectionStringBuilder.MaxPoolSize < 200)
@@ -93,10 +93,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
         sqlOptions =>
         {
             sqlOptions.EnableRetryOnFailure(
-                maxRetryCount: 2,
-                maxRetryDelay: TimeSpan.FromSeconds(5),
+                maxRetryCount: 1,
+                maxRetryDelay: TimeSpan.FromSeconds(2),
                 errorNumbersToAdd: new[] { -2, 4060, 40197, 40501, 40613, 49918, 49919, 49920 });
-            sqlOptions.CommandTimeout(60);
+            sqlOptions.CommandTimeout(30);
         }));
 
 builder.Services.AddCors(options =>

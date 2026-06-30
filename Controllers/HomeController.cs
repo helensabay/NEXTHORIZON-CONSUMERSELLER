@@ -116,6 +116,7 @@ namespace MyAspNetApp.Controllers
             }
             catch (Exception ex) when (IsDatabaseConnectionException(ex))
             {
+                SqlConnection.ClearAllPools();
                 _logger.LogWarning(ex, "Unable to load landing page products from the database. Rendering the landing page without products.");
             }
 
@@ -158,6 +159,7 @@ namespace MyAspNetApp.Controllers
             }
             catch (Exception ex) when (ex is SqlException || ex is TimeoutException)
             {
+                SqlConnection.ClearAllPools();
                 _logger.LogWarning(ex, "Unable to load leaderboard for storefront due to database connectivity issues. Rendering storefront without leaderboard.");
                 return View(new Models.ViewModels.LeaderboardPageViewModel());
             }
@@ -176,6 +178,7 @@ namespace MyAspNetApp.Controllers
             }
             catch (Exception ex) when (IsDatabaseConnectionException(ex))
             {
+                SqlConnection.ClearAllPools();
                 _logger.LogWarning(ex, "Unable to load promotions due to database connectivity issues. Returning empty list.");
                 return Json(new List<object>());
             }
@@ -234,6 +237,7 @@ namespace MyAspNetApp.Controllers
             }
             catch (Exception ex) when (IsDatabaseConnectionException(ex))
             {
+                SqlConnection.ClearAllPools();
                 _logger.LogWarning(ex, "Unable to load leaderboard due to database connectivity issues. Returning empty list.");
                 return Json(new List<object>());
             }

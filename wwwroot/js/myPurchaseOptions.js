@@ -212,6 +212,127 @@ async function confirmReceive(orderId) {
     }
 }
 
+function openReturnRequest(orderId, orderNumber, productName) {
+    const parsedOrderId = parseInt(orderId, 10) || 0;
+    if (!parsedOrderId) {
+        showToast("Invalid order.", "error");
+        return;
+    }
+
+    const overlay = document.getElementById('returnRequestOverlay');
+    const form = document.getElementById('returnRequestForm');
+    const preview = document.getElementById('returnProofPreview');
+    const subtitle = document.getElementById('returnOrderSubtitle');
+
+    document.getElementById('returnOrderId').value = parsedOrderId;
+    if (form) form.reset();
+    if (preview) preview.innerHTML = '';
+    if (subtitle) {
+        subtitle.innerText = `${orderNumber || 'Order'} - ${productName || 'Return item'}`;
+    }
+
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeReturnRequest() {
+    const overlay = document.getElementById('returnRequestOverlay');
+    const preview = document.getElementById('returnProofPreview');
+    const form = document.getElementById('returnRequestForm');
+
+    if (overlay) overlay.classList.remove('active');
+    if (preview) preview.innerHTML = '';
+    if (form) form.reset();
+    document.body.style.overflow = 'auto';
+}
+
+function previewReturnProofImages(input) {
+    const preview = document.getElementById('returnProofPreview');
+    if (!preview) return;
+
+    preview.innerHTML = '';
+    Array.from(input.files || []).slice(0, 12).forEach(file => {
+        if (!file.type.startsWith('image/')) return;
+
+        const image = document.createElement('img');
+        image.alt = file.name || 'Return proof image';
+        preview.appendChild(image);
+
+        const reader = new FileReader();
+        reader.onload = event => {
+            image.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+async function submitReturnRequest() {
+    const orderId = parseInt(document.getElementById('returnOrderId')?.value || '0', 10);
+    const reason = document.getElementById('returnReason')?.value || '';
+    const fileInput = document.getElementById('returnProofImages');
+    const submitBtn = document.getElementById('submitReturnRequestBtn');
+
+    if (!orderId) {
+        showToast("Invalid order.", "error");
+        return;
+    }
+
+    if (!reason.trim()) {
+        showToast("Please select a return reason.", "error");
+        return;
+    }
+
+    if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+        showToast("Please upload at least one proof image.", "error");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('OrderId', orderId);
+    formData.append('ReturnReason', reason);
+    Array.from(fileInput.files).forEach(file => {
+        formData.append('ReturnProofImages', file);
+    });
+
+    const originalText = submitBtn ? submitBtn.innerText : '';
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'SUBMITTING...';
+    }
+
+    try {
+        const response = await fetch('/AccountProfile/RequestReturn', {
+            method: 'POST',
+            headers: { 'Accept': 'application/json' },
+            body: formData
+        });
+
+        const payload = await readJsonSafe(response);
+        if (!response.ok || payload.success === false) {
+            throw new Error(payload.message || 'Could not submit return request.');
+        }
+
+        showToast(payload.message || "Return requested.");
+        window.location.href = '/AccountProfile/MyPurchases?status=Returns';
+    } catch (error) {
+        showToast(error.message || "Could not submit return request.", "error");
+    } finally {
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerText = originalText || 'SUBMIT RETURN';
+        }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const returnProofInput = document.getElementById('returnProofImages');
+    if (returnProofInput) {
+        returnProofInput.addEventListener('change', function () {
+            previewReturnProofImages(this);
+        });
+    }
+});
+
 async function readJsonSafe(response) {
     try {
         return await response.json();
